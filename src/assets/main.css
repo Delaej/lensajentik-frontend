@@ -1,0 +1,48 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+/* ─── LensaJentik Design System ───────────────────────────────────────────── */
+/* Color Palette:
+   --lj-lime:    #CEFF82  (Light lime accent / tag backgrounds)
+   --lj-green:   #5AF61F  (Primary green CTA, badges, pills)
+   --lj-blue-lt: #7B93F0  (Light blue / periwinkle accent)
+   --lj-blue:    #4E63DA  (Primary blue – sidebar active, buttons)
+   --lj-navy:    #1E2B5B  (Navy dark – logo dot, headings)
+   --lj-bg:      #F8FAFC  (App background)
+*/
+
+:root {
+  --lj-lime:    #CEFF82;
+  --lj-green:   #5AF61F;
+  --lj-blue-lt: #7B93F0;
+  --lj-blue:    #4E63DA;
+  --lj-navy:    #1E2B5B;
+  --lj-bg:      #F8FAFC;
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: 'Satoshi', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  body {
+    background-color: var(--lj-bg);
+    color: #0f172a;
+    font-family: 'Satoshi', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ─── Custom Scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ─── Utility Overrides ────────────────────────────────────────────────────── */
+.font-satoshi { font-family: 'Satoshi', sans-serif; }
