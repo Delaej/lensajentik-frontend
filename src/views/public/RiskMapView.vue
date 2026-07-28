@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import {
   MapPin,
   Filter,
@@ -16,6 +16,42 @@ import { useMapStore } from '@/stores/useMapStore'
 const mapStore = useMapStore()
 const mapContainer = ref(null)
 let mapInstance = null
+let activeLayers = []
+
+const drawLayers = (L) => {
+  // Clear existing layers
+  activeLayers.forEach(layer => mapInstance.removeLayer(layer))
+  activeLayers = []
+
+  // Render polygon areas and markers
+  mapStore.diseaseRiskData.forEach((region) => {
+    const color = region.riskCode === 'high' ? '#EF4444' : region.riskCode === 'medium' ? '#F59E0B' : '#10B981'
+
+    const polygon = L.polygon(region.latLngs, {
+      color: color,
+      fillColor: color,
+      fillOpacity: 0.35,
+      weight: 2,
+    }).addTo(mapInstance)
+
+    polygon.bindPopup(`
+      <div style="font-family: sans-serif; padding: 4px; color: black;">
+        <h4 style="margin: 0; font-weight: bold; font-size: 14px;">${region.name}</h4>
+        <p style="margin: 4px 0; font-size: 12px; color: #64748b;">${region.district}</p>
+        <div style="display: inline-block; padding: 2px 8px; background: ${color}; color: white; border-radius: 999px; font-weight: bold; font-size: 11px;">
+          Risiko: ${region.riskLevel} (${region.abj}% ABJ)
+        </div>
+      </div>
+    `)
+
+    polygon.on('click', () => {
+      // Fetch detailed calculation (real-time Open-Meteo & risk forecasts)
+      mapStore.fetchRegionDetail(region.id)
+    })
+
+    activeLayers.push(polygon)
+  })
+}
 
 onMounted(async () => {
   if (typeof window !== 'undefined') {
@@ -23,7 +59,7 @@ onMounted(async () => {
     
     // Initialize map centered at Bandung area
     mapInstance = L.map(mapContainer.value, {
-      center: [-6.892, 107.595],
+      center: [-6.9175, 107.6191], // Bandung center
       zoom: 13,
       zoomControl: true,
     })
@@ -34,33 +70,25 @@ onMounted(async () => {
       maxZoom: 18,
     }).addTo(mapInstance)
 
-    // Render polygon areas and markers
-    mapStore.diseaseRiskData.forEach((region) => {
-      const color = region.riskCode === 'high' ? '#EF4444' : region.riskCode === 'medium' ? '#F59E0B' : '#10B981'
+    // Load data from backend
+    await mapStore.fetchRiskMap()
+    await mapStore.fetchSubscribedRegions()
 
-      const polygon = L.polygon(region.latLngs, {
-        color: color,
-        fillColor: color,
-        fillOpacity: 0.35,
-        weight: 2,
-      }).addTo(mapInstance)
+    // Draw initial layers
+    drawLayers(L)
 
-      polygon.bindPopup(`
-        <div style="font-family: sans-serif; padding: 4px;">
-          <h4 style="margin: 0; font-weight: bold; font-size: 14px;">${region.name}</h4>
-          <p style="margin: 4px 0; font-size: 12px; color: #64748b;">${region.district}</p>
-          <div style="display: inline-block; padding: 2px 8px; background: ${color}; color: white; border-radius: 999px; font-weight: bold; font-size: 11px;">
-            Risiko: ${region.riskLevel} (${region.abj}% ABJ)
-          </div>
-        </div>
-      `)
-
-      polygon.on('click', () => {
-        mapStore.setSelectedRegion(region)
-      })
-    })
+    // Watch for risk data updates to redraw
+    watch(() => mapStore.diseaseRiskData, () => {
+      drawLayers(L)
+    }, { deep: true })
   }
 })
+
+// Watch selected disease type filter to reload map data
+watch(() => mapStore.selectedDisease, async () => {
+  await mapStore.fetchRiskMap()
+})
+
 </script>
 
 <template>
@@ -119,12 +147,12 @@ onMounted(async () => {
               <p class="text-xs text-slate-400">{{ mapStore.selectedRegion.district }}</p>
             </div>
             <button
-              @click="mapStore.toggleSubscription(mapStore.selectedRegion.name)"
+              @click="mapStore.toggleSubscription(mapStore.selectedRegion.id)"
               class="p-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1"
-              :class="mapStore.subscribedRegions.includes(mapStore.selectedRegion.name) ? 'bg-amber-500 text-slate-900' : 'bg-slate-700 text-white hover:bg-slate-600'"
+              :class="mapStore.subscribedRegions.includes(mapStore.selectedRegion.id) ? 'bg-amber-500 text-slate-900' : 'bg-slate-700 text-white hover:bg-slate-600'"
             >
               <BellRing class="w-3.5 h-3.5" />
-              <span>{{ mapStore.subscribedRegions.includes(mapStore.selectedRegion.name) ? 'Subscribed' : 'Subscribe' }}</span>
+              <span>{{ mapStore.subscribedRegions.includes(mapStore.selectedRegion.id) ? 'Subscribed' : 'Subscribe' }}</span>
             </button>
           </div>
 

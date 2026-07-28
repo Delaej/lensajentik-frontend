@@ -1,14 +1,37 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Calculator, CheckCircle2, ShieldAlert } from 'lucide-vue-next'
+import { educationService } from '@/services/educationService'
 
-const q1 = ref('jarang')
-const q2 = ref('ada')
-const q3 = ref('tidak')
+const questions = ref([])
+const answers = ref({})
 const isCalculated = ref(false)
+const result = ref(null)
+const isLoading = ref(true)
 
-const handleCalculate = () => {
-  isCalculated.value = true
+onMounted(async () => {
+  try {
+    const response = await educationService.fetchQuizQuestions()
+    questions.value = response.pertanyaan || response
+    // Initialize default answers
+    questions.value.forEach((q) => {
+      answers.value[q.id] = q.opsi[0].value
+    })
+  } catch (error) {
+    console.error('Fetch quiz questions failed:', error)
+  } finally {
+    isLoading.value = false
+  }
+})
+
+const handleCalculate = async () => {
+  try {
+    const response = await educationService.submitQuizAnswers({ jawaban: answers.value })
+    result.value = response
+    isCalculated.value = true
+  } catch (error) {
+    alert('Gagal menghitung kuis: ' + error.message)
+  }
 }
 </script>
 
@@ -22,48 +45,45 @@ const handleCalculate = () => {
     </div>
 
     <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
-      <div class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase mb-2">1. Berapa kali Anda menguras tempat penampungan air?</label>
-          <select v-model="q1" class="w-full p-3 bg-slate-50 border rounded-xl text-xs font-bold">
-            <option value="rutin">Seminggu 1x (Rutin)</option>
-            <option value="jarang">2 Minggu Sekali</option>
-            <option value="jarang_banget">Jarang Sekali (> 1 Bulan)</option>
+      <div v-if="isLoading" class="text-center py-6 text-xs text-slate-500">
+        Memuat pertanyaan kuis...
+      </div>
+
+      <div v-else class="space-y-4">
+        <div v-for="(q, idx) in questions" :key="q.id">
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-2">
+            {{ idx + 1 }}. {{ q.teks }}
+          </label>
+          <select v-model="answers[q.id]" class="w-full p-3 bg-slate-50 border rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+            <option v-for="opt in q.opsi" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
           </select>
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase mb-2">2. Apakah terdapat pot bunga / genangan ban bekas di luar rumah?</label>
-          <select v-model="q2" class="w-full p-3 bg-slate-50 border rounded-xl text-xs font-bold">
-            <option value="ada">Ya, Ada beberapa genangan</option>
-            <option value="tidak">Tidak Ada, Selalu kering</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase mb-2">3. Apakah Anda menggunakan bubuk Abate / Larvasida?</label>
-          <select v-model="q3" class="w-full p-3 bg-slate-50 border rounded-xl text-xs font-bold">
-            <option value="ya">Ya, Digunakan rutin</option>
-            <option value="tidak">Belum Pernah</option>
-          </select>
-        </div>
-
-        <button @click="handleCalculate" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-2xl text-xs shadow-md">
+        <button @click="handleCalculate" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-2xl text-xs shadow-md transition-all active:scale-[0.99] mt-4">
           Hitung Tingkat Risiko Saya →
         </button>
       </div>
 
       <!-- Result Card -->
-      <div v-if="isCalculated" class="p-6 bg-slate-900 text-white rounded-3xl space-y-3 animate-in fade-in">
+      <div v-if="isCalculated && result" class="p-6 bg-slate-900 text-white rounded-3xl space-y-3 animate-in fade-in">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold uppercase text-amber-400">Hasil Evaluasi Personal:</span>
-          <span class="px-2.5 py-0.5 bg-amber-500/20 text-amber-300 font-extrabold text-xs rounded-full border border-amber-500/30">
-            Risiko Sedang
+          <span
+            class="px-2.5 py-0.5 font-extrabold text-xs rounded-full border"
+            :class="[
+              result.level_risiko === 'tinggi' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
+              result.level_risiko === 'sedang' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
+              'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+            ]"
+          >
+            Risiko {{ result.level_risiko === 'tinggi' ? 'Tinggi' : result.level_risiko === 'sedang' ? 'Sedang' : 'Rendah' }}
           </span>
         </div>
-        <div class="text-2xl font-black">Potensi Jentik: 65%</div>
+        <div class="text-2xl font-black">Skor Kerentanan: {{ result.skor }}%</div>
         <p class="text-xs text-slate-300 leading-relaxed">
-          Disarankan meningkatkan frekuensi 3M Plus menjadi seminggu sekali dan memberikan larvasida pada tempat penampungan air terbuka.
+          {{ result.rekomendasi }}
         </p>
       </div>
     </div>

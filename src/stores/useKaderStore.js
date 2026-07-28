@@ -1,99 +1,30 @@
 import { defineStore } from 'pinia'
+import { authService } from '@/services/authService'
+import { abjService } from '@/services/abjService'
 
 export const useKaderStore = defineStore('kader', {
   state: () => ({
-    isAuthenticated: true,
+    isAuthenticated: !!localStorage.getItem('kader_token'),
     userProfile: {
-      name: 'Nayla Salsabila',
-      email: 'nayla@gmail.com',
-      phone: '0812-3456-7890',
-      role: 'Kader Kesehatan Utama',
-      district: 'Kecamatan Sukajadi',
-      subDistrict: 'Kelurahan Pasteur',
-      rt: '03',
-      rw: '05',
+      name: '',
+      email: '',
+      phone: '',
+      role: '',
+      district: '',
+      subDistrict: '',
+      rt: '',
+      rw: '',
       totalHouseTarget: 45,
       avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop',
     },
     quickMetrics: {
       totalRumah: 45,
-      diperiksa: 38,
-      positifJentik: 3,
-      abjScore: 92.1,
+      diperiksa: 0,
+      positifJentik: 0,
+      abjScore: 0,
       status: 'Aman', // Aman, Waspada, Bahaya
     },
-    abjRecords: [
-      {
-        id: 'REC-001',
-        date: '2026-07-24',
-        weekLabel: 'Mg 4 (Jul)',
-        location: 'RT 03 / RW 05',
-        rt: '03',
-        rw: '05',
-        diperiksa: 45,
-        positifJentik: 3,
-        abjScore: 93.3,
-        status: 'Aman',
-        notes: 'Pemeriksaan rutin minggu ke-4. Tempat penampungan air sudah dikuras warga.',
-        kaderName: 'Nayla Salsabila',
-      },
-      {
-        id: 'REC-002',
-        date: '2026-07-17',
-        weekLabel: 'Mg 3 (Jul)',
-        location: 'RT 02 / RW 05',
-        rt: '02',
-        rw: '05',
-        diperiksa: 42,
-        positifJentik: 5,
-        abjScore: 88.1,
-        status: 'Waspada',
-        notes: 'Ditemukan jentik di pot bunga outdoor & bak kamar mandi rumah pak RT.',
-        kaderName: 'Nayla Salsabila',
-      },
-      {
-        id: 'REC-003',
-        date: '2026-07-10',
-        weekLabel: 'Mg 2 (Jul)',
-        location: 'RT 01 / RW 05',
-        rt: '01',
-        rw: '05',
-        diperiksa: 40,
-        positifJentik: 2,
-        abjScore: 95.0,
-        status: 'Aman',
-        notes: 'Sosialisasi Abate berjalan baik. Kesadaran warga tinggi.',
-        kaderName: 'Nayla Salsabila',
-      },
-      {
-        id: 'REC-004',
-        date: '2026-07-03',
-        weekLabel: 'Mg 1 (Jul)',
-        location: 'RT 04 / RW 05',
-        rt: '04',
-        rw: '05',
-        diperiksa: 38,
-        positifJentik: 4,
-        abjScore: 89.4,
-        status: 'Waspada',
-        notes: 'Perlu pengawasan berulang pada area genangan drum bekas warga.',
-        kaderName: 'Nayla Salsabila',
-      },
-      {
-        id: 'REC-005',
-        date: '2026-06-26',
-        weekLabel: 'Mg 4 (Jun)',
-        location: 'RT 03 / RW 05',
-        rt: '03',
-        rw: '05',
-        diperiksa: 44,
-        positifJentik: 1,
-        abjScore: 97.7,
-        status: 'Aman',
-        notes: 'Kondisi sanitasi sangat bersih.',
-        kaderName: 'Nayla Salsabila',
-      },
-    ],
+    abjRecords: [],
     notifications: [
       {
         id: 1,
@@ -150,36 +81,70 @@ export const useKaderStore = defineStore('kader', {
   },
 
   actions: {
-    addAbjRecord(recordData) {
-      const total = Number(recordData.diperiksa) || 0
-      const positif = Number(recordData.positifJentik) || 0
-      const abjScore = total > 0 ? Number((((total - positif) / total) * 100).toFixed(1)) : 0
-
-      let status = 'Aman'
-      if (abjScore < 90) status = 'Bahaya'
-      else if (abjScore < 95) status = 'Waspada'
-
-      const newRecord = {
-        id: `REC-${Date.now().toString().slice(-4)}`,
-        date: recordData.date || new Date().toISOString().split('T')[0],
-        weekLabel: `Input Baru (${new Date().toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })})`,
-        location: `RT ${recordData.rt} / RW ${recordData.rw}`,
-        rt: recordData.rt,
-        rw: recordData.rw,
-        diperiksa: total,
-        positifJentik: positif,
-        abjScore,
-        status,
-        notes: recordData.notes || '',
-        kaderName: this.userProfile.name,
+    async fetchProfile() {
+      try {
+        const profile = await authService.getProfile()
+        this.userProfile = {
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone || '',
+          role: profile.role === 'kader' ? 'Kader Kesehatan' : profile.role,
+          district: profile.wilayah_tugas ? profile.wilayah_tugas.nama : '',
+          wilayah_kode: profile.wilayah_kode,
+          avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop',
+        }
+      } catch (error) {
+        console.error('Fetch profile failed:', error)
       }
+    },
 
-      this.abjRecords.unshift(newRecord)
-      this.quickMetrics.diperiksa = total
-      this.quickMetrics.positifJentik = positif
-      this.quickMetrics.abjScore = abjScore
-      this.quickMetrics.status = status
-      return newRecord
+    async fetchMyAbjRecords() {
+      try {
+        const response = await abjService.fetchAbjRecords()
+        const records = response.data || response
+        this.abjRecords = records.map((rec) => {
+          return {
+            id: rec.id,
+            date: rec.tanggal_pemeriksaan,
+            weekLabel: rec.tanggal_pemeriksaan,
+            location: rec.wilayah ? rec.wilayah.nama : 'Desa Binaan',
+            diperiksa: rec.jumlah_rumah_diperiksa,
+            positifJentik: rec.jumlah_rumah_positif_jentik,
+            abjScore: rec.abj_persen,
+            status: rec.abj_persen >= 95 ? 'Aman' : rec.abj_persen >= 90 ? 'Waspada' : 'Bahaya',
+            notes: rec.catatan || '',
+            kaderName: rec.kader ? rec.kader.name : '',
+          }
+        })
+
+        if (this.abjRecords.length > 0) {
+          const latest = this.abjRecords[0]
+          this.quickMetrics.diperiksa = latest.diperiksa
+          this.quickMetrics.positifJentik = latest.positifJentik
+          this.quickMetrics.abjScore = latest.abjScore
+          this.quickMetrics.status = latest.status
+        }
+      } catch (error) {
+        console.error('Fetch ABJ records failed:', error)
+      }
+    },
+
+    async addAbjRecord(recordData) {
+      try {
+        const payload = {
+          wilayah_kode: recordData.wilayah_kode,
+          tanggal_pemeriksaan: recordData.date,
+          jumlah_rumah_diperiksa: recordData.diperiksa,
+          jumlah_rumah_positif_jentik: recordData.positifJentik,
+          catatan: recordData.notes,
+        }
+        const newRecord = await abjService.storeAbjRecord(payload)
+        await this.fetchMyAbjRecords()
+        return newRecord
+      } catch (error) {
+        console.error('Add ABJ record failed:', error)
+        throw error
+      }
     },
 
     markNotificationRead(id) {
@@ -195,16 +160,40 @@ export const useKaderStore = defineStore('kader', {
       this.userProfile = { ...this.userProfile, ...updatedData }
     },
 
-    login(email, password) {
-      if (email && password) {
+    async login(email, password) {
+      try {
+        const data = await authService.login({ email, password })
         this.isAuthenticated = true
+        await this.fetchProfile()
+        await this.fetchMyAbjRecords()
         return true
+      } catch (error) {
+        console.error('Login failed:', error)
+        return false
       }
-      return false
     },
 
-    logout() {
-      this.isAuthenticated = false
+    async logout() {
+      try {
+        await authService.logout()
+      } catch (error) {
+        console.error('Logout failed:', error)
+      } finally {
+        this.isAuthenticated = false
+        this.userProfile = {
+          name: '',
+          email: '',
+          phone: '',
+          role: '',
+          district: '',
+          subDistrict: '',
+          rt: '',
+          rw: '',
+          totalHouseTarget: 45,
+          avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop',
+        }
+        this.abjRecords = []
+      }
     },
   },
 })

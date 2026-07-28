@@ -1,12 +1,19 @@
 <script setup>
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { BookOpen, Calculator, HelpCircle, ShieldCheck } from 'lucide-vue-next'
+import { educationService } from '@/services/educationService'
 
-const articles = [
-  { id: 1, title: 'Panduan Praktis 3M Plus di Musim Hujan', category: 'Pencegahan', date: '24 Jul 2026' },
-  { id: 2, title: 'Mengenali Perbedaan Gejala Demam DBD & Malaria', category: 'Medis', date: '20 Jul 2026' },
-  { id: 3, title: 'Cara Menggunakan Larvasida (Abate) yang Benar', category: 'Edukasi', date: '18 Jul 2026' },
-]
+const articles = ref([])
+
+onMounted(async () => {
+  try {
+    const response = await educationService.fetchArticles()
+    articles.value = response.data || response
+  } catch (error) {
+    console.error('Fetch articles failed:', error)
+  }
+})
 </script>
 
 <template>
@@ -31,13 +38,13 @@ const articles = [
     <!-- Articles List -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div v-for="art in articles" :key="art.id" class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
-        <span class="px-2.5 py-1 bg-blue-50 text-blue-700 font-bold text-[10px] rounded-full border border-blue-200">
-          {{ art.category }}
+        <span class="px-2.5 py-1 bg-blue-50 text-blue-700 font-bold text-[10px] rounded-full border border-blue-200 uppercase">
+          {{ art.tipe }}
         </span>
-        <h3 class="font-extrabold text-slate-900 text-base leading-snug">{{ art.title }}</h3>
+        <h3 class="font-extrabold text-slate-900 text-base leading-snug">{{ art.judul }}</h3>
         <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-100">
-          <span>{{ art.date }}</span>
-          <RouterLink :to="`/edukasi/artikel/${art.id}`" class="text-blue-600 font-bold hover:underline">Baca →</RouterLink>
+          <span>{{ new Date(art.created_at).toLocaleDateString('id-ID') }}</span>
+          <RouterLink :to="`/edukasi/artikel/${art.slug}`" class="text-blue-600 font-bold hover:underline">Baca →</RouterLink>
         </div>
       </div>
     </div>

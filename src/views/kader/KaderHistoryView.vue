@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   TrendingUp,
   Filter,
@@ -15,8 +15,17 @@ import { useKaderStore } from '@/stores/useKaderStore'
 
 const kaderStore = useKaderStore()
 
+onMounted(async () => {
+  await kaderStore.fetchMyAbjRecords()
+})
+
 const selectedFilterMonth = ref('all')
 const searchKeyword = ref('')
+
+// Slice and reverse records for a clean left-to-right chart flow (latest 6 records)
+const chartRecords = computed(() => {
+  return kaderStore.abjRecords.slice(0, 6).reverse()
+})
 
 // Comparison widget state
 const regionA = ref('RT 03 / RW 05 (Pasteur)')
@@ -85,7 +94,7 @@ const filteredRecords = computed(() => {
 
         <div class="h-56 flex items-end justify-around gap-4 pt-6 pb-2 border-b border-slate-100">
           <div
-            v-for="rec in kaderStore.abjRecords"
+            v-for="rec in chartRecords"
             :key="rec.id"
             class="flex-1 flex flex-col items-center gap-2 group h-full justify-end"
           >

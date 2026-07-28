@@ -13,22 +13,21 @@ const showPassword = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
 
-const handleLogin = () => {
+const handleLogin = async () => {
   if (!email.value || !password.value) {
     errorMessage.value = 'Silakan isi email dan kata sandi Anda.'
     return
   }
   isLoading.value = true
   errorMessage.value = ''
-  setTimeout(() => {
-    const success = kaderStore.login(email.value, password.value)
-    isLoading.value = false
-    if (success) {
-      router.push('/kader/dashboard')
-    } else {
-      errorMessage.value = 'Email atau kata sandi tidak cocok.'
-    }
-  }, 400)
+  
+  const success = await kaderStore.login(email.value, password.value)
+  isLoading.value = false
+  if (success) {
+    router.push('/kader/dashboard')
+  } else {
+    errorMessage.value = 'Email atau kata sandi tidak cocok.'
+  }
 }
 </script>
 

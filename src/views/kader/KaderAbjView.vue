@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   ClipboardCheck,
@@ -18,6 +18,7 @@ import {
   ShieldAlert,
 } from 'lucide-vue-next'
 import { useKaderStore } from '@/stores/useKaderStore'
+import { abjService } from '@/services/abjService'
 
 const router = useRouter()
 const kaderStore = useKaderStore()
@@ -28,6 +29,23 @@ const currentStep = ref(1) // Step 1: Area Kerja, Step 2: Detail Pemeriksaan
 const selectedRt = ref('03')
 const selectedRw = ref('05')
 const inspectionDate = ref(new Date().toISOString().split('T')[0])
+const villages = ref([])
+const selectedVillageKode = ref('')
+
+onMounted(async () => {
+  await kaderStore.fetchProfile()
+  if (kaderStore.userProfile.wilayah_kode) {
+    try {
+      const response = await abjService.fetchDesaByKecamatan(kaderStore.userProfile.wilayah_kode)
+      villages.value = response.data || response
+      if (villages.value.length > 0) {
+        selectedVillageKode.value = villages.value[0].kode
+      }
+    } catch (error) {
+      console.error('Fetch villages failed:', error)
+    }
+  }
+})
 
 // Step 2 Form Data
 const totalDiperiksa = ref(45)
@@ -96,29 +114,34 @@ const decrementPositif = () => {
 
 // Navigation Flow Controls
 const goToStep2 = () => {
-  if (!selectedRt.value || !selectedRw.value || !inspectionDate.value) {
-    alert('Silakan lengkapi area kerja dan tanggal terlebih dahulu.')
+  if (!selectedRt.value || !selectedRw.value || !inspectionDate.value || !selectedVillageKode.value) {
+    alert('Silakan lengkapi area kerja, desa, dan tanggal terlebih dahulu.')
     return
   }
   currentStep.value = 2
 }
 
-const submitForm = () => {
+const submitForm = async () => {
+  if (!selectedVillageKode.value) {
+    alert('Silakan pilih desa/kelurahan terlebih dahulu.')
+    return
+  }
   isSubmitting.value = true
-
-  setTimeout(() => {
-    kaderStore.addAbjRecord({
-      rt: selectedRt.value,
-      rw: selectedRw.value,
+  try {
+    const fullNotes = `RT ${selectedRt.value} / RW ${selectedRw.value}. ${notes.value}`
+    await kaderStore.addAbjRecord({
+      wilayah_kode: selectedVillageKode.value,
       date: inspectionDate.value,
       diperiksa: totalDiperiksa.value,
       positifJentik: rumahPositif.value,
-      notes: notes.value,
+      notes: fullNotes,
     })
-
     isSubmitting.value = false
     showSuccessModal.value = true
-  }, 600)
+  } catch (error) {
+    isSubmitting.value = false
+    alert('Gagal menyimpan data ABJ: ' + (error.response?.data?.message || error.message))
+  }
 }
 
 const handleFinished = () => {
@@ -170,6 +193,20 @@ const handleFinished = () => {
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <!-- Desa/Kelurahan Binaan Select (Full Width) -->
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Pilih Desa/Kelurahan Binaan</label>
+          <select
+            v-model="selectedVillageKode"
+            class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            <option v-if="villages.length === 0" value="">Memuat daftar desa...</option>
+            <option v-for="village in villages" :key="village.kode" :value="village.kode">
+              {{ village.nama }}
+            </option>
+          </select>
+        </div>
+
         <!-- RT Select -->
         <div>
           <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Pilih RT Binaan</label>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   FileText,
   Calendar,
@@ -13,10 +13,30 @@ import {
   Building,
   Check,
 } from 'lucide-vue-next'
+import { useKaderStore } from '@/stores/useKaderStore'
+import { useReportStore } from '@/stores/useReportStore'
 
-const startDate = ref('2026-07-01')
-const endDate = ref('2026-07-31')
+const kaderStore = useKaderStore()
+const reportStore = useReportStore()
+
+const startDate = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
+const endDate = ref(new Date().toISOString().split('T')[0])
 const isApplied = ref(false)
+
+onMounted(async () => {
+  await kaderStore.fetchProfile()
+  await kaderStore.fetchMyAbjRecords()
+  await reportStore.fetchReports()
+})
+
+// Computed summary from real ABJ records
+const totalDiperiksa = computed(() =>
+  kaderStore.abjRecords.reduce((sum, r) => sum + (r.diperiksa || 0), 0)
+)
+const totalPositif = computed(() =>
+  kaderStore.abjRecords.reduce((sum, r) => sum + (r.positifJentik || 0), 0)
+)
+const averageAbj = computed(() => kaderStore.averageAbjScore)
 
 const handleApplyFilter = () => {
   isApplied.value = true
@@ -28,7 +48,7 @@ const handleExportPdf = () => {
 }
 
 const handleExportExcel = () => {
-  alert('Mengunduh spreadsheet Excel Data_ABJ_Sukajadi_Juli_2026.xlsx...')
+  alert('Mengunduh spreadsheet Excel Data_ABJ_Juli.xlsx...')
 }
 
 const handlePrint = () => {
@@ -117,9 +137,9 @@ const handlePrint = () => {
           </div>
         </div>
         <div>
-          <div class="text-3xl font-black text-slate-900">1,248</div>
+          <div class="text-3xl font-black text-slate-900">{{ totalDiperiksa.toLocaleString('id-ID') }}</div>
           <p class="text-xs text-emerald-600 font-bold mt-1 flex items-center gap-1">
-            <TrendingUp class="w-3.5 h-3.5" /> +12.4% dibanding bulan lalu
+            <TrendingUp class="w-3.5 h-3.5" /> Dari {{ kaderStore.abjRecords.length }} sesi pemeriksaan
           </p>
         </div>
       </div>
@@ -133,9 +153,10 @@ const handlePrint = () => {
           </div>
         </div>
         <div>
-          <div class="text-3xl font-black text-slate-900">92.5%</div>
+          <div class="text-3xl font-black text-slate-900">{{ averageAbj }}%</div>
           <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Status Ketahanan: Aman
+            <span :class="averageAbj >= 95 ? 'bg-emerald-500' : averageAbj >= 90 ? 'bg-amber-500' : 'bg-rose-500'" class="w-2 h-2 rounded-full"></span>
+            Status: {{ averageAbj >= 95 ? 'Aman' : averageAbj >= 90 ? 'Waspada' : 'Bahaya' }}
           </p>
         </div>
       </div>
@@ -149,7 +170,7 @@ const handlePrint = () => {
           </div>
         </div>
         <div>
-          <div class="text-3xl font-black text-rose-600">93</div>
+          <div class="text-3xl font-black text-rose-600">{{ totalPositif }}</div>
           <p class="text-xs text-rose-700 font-semibold mt-1">Perlu Intervensi Tindak Lanjut Abatisasi</p>
         </div>
       </div>
@@ -164,20 +185,20 @@ const handlePrint = () => {
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
         <div class="p-3 bg-slate-50 rounded-xl">
-          <div class="text-slate-400 font-medium">Kecamatan:</div>
-          <div class="font-bold text-slate-800">Sukajadi</div>
+          <div class="text-slate-400 font-medium">Wilayah Tugas:</div>
+          <div class="font-bold text-slate-800">{{ kaderStore.userProfile.district || 'Wilayah Kader' }}</div>
         </div>
         <div class="p-3 bg-slate-50 rounded-xl">
-          <div class="text-slate-400 font-medium">Kelurahan:</div>
-          <div class="font-bold text-slate-800">Pasteur</div>
+          <div class="text-slate-400 font-medium">Periode:</div>
+          <div class="font-bold text-slate-800">{{ startDate }} s/d {{ endDate }}</div>
         </div>
         <div class="p-3 bg-slate-50 rounded-xl">
           <div class="text-slate-400 font-medium">Penanggung Jawab:</div>
-          <div class="font-bold text-slate-800">Nayla Salsabila</div>
+          <div class="font-bold text-slate-800">{{ kaderStore.userProfile.name || 'Kader Kesehatan' }}</div>
         </div>
         <div class="p-3 bg-slate-50 rounded-xl">
           <div class="text-slate-400 font-medium">Tanggal Cetak:</div>
-          <div class="font-bold text-slate-800">27 Juli 2026</div>
+          <div class="font-bold text-slate-800">{{ new Date().toLocaleDateString('id-ID', { dateStyle: 'long' }) }}</div>
         </div>
       </div>
 

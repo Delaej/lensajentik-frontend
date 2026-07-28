@@ -2,22 +2,38 @@
 import { RouterLink } from 'vue-router'
 import { Bell, User, BookOpen, CheckCircle2, Plus, TrendingUp } from 'lucide-vue-next'
 
-// Mock notifications list
-const notifications = [
-  { id: 1, title: 'Lorem ipsum', subtitle: 'dolor sit amet', date: 'July 23, 2026' },
-  { id: 2, title: 'Lorem ipsum', subtitle: 'dolor sit amet', date: 'July 23, 2026' },
-  { id: 3, title: 'Lorem ipsum', subtitle: 'dolor sit amet', date: 'July 23, 2026' },
-]
+import { onMounted, computed } from 'vue'
+import { useKaderStore } from '@/stores/useKaderStore'
 
-// Weekly Trend bars – heights in %, colors matching design palette
-const chartBars = [
-  { label: 'Mg 1', h: 35, color: '#4E63DA' },
-  { label: 'Mg 2', h: 52, color: '#4E63DA' },
-  { label: 'Mg 3', h: 32, color: '#5AF61F' },
-  { label: 'Mg 4', h: 72, color: '#D9534F' },
-  { label: 'Mg 5', h: 45, color: '#4E63DA' },
-  { label: 'Mg 6', h: 20, color: '#5AF61F' },
-]
+const kaderStore = useKaderStore()
+
+onMounted(async () => {
+  await kaderStore.fetchProfile()
+  await kaderStore.fetchMyAbjRecords()
+})
+
+// Real notifications list mapped from store
+const notifications = computed(() => {
+  return kaderStore.notifications.slice(0, 3)
+})
+
+// Weekly Trend bars – mapped from real store ABJ records
+const chartBars = computed(() => {
+  if (kaderStore.abjRecords.length === 0) {
+    return [
+      { label: 'Mg 1', h: 0, color: '#4E63DA' },
+      { label: 'Mg 2', h: 0, color: '#4E63DA' },
+    ]
+  }
+  return kaderStore.abjRecords.slice(0, 6).reverse().map((rec, index) => {
+    return {
+      label: `Mg ${index + 1}`,
+      h: rec.abjScore,
+      color: rec.abjScore >= 95 ? '#5AF61F' : rec.abjScore >= 90 ? '#4E63DA' : '#D9534F'
+    }
+  })
+})
+
 </script>
 
 <template>
@@ -29,7 +45,7 @@ const chartBars = [
         <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center flex-wrap gap-2">
           Selamat Pagi,
           <span class="px-3 py-0.5 rounded-full text-slate-900 font-black" style="background:#5AF61F;">
-            Kader!
+            {{ kaderStore.userProfile.name || 'Kader' }}!
           </span>
         </h1>
         <p class="text-sm text-slate-500 font-medium mt-1.5">
@@ -65,9 +81,9 @@ const chartBars = [
           </div>
           <!-- Status Aman badge -->
           <div class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-900 shadow-2xs"
-            style="background:#5AF61F;">
+            :style="{ background: kaderStore.quickMetrics.status === 'Aman' ? '#5AF61F' : kaderStore.quickMetrics.status === 'Waspada' ? '#F59E0B' : '#EF4444' }">
             <CheckCircle2 class="w-3.5 h-3.5 stroke-[2.8]" />
-            Status Aman
+            Status {{ kaderStore.quickMetrics.status }}
           </div>
         </div>
 
@@ -75,15 +91,15 @@ const chartBars = [
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="p-5 rounded-2xl text-center border-2 bg-white" style="border-color:#5AF61F;">
             <div class="text-xs font-semibold text-slate-600 mb-1">Total Rumah</div>
-            <div class="text-4xl font-black text-slate-900">45</div>
+            <div class="text-4xl font-black text-slate-900">{{ kaderStore.userProfile.totalHouseTarget || 45 }}</div>
           </div>
           <div class="p-5 rounded-2xl text-center border-2 bg-white" style="border-color:#5AF61F;">
             <div class="text-xs font-semibold text-slate-600 mb-1">Diperiksa</div>
-            <div class="text-4xl font-black text-slate-900">38</div>
+            <div class="text-4xl font-black text-slate-900">{{ kaderStore.quickMetrics.diperiksa }}</div>
           </div>
           <div class="p-5 rounded-2xl text-center border-2 bg-white" style="border-color:#7B93F0;">
             <div class="text-[11px] font-semibold text-slate-600 mb-1 leading-tight">Angka Bebas<br/>Jentik (ABJ)</div>
-            <div class="text-4xl font-black text-slate-900">92%</div>
+            <div class="text-4xl font-black text-slate-900">{{ kaderStore.quickMetrics.abjScore }}%</div>
           </div>
         </div>
 

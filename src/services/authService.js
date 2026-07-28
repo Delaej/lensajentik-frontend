@@ -1,11 +1,11 @@
 import apiClient from './apiClient'
 
 // Mock mode toggle (Set to false when Laravel API endpoint is live)
-const USE_MOCK = true
+const USE_MOCK = false
 
 export const authService = {
   /**
-   * Login Kader via Laravel REST API (/api/v1/auth/login)
+   * Login Kader via Laravel REST API (/auth/login)
    */
   async login(credentials) {
     if (USE_MOCK) {
@@ -36,7 +36,7 @@ export const authService = {
   },
 
   /**
-   * Logout Kader (/api/v1/auth/logout)
+   * Logout Kader (/auth/logout)
    */
   async logout() {
     if (USE_MOCK) {
@@ -49,7 +49,7 @@ export const authService = {
   },
 
   /**
-   * Get current Kader Profile (/api/v1/kader/profile)
+   * Get current Kader Profile (/auth/me)
    */
   async getProfile() {
     if (USE_MOCK) {
@@ -62,7 +62,7 @@ export const authService = {
         rw: '05',
       }
     }
-    const response = await apiClient.get('/kader/profile')
-    return response.data
+    const response = await apiClient.get('/auth/me')
+    return response.data.data
   },
 }

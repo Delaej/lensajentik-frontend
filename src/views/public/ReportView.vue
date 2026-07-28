@@ -11,9 +11,11 @@ import {
   Sparkles,
   User,
   FileText,
+  Search,
 } from 'lucide-vue-next'
 import { useReportStore } from '@/stores/useReportStore'
 import { useGamificationStore } from '@/stores/useGamificationStore'
+import { mapService } from '@/services/mapService'
 
 const reportStore = useReportStore()
 const gamificationStore = useGamificationStore()
@@ -26,43 +28,116 @@ const isSubmitting = ref(false)
 const showSuccessModal = ref(false)
 const showTwibbonModal = ref(false)
 
+// File upload states
+const fileInput = ref(null)
+const selectedFile = ref(null)
+const imagePreview = ref(null)
+
+// Wilayah search states
+const searchQuery = ref('')
+const searchResults = ref([])
+const selectedWilayahKode = ref('')
+const selectedRegionName = ref('')
+const latitude = ref(-6.892)
+const longitude = ref(107.595)
+
+const handleSearch = async () => {
+  if (searchQuery.value.length < 3) {
+    searchResults.value = []
+    return
+  }
+  try {
+    const response = await mapService.searchWilayah(searchQuery.value)
+    searchResults.value = response.data || response
+  } catch (error) {
+    console.error('Search failed:', error)
+  }
+}
+
+const selectRegion = (region) => {
+  selectedWilayahKode.value = region.kode
+  selectedRegionName.value = `${region.nama} (${region.tingkat})`
+  latitude.value = Number(region.latitude) || -6.892
+  longitude.value = Number(region.longitude) || 107.595
+  searchResults.value = []
+  searchQuery.value = ''
+}
+
+const triggerFileInput = () => {
+  fileInput.value.click()
+}
+
+const onFileChange = (e) => {
+  const file = e.target.files[0]
+  if (file) {
+    selectedFile.value = file
+    imagePreview.value = URL.createObjectURL(file)
+  }
+}
+
 const handleGetGps = () => {
   isLocating.value = true
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         isLocating.value = false
-        address.value = `GPS: (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}) — Pasteur Sukajadi`
+        latitude.value = pos.coords.latitude
+        longitude.value = pos.coords.longitude
+        address.value = `GPS: (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`
+        // Fallback to Nanggung if no wilayah is selected yet
+        if (!selectedWilayahKode.value) {
+          selectedWilayahKode.value = '3201010'
+          selectedRegionName.value = 'Kecamatan Nanggung (Simulasi GPS)'
+        }
       },
       () => {
         isLocating.value = false
         address.value = 'GPS Terdeteksi: Pasteur Sukajadi (Simulasi)'
+        selectedWilayahKode.value = '3201010'
+        selectedRegionName.value = 'Kecamatan Nanggung (Simulasi GPS)'
       }
     )
   } else {
     isLocating.value = false
     address.value = 'GPS Terdeteksi: Pasteur Sukajadi (Simulasi)'
+    selectedWilayahKode.value = '3201010'
+    selectedRegionName.value = 'Kecamatan Nanggung (Simulasi GPS)'
   }
 }
 
-const handleSubmitReport = () => {
+const handleSubmitReport = async () => {
+  if (!selectedWilayahKode.value) {
+    alert('Silakan cari dan pilih Wilayah Binaan terlebih dahulu.')
+    return
+  }
+  if (!selectedFile.value) {
+    alert('Silakan pilih atau ambil foto bukti genangan terlebih dahulu.')
+    return
+  }
   if (!description.value) {
     alert('Silakan isi deskripsi temuan genangan jentik terlebih dahulu.')
     return
   }
 
   isSubmitting.value = true
-  setTimeout(() => {
-    reportStore.addReport({
+  try {
+    await reportStore.addReport({
       userName: userName.value || 'Warga Peduli',
       address: address.value,
       description: description.value,
+      wilayah_kode: selectedWilayahKode.value,
+      latitude: latitude.value,
+      longitude: longitude.value,
+      foto: selectedFile.value,
     })
 
     gamificationStore.addPoints(50)
     isSubmitting.value = false
     showSuccessModal.value = true
-  }, 600)
+  } catch (error) {
+    isSubmitting.value = false
+    alert('Gagal mengirimkan laporan: ' + (error.response?.data?.message || error.message))
+  }
 }
 </script>
 
@@ -92,6 +167,37 @@ const handleSubmitReport = () => {
               placeholder="Misal: Ahmad Pratama"
               class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+        </div>
+
+        <!-- Search Wilayah Binaan (Kecamatan & Kelurahan) -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Pilih Wilayah Genangan</label>
+          <div class="relative">
+            <Search class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Cari Kelurahan / Kecamatan (Ketik minimal 3 huruf)..."
+              class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
+              @input="handleSearch"
+            />
+          </div>
+          <!-- Dropdown search results -->
+          <div v-if="searchResults.length > 0" class="mt-2 border border-slate-200 rounded-2xl bg-white max-h-40 overflow-y-auto divide-y text-xs shadow-sm">
+            <div
+              v-for="region in searchResults"
+              :key="region.kode"
+              class="p-3 hover:bg-slate-50 cursor-pointer font-semibold text-slate-800 flex justify-between items-center"
+              @click="selectRegion(region)"
+            >
+              <span>{{ region.nama }} ({{ region.tingkat }})</span>
+              <span class="text-blue-600 font-bold">Pilih →</span>
+            </div>
+          </div>
+          <div v-if="selectedRegionName" class="mt-2 text-xs text-emerald-600 font-bold flex items-center gap-1.5">
+            <CheckCircle2 class="w-3.5 h-3.5" />
+            <span>Wilayah Terpilih: {{ selectedRegionName }}</span>
           </div>
         </div>
 
@@ -131,13 +237,29 @@ const handleSubmitReport = () => {
           ></textarea>
         </div>
 
-        <!-- Photo Upload Box Mock -->
+        <!-- Photo Upload Box with Real Input -->
         <div>
           <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Upload Foto Bukti Genangan</label>
-          <div class="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50 rounded-2xl p-6 text-center space-y-2 cursor-pointer transition-colors">
+          <div
+            @click="triggerFileInput"
+            class="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50 rounded-2xl p-6 text-center space-y-2 cursor-pointer transition-colors"
+          >
             <Camera class="w-8 h-8 text-slate-400 mx-auto" />
-            <div class="text-xs font-bold text-slate-700">Ambil Foto atau Pilih Gambar</div>
-            <p class="text-[11px] text-slate-400">Format PNG/JPG max 5MB (Sudah siap foto otomatis)</p>
+            <div class="text-xs font-bold text-slate-700">
+              {{ selectedFile ? selectedFile.name : 'Ambil Foto atau Pilih Gambar' }}
+            </div>
+            <p class="text-[11px] text-slate-400">Format PNG/JPG max 5MB (Klik untuk memilih file)</p>
+          </div>
+          <input
+            type="file"
+            ref="fileInput"
+            class="hidden"
+            accept="image/*"
+            @change="onFileChange"
+          />
+          <!-- Preview Area -->
+          <div v-if="imagePreview" class="relative mt-3 max-w-[240px] mx-auto rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+            <img :src="imagePreview" class="object-cover w-full h-40" />
           </div>
         </div>
 

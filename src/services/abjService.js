@@ -1,10 +1,10 @@
 import apiClient from './apiClient'
 
-const USE_MOCK = true
+const USE_MOCK = false
 
 export const abjService = {
   /**
-   * Fetch ABJ Records (/api/v1/kader/abj)
+   * Fetch ABJ Records (/abj/saya)
    */
   async fetchAbjRecords(params = {}) {
     if (USE_MOCK) {
@@ -16,12 +16,12 @@ export const abjService = {
         ],
       })
     }
-    const response = await apiClient.get('/kader/abj', { params })
+    const response = await apiClient.get('/abj/saya', { params })
     return response.data
   },
 
   /**
-   * Store new ABJ Inspection Data (/api/v1/kader/abj)
+   * Store new ABJ Inspection Data (/abj)
    */
   async storeAbjRecord(payload) {
     if (USE_MOCK) {
@@ -31,7 +31,15 @@ export const abjService = {
         data: payload,
       })
     }
-    const response = await apiClient.post('/kader/abj', payload)
+    const response = await apiClient.post('/abj', payload)
+    return response.data
+  },
+
+  /**
+   * Fetch list of villages (desa/kelurahan) under a kecamatan
+   */
+  async fetchDesaByKecamatan(kecamatanKode) {
+    const response = await apiClient.get(`/wilayah/${kecamatanKode}/desa`)
     return response.data
   },
 }
