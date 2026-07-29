@@ -181,57 +181,53 @@ const statCards = [
 <template>
   <div>
     <!-- ─── Hero Section ─────────────────────────────────────────────────── -->
-    <section
-      class="relative overflow-hidden"
-      style="background: linear-gradient(135deg, var(--lj-blue-pale) 0%, #dce3fb 50%, #c8f5b0 100%); min-height: 520px;"
-    >
-      <!-- Background mosquito SVGs decorative -->
-      <div class="absolute inset-0 pointer-events-none overflow-hidden">
-        <svg class="absolute -top-4 right-10 opacity-20 animate-float-slow" width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="35" fill="none" stroke="#4E63DA" stroke-width="2"/><line x1="40" y1="5" x2="40" y2="75" stroke="#4E63DA" stroke-width="1"/><line x1="5" y1="40" x2="75" y2="40" stroke="#4E63DA" stroke-width="1"/></svg>
-        <svg class="absolute top-20 left-6 opacity-15 animate-float" width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="25" fill="none" stroke="#95FE6D" stroke-width="2"/><circle cx="30" cy="30" r="10" fill="#95FE6D" opacity="0.3"/></svg>
-        <svg class="absolute bottom-10 right-1/4 opacity-10 animate-float-delay" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="#4E63DA" stroke-width="1.5"/><circle cx="50" cy="50" r="25" fill="none" stroke="#4E63DA" stroke-width="1"/></svg>
+    <section class="hero-full-width overflow-hidden bg-[--lj-blue-pale] relative" style="min-height: 700px;">
+      <!-- Lottie Background Placeholder fills full height -->
+      <div class="absolute inset-0 lottie-placeholder" style="border-radius: 0;">
+        <span class="text-[--lj-blue] font-semibold text-xl">Lottie: Ilustrasi Hero (Animasi)</span>
       </div>
 
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12 relative z-10">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <!-- Hero Text -->
-          <div class="space-y-6 animate-on-scroll">
-            <h1 class="text-4xl sm:text-5xl font-bold leading-tight" style="color: var(--lj-navy);">
-              Satu Peta, <span class="font-garamond" style="color: var(--lj-blue);">Seribu Langkah</span>
-              <br>Cegah Wabah.
-            </h1>
-            <p class="text-base leading-relaxed" style="color: var(--lj-muted); max-width: 440px;">
-              LensaJentik menghubungkan laporan warga, data kader, dan pemantauan cuaca real-time untuk memetakan dan mencegah risiko DBD & Malaria bersama-sama.
-            </p>
-            <div class="flex flex-wrap gap-3 pt-2">
-              <RouterLink data-onboard="peta" to="/peta-resiko" class="lj-btn-primary">
-                Lihat Apa Saja
-              </RouterLink>
-            </div>
-          </div>
+      <!-- Backdrop overlay for readability -->
+      <div class="absolute inset-0 bg-gradient-to-b from-white/70 via-white/30 to-transparent"></div>
 
-          <!-- Hero Illustration Placeholder (Lottie) -->
-          <div class="animate-on-scroll delay-200 hidden lg:block">
-            <div class="lottie-placeholder flex-col" style="height: 320px; border-radius: 24px;">
-              <Bug class="w-16 h-16 text-[--lj-blue] mb-2" />
-              <span class="text-[--lj-blue] font-semibold text-sm">Lottie: Ilustrasi Hero</span>
-              <span style="color: rgba(78,99,218,0.5); font-size: 11px;">Akan diganti dengan motion graphic</span>
-            </div>
+      <!-- Sway wave bottom -->
+      <div class="absolute bottom-0 left-0 w-full z-10" style="transform: translateY(1px);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 80px; object-fit: fill;" />
+      </div>
+
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-36 pb-28 relative z-10 text-center flex flex-col items-center justify-center" style="min-height: 700px;">
+        <div class="space-y-6 animate-on-scroll">
+          <h1 class="text-4xl sm:text-[3.5rem] font-bold leading-tight text-glow" style="color: var(--lj-navy);">
+            Satu Peta, 
+            <span class="font-garamond highlight-green" style="color: var(--lj-navy);">Seribu Langkah</span>
+            <br>Cegah Wabah.
+          </h1>
+          <p class="text-base sm:text-lg leading-relaxed mx-auto text-glow" style="color: var(--lj-navy); max-width: 500px; font-weight: 500;">
+            LensaJentik menghubungkan laporan warga, data kader, dan pemantauan cuaca real-time untuk memetakan dan mencegah risiko DBD &amp; Malaria bersama-sama.
+          </p>
+          <div class="flex justify-center pt-4">
+            <RouterLink data-onboard="peta" to="/peta-resiko" class="lj-btn-primary px-8 py-3.5 shadow-xl hover:scale-105">
+              Lihat Peta Sekarang
+            </RouterLink>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ─── About LensaJentik ────────────────────────────────────────────── -->
-    <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-      <div class="text-center mb-12 animate-on-scroll">
-        <div class="lj-section-label mb-4 mx-auto" style="width: fit-content;">TENTANG LENSAJENTIK</div>
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative">
+      <!-- Decorative Blobs -->
+      <div class="blob-bg w-96 h-96 top-0 left-0" style="background: var(--lj-green);"></div>
+      <div class="blob-bg w-96 h-96 bottom-0 right-0" style="background: var(--lj-blue);"></div>
+
+      <div class="text-center mb-16 relative z-10 animate-on-scroll">
+        <div class="lj-section-label mb-5 mx-auto bg-white" style="width: fit-content;">TENTANG LENSAJENTIK</div>
         <h2 class="lj-heading">
-          Lihat risiko wilayahmu,<br>
-          <span class="font-garamond" style="color: var(--lj-blue);">sebelum jadi besar</span>
+          Lihat risiko <span style="color: var(--lj-green-dk);">wilayahmu</span>,<br>
+          <span class="font-garamond highlight-blue text-white inline-block mt-2" style="font-size: 1.05em;">sebelum jadi kasus</span>
         </h2>
-        <p class="text-sm mt-4" style="color: var(--lj-muted); max-width: 520px; margin: 12px auto 0;">
-          Platform ini dirancang agar setiap warga bisa memantau wilayahnya, melapor, dan berkontribusi mencegah wabah — tanpa perlu keahlian khusus.
+        <p class="text-sm mt-6" style="color: var(--lj-muted); max-width: 580px; margin-left: auto; margin-right: auto; font-weight: 500;">
+          Sebagian besar masyarakat baru waspada setelah kasus muncul. LensaJentik membaca pola cuaca, laporan warga, dan data jentik lebih dulu supaya kamu bisa bertindak sebelum wilayahmu ikut jadi statistik.
         </p>
       </div>
 
@@ -256,17 +252,28 @@ const statCards = [
     </section>
 
     <!-- ─── Feature Slider ───────────────────────────────────────────────── -->
-    <section class="py-16" style="background: white;">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-10 animate-on-scroll">
-          <div class="lj-section-label mb-4 mx-auto" style="width: fit-content;">FITUR KAMI</div>
+    <section class="py-24 relative hero-full-width">
+      <!-- Background Lottie Placeholder -->
+      <div class="absolute inset-0 lottie-placeholder" style="border-radius: 0;"></div>
+      
+      <!-- Sway wave top & bottom -->
+      <div class="absolute top-0 left-0 w-full z-10" style="transform: translateY(-98%) rotate(180deg);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
+      </div>
+      <div class="absolute bottom-0 left-0 w-full z-10" style="transform: translateY(98%);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
+      </div>
+
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
+        <div class="text-center mb-12 animate-on-scroll">
+          <div class="lj-section-label mb-4 mx-auto bg-white" style="width: fit-content;">FITUR KAMI</div>
         </div>
 
         <!-- Slider Card -->
-        <div class="animate-on-scroll relative overflow-hidden rounded-3xl" :style="{ background: features[featureSliderIndex].bg }">
+        <div class="animate-on-scroll relative overflow-hidden rounded-3xl bg-white shadow-2xl" style="max-width: 900px; margin: 0 auto;">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
             <!-- Text side -->
-            <div class="p-8 sm:p-12 flex flex-col justify-center space-y-4">
+            <div class="p-8 sm:p-12 flex flex-col justify-center space-y-5">
               <span
                 class="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full w-fit"
                 :style="{ background: features[featureSliderIndex].accent + '20', color: features[featureSliderIndex].accent }"
@@ -274,25 +281,28 @@ const statCards = [
                 {{ features[featureSliderIndex].label }}
               </span>
               <h3
-                class="text-2xl sm:text-3xl font-bold leading-tight whitespace-pre-line"
-                :style="{ color: features[featureSliderIndex].accent }"
+                class="text-2xl sm:text-4xl font-bold leading-tight whitespace-pre-line text-glow"
+                style="color: var(--lj-navy);"
               >
-                {{ features[featureSliderIndex].heading }}
+                {{ features[featureSliderIndex].heading.split('\n')[0] }}<br>
+                <span class="font-garamond highlight-green mt-1 inline-block" style="font-size: 0.95em;">
+                  {{ features[featureSliderIndex].heading.split('\n')[1] }}
+                </span>
               </h3>
               <p class="text-sm leading-relaxed" style="color: var(--lj-muted);">
-                {{ features[featureSliderIndex].body }}
+                Bukan sekadar peta biasa, warna di tiap wilayah dihitung dari suhu, kelembapan, dan curah hujan real-time, lalu diproyeksikan jadi tren 7-14 hari ke depan. Kamu tahu duluan, sebelum kasus muncul.
               </p>
-              <RouterLink :to="features[featureSliderIndex].ctaPath" class="lj-btn-primary w-fit" :style="{ background: features[featureSliderIndex].accent }">
+              <RouterLink :to="features[featureSliderIndex].ctaPath" class="lj-btn-primary w-fit mt-2 shadow-lg" :style="{ background: features[featureSliderIndex].accent }">
                 {{ features[featureSliderIndex].cta }}
               </RouterLink>
             </div>
 
             <!-- Visual side (Lottie placeholder) -->
-            <div class="flex items-center justify-center p-8">
-              <div class="lottie-placeholder w-full flex-col" style="height: 240px;">
-                <component :is="features[featureSliderIndex].icon" class="w-14 h-14 mb-3" :style="{ color: features[featureSliderIndex].accent }" />
-                <span class="text-xs font-semibold" :style="{ color: features[featureSliderIndex].accent }">
-                  Lottie: {{ features[featureSliderIndex].label }}
+            <div class="flex items-center justify-center p-8 bg-[--lj-bg]">
+              <div class="lottie-placeholder w-full flex-col bg-white border-dashed border-2 shadow-inner" style="height: 280px; border-color: var(--lj-border);">
+                <component :is="features[featureSliderIndex].icon" class="w-16 h-16 mb-3" :style="{ color: features[featureSliderIndex].accent }" />
+                <span class="text-sm font-semibold" :style="{ color: features[featureSliderIndex].accent }">
+                  Lottie: Ilustrasi {{ features[featureSliderIndex].label }}
                 </span>
               </div>
             </div>
@@ -330,41 +340,33 @@ const statCards = [
       </div>
     </section>
 
-    <!-- ─── Cara Kerja ───────────────────────────────────────────────────── -->
+    <!-- ─── Cara Kerja ───────────────────────────────────────────────── -->
     <section class="py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-12 animate-on-scroll">
         <div class="lj-section-label mb-4 mx-auto" style="width: fit-content;">CARA KERJA</div>
       </div>
 
+      <!-- Cara Kerja Diagram SVG -->
+      <div class="w-full animate-on-scroll mb-8">
+        <img src="/cara-kerja.svg" alt="Diagram Cara Kerja LensaJentik" class="w-full h-auto block max-w-3xl mx-auto" />
+      </div>
+
       <!-- Step selector -->
-      <div class="flex items-center justify-center gap-4 sm:gap-8 mb-10 animate-on-scroll">
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-10 animate-on-scroll relative">
         <template v-for="(step, i) in steps" :key="i">
           <button
             @click="activeStep = i"
-            class="flex flex-col items-center gap-2 group transition-all"
+            class="flex flex-col items-center gap-2 group transition-all relative z-10 bg-[--lj-bg] p-2"
           >
             <div
-              class="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300"
+              class="w-16 h-16 rounded-full border-4 flex items-center justify-center transition-all duration-300 font-bold text-xl shadow-sm bg-white"
               :style="activeStep === i
-                ? 'background: var(--lj-blue); box-shadow: 0 8px 24px rgba(78,99,218,0.35); transform: scale(1.15); color: white;'
-                : 'background: var(--lj-blue-pale); color: var(--lj-blue);'"
-            >
-              <component :is="step.icon" class="w-6 h-6" />
-            </div>
-            <span
-              class="text-xs font-bold hidden sm:block transition-colors"
-              :style="{ color: activeStep === i ? 'var(--lj-blue)' : 'var(--lj-muted)' }"
+                ? 'border-color: var(--lj-navy); color: var(--lj-navy); transform: scale(1.1); box-shadow: 0 10px 25px rgba(0,0,0,0.1);'
+                : 'border-color: var(--lj-border); color: var(--lj-muted);'"
             >
               {{ i + 1 }}
-            </span>
+            </div>
           </button>
-
-          <!-- Connector -->
-          <div
-            v-if="i < steps.length - 1"
-            class="h-0.5 flex-1 max-w-16 transition-all duration-500"
-            :style="{ background: i < activeStep ? 'var(--lj-green-dk)' : 'var(--lj-border)' }"
-          />
         </template>
       </div>
 
@@ -410,35 +412,43 @@ const statCards = [
     </section>
 
     <!-- ─── FAQ ─────────────────────────────────────────────────────────── -->
-    <section class="py-16" style="background: white;">
-      <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <section class="pt-24 hero-full-width relative pb-0 mb-0">
+      <!-- Background Lottie Placeholder -->
+      <div class="absolute inset-0 lottie-placeholder" style="border-radius: 0;"></div>
+      
+      <!-- Sway wave top -->
+      <div class="absolute top-0 left-0 w-full z-10" style="transform: translateY(-98%) rotate(180deg);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
+      </div>
+
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 relative z-10 pb-8">
         <div class="text-center mb-10 animate-on-scroll">
-          <div class="lj-section-label mb-4 mx-auto" style="width: fit-content;">PERTANYAAN PALING SERING DITANYAKAN</div>
+          <div class="lj-section-label mb-4 mx-auto bg-white" style="width: fit-content;">PERTANYAAN PALING SERING DITANYAKAN</div>
         </div>
 
-        <div class="space-y-3 animate-on-scroll">
+        <div class="space-y-4 animate-on-scroll">
           <div
             v-for="(faq, i) in faqs"
             :key="i"
-            class="lj-card overflow-hidden"
-            :style="activeFaq === i ? 'border-color: var(--lj-blue);' : ''"
+            class="lj-card overflow-hidden bg-white/95 backdrop-blur shadow-sm"
+            style="border-radius: 100px;"
+            :style="activeFaq === i ? 'border-color: var(--lj-blue); border-radius: 24px;' : ''"
           >
             <button
               @click="toggleFaq(i)"
-              class="w-full flex items-center justify-between p-5 text-left gap-4 hover:bg-[--lj-blue-pale] transition-colors"
+              class="w-full flex items-center justify-between px-6 py-4 text-left gap-4 hover:bg-[--lj-blue-pale] transition-colors"
             >
-              <span class="text-sm font-600" style="color: var(--lj-navy);">{{ faq.q }}</span>
+              <span class="text-sm font-bold" style="color: var(--lj-navy);">{{ faq.q }}</span>
               <div
-                class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                :style="activeFaq === i ? 'background: var(--lj-blue); color: white;' : 'background: var(--lj-blue-pale); color: var(--lj-blue);'"
+                class="shrink-0 w-8 h-8 flex items-center justify-center transition-all text-[--lj-navy]"
               >
-                <ChevronDown v-if="activeFaq !== i" class="w-4 h-4" />
-                <ChevronUp v-else class="w-4 h-4" />
+                <ChevronDown v-if="activeFaq !== i" class="w-5 h-5" />
+                <ChevronUp v-else class="w-5 h-5" />
               </div>
             </button>
 
             <Transition name="accordion-content">
-              <div v-if="activeFaq === i" class="px-5 pb-5">
+              <div v-if="activeFaq === i" class="px-6 pb-5 pt-0">
                 <p class="text-xs sm:text-sm leading-relaxed" style="color: var(--lj-muted);">{{ faq.a }}</p>
               </div>
             </Transition>

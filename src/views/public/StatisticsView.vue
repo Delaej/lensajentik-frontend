@@ -84,6 +84,16 @@ const renderCharts = async () => {
             pointBorderColor: 'white',
             pointBorderWidth: 2,
             borderWidth: 2.5,
+          },
+          {
+            label: 'Batas Aman WHO (95%)',
+            data: Array(labels.length).fill(95),
+            borderColor: '#EF4444',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 0,
+            fill: false,
+            tension: 0
           }],
         },
         options: {
@@ -198,52 +208,37 @@ const handleExport = () => {
 </script>
 
 <template>
-  <div class="min-h-screen relative overflow-hidden" style="background-color: #f7fbf8;">
+  <div class="pb-0 mb-0 relative overflow-hidden" style="background-color: var(--lj-bg);">
     
-    <!-- ─── Hero banner / Illustration (Mockup 4 style) ─── -->
-    <div class="relative w-full overflow-hidden" style="height: 380px; background: linear-gradient(180deg, #c4e9ff 0%, #e0f2fe 100%);">
-      <!-- Clouds decorative -->
-      <div class="absolute top-10 left-10 opacity-60 text-6xl">☁️</div>
-      <div class="absolute top-20 right-20 opacity-60 text-7xl">☁️</div>
+    <!-- ─── Hero banner / Illustration (Lottie placeholder) ─── -->
+    <div class="hero-full-width lottie-placeholder relative" style="height: 320px; border-radius: 0;">
+      <BarChart3 class="w-16 h-16 mb-2 mx-auto text-[--lj-blue]" />
+      <span class="font-semibold text-lg text-glow" style="color: var(--lj-blue);">Lottie: Ilustrasi Grafik & Data</span>
       
-      <!-- Illustration placeholder -->
-      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div class="text-center">
-          <div class="w-64 h-64 mx-auto rounded-full bg-blue-100 flex items-center justify-center opacity-80 shadow-lg">
-            <span class="text-[--lj-blue] font-bold">Lottie: Ilustrasi 2 Anak & Grafik (Sesuai Mockup)</span>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Curved bottom border matching mockup -->
-      <div class="absolute bottom-0 w-full" style="transform: translateY(1px);">
-        <svg viewBox="0 0 1440 120" class="w-full h-auto block" preserveAspectRatio="none">
-          <path fill="#f7fbf8" d="M0,120 L1440,120 L1440,60 Q1080,-20 720,60 Q360,140 0,60 Z" />
-        </svg>
+      <!-- Sway wave bottom -->
+      <div class="absolute bottom-0 left-0 w-full z-10" style="transform: translateY(1px);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
       </div>
     </div>
 
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-40 space-y-10 relative z-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-20 space-y-10 relative z-10">
 
-      <!-- Header -->
-      <div class="animate-on-scroll space-y-2 text-center sm:text-left">
-        <div class="lj-section-label sm:mx-0 mx-auto" style="width: fit-content;">STATISTIK & DATA</div>
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <h1 class="lj-heading">
-            Dashboard <span class="font-garamond" style="color: var(--lj-blue);">Statistik</span> Publik
-          </h1>
-          <button
-            @click="handleExport"
-            class="lj-btn-primary text-sm px-5 py-2.5 shrink-0"
-          >
+      <!-- Header (centered) -->
+      <div class="animate-on-scroll space-y-3 text-center">
+        <div class="lj-section-label mb-3 mx-auto" style="width: fit-content;">STATISTIK & DATA</div>
+        <h1 class="lj-heading">
+          Dashboard <span class="font-garamond" style="color: var(--lj-blue);">Statistik</span> Publik
+        </h1>
+        <p class="text-sm" style="color: var(--lj-muted); max-width: 560px; margin: 0 auto;">
+          Data transparansi capaian Angka Bebas Jentik (ABJ) dan tren kasus DBD — bisa diakses tanpa login.
+          <span class="font-bold ml-1" style="color: var(--lj-blue);">Wilayah: {{ wilayahNama }}</span>
+        </p>
+        <div class="flex justify-center pt-2">
+          <button @click="handleExport" class="lj-btn-primary text-sm px-5 py-2.5">
             <Download class="w-4 h-4" /> Unduh Laporan
           </button>
         </div>
-      <p class="text-sm" style="color: var(--lj-muted);">
-        Data transparansi capaian Angka Bebas Jentik (ABJ) dan tren kasus DBD — bisa diakses tanpa login.
-        <span class="font-bold ml-1" style="color: var(--lj-blue);">Wilayah: {{ wilayahNama }}</span>
-      </p>
-    </div>
+      </div>
 
     <!-- ─── Stat Metric Cards ─── -->
     <div v-if="!isLoading" class="grid grid-cols-2 md:grid-cols-4 gap-4 animate-on-scroll">
@@ -355,5 +350,5 @@ const handleExport = () => {
       Sumber data: Kader Kesehatan Kota Bandung · Open-Meteo API · Laporan Warga LensaJentik 2026
     </div>
     </div> <!-- end of max-w-6xl -->
-  </div> <!-- end of min-h-screen -->
+  </div>
 </template>

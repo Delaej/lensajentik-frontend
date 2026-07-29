@@ -61,7 +61,7 @@ const formatDate = (d) => {
 </script>
 
 <template>
-  <div class="min-h-screen relative" style="background-color: #f7fbf8;">
+  <div class="min-h-screen relative" style="background-color: var(--lj-bg);">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10 pb-40">
       
       <!-- Header -->
@@ -101,8 +101,8 @@ const formatDate = (d) => {
         <div
           v-for="notif in filteredNotifications()"
           :key="notif.id"
-          class="bg-white rounded-[16px] p-4 sm:p-5 flex items-start gap-4 border shadow-sm relative"
-          style="border-color: #E5E7EB;"
+          class="bg-white rounded-3xl p-5 flex items-start gap-5 border shadow-sm relative transition-transform hover:-translate-y-1"
+          style="border-color: var(--lj-border);"
         >
           <!-- Unread dot -->
           <div v-if="!notif.dibaca" class="absolute top-4 left-4 w-2 h-2 rounded-full" style="background: #95FE6D;"></div>

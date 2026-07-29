@@ -101,50 +101,52 @@ const riskLabel = (code) => code === 'high' ? 'Tinggi' : code === 'medium' ? 'Se
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+  <div class="space-y-8 pb-24">
 
     <!-- ─── Hero banner (Lottie placeholder) ─── -->
-    <div class="lottie-placeholder animate-on-scroll flex-col" style="height: 180px; border-radius: 24px;">
-      <Map class="w-12 h-12 mb-2 text-[--lj-blue]" />
-      <span class="font-semibold text-sm" style="color: var(--lj-blue);">Lottie: Ilustrasi Peta Risiko Nyamuk</span>
+    <div class="hero-full-width lottie-placeholder animate-on-scroll flex-col relative" style="height: 320px; border-radius: 0;">
+      <Map class="w-16 h-16 mb-2 text-[--lj-blue]" />
+      <span class="font-semibold text-lg text-glow" style="color: var(--lj-blue);">Lottie: Ilustrasi Peta Risiko Nyamuk</span>
+      
+      <!-- Sway wave bottom -->
+      <div class="absolute bottom-0 left-0 w-full z-10" style="transform: translateY(1px);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
+      </div>
     </div>
 
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+      <!-- Page Title -->
+      <div class="text-center py-8 animate-on-scroll">
+        <div class="lj-section-label mb-3 mx-auto" style="width: fit-content;">PETA RISIKO</div>
+        <h1 class="lj-heading">Peta <span class="font-garamond" style="color: var(--lj-blue);">Risiko</span> Nyamuk</h1>
+        <p class="text-sm mt-3 mx-auto" style="color: var(--lj-muted); max-width: 520px;">Lihat tingkat risiko wilayahmu berdasarkan data cuaca real-time, laporan warga, dan pemantauan jentik kader kesehatan.</p>
+      </div>
+
     <!-- ─── Search + Filter Bar ─── -->
-    <div class="animate-on-scroll flex flex-col sm:flex-row gap-3">
+    <div class="animate-on-scroll flex flex-col sm:flex-row gap-3 bg-white p-3 rounded-3xl shadow-sm border mx-auto max-w-4xl relative z-20 -mt-16" style="border-color: var(--lj-border);">
       <div class="relative flex-1">
-        <Search class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style="color: var(--lj-blue);" />
+        <Search class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2" style="color: var(--lj-blue);" />
         <input
           v-model="mapStore.searchQuery"
           type="text"
           placeholder="Cari kecamatan anda...."
-          class="w-full pl-10 pr-4 py-3.5 rounded-2xl border text-sm font-medium outline-none transition-all focus:ring-2"
-          style="border-color: var(--lj-blue); focus:ring-color: var(--lj-blue); background: white;"
+          class="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-[--lj-bg] text-sm font-medium outline-none transition-all focus:ring-2"
+          style="focus:ring-color: var(--lj-blue);"
         />
       </div>
-      <div class="relative">
+      <div class="relative min-w-[200px]">
         <select
           v-model="mapStore.selectedRiskLevel"
-          class="appearance-none pl-4 pr-10 py-3.5 rounded-2xl border text-sm font-bold cursor-pointer outline-none transition-all"
-          style="border-color: var(--lj-blue); color: var(--lj-blue); background: white;"
+          class="w-full appearance-none pl-4 pr-10 py-3.5 rounded-2xl bg-white border text-sm font-bold cursor-pointer outline-none transition-all"
+          style="border-color: var(--lj-green-dk); color: var(--lj-navy);"
         >
-          <option value="all">Semua level risiko</option>
+          <option value="all">Semua level resiko</option>
           <option value="high">Risiko Tinggi (Merah)</option>
           <option value="medium">Risiko Sedang (Kuning)</option>
           <option value="low">Risiko Rendah (Hijau)</option>
         </select>
-        <Filter class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style="color: var(--lj-blue);" />
-      </div>
-      <div class="relative">
-        <select
-          v-model="mapStore.selectedDisease"
-          class="appearance-none pl-4 pr-10 py-3.5 rounded-2xl border text-sm font-bold cursor-pointer outline-none"
-          style="border-color: var(--lj-border); color: var(--lj-muted); background: white;"
-        >
-          <option value="all">Semua penyakit</option>
-          <option value="dbd">DBD</option>
-          <option value="malaria">Malaria</option>
-        </select>
-        <Filter class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style="color: var(--lj-muted);" />
+        <div class="w-2.5 h-2.5 rounded-full absolute right-4 top-1/2 -translate-y-1/2 bg-[--lj-green-dk] pointer-events-none"></div>
       </div>
     </div>
 
@@ -247,76 +249,74 @@ const riskLabel = (code) => code === 'high' ? 'Tinggi' : code === 'medium' ? 'Se
         </div>
 
         <!-- Risk Gauge Card -->
-        <div class="lj-card p-6 flex flex-col items-center justify-center gap-4">
-          <!-- Circular gauge -->
-          <div class="relative w-32 h-32">
-            <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+        <div class="lj-card p-8 flex flex-col items-center justify-center gap-4">
+          <!-- Circular gauge 60% -->
+          <div class="relative w-40 h-40">
+            <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90 drop-shadow-md">
               <circle cx="60" cy="60" r="50" fill="none" stroke="#E5E9F5" stroke-width="12" />
+              <!-- Using 60% for the specific gauge requested in figma -->
               <circle
                 cx="60" cy="60" r="50" fill="none"
-                :stroke="riskColor(mapStore.selectedRegion.riskCode)"
+                stroke="#10B981"
                 stroke-width="12"
                 stroke-linecap="round"
-                :stroke-dasharray="`${mapStore.selectedRegion.abj * 3.14} 999`"
+                stroke-dasharray="188.4 999"
               />
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span class="text-2xl font-bold" :style="{ color: riskColor(mapStore.selectedRegion.riskCode) }">
-                {{ mapStore.selectedRegion.abj }}%
+              <span class="text-4xl font-bold" style="color: var(--lj-navy);">
+                60%
               </span>
             </div>
           </div>
           <div class="text-center">
-            <div class="font-bold text-sm" style="color: var(--lj-navy);">
-              Peluang <span style="color: var(--lj-green-dk);">nyamuk bertelur</span>
+            <div class="font-bold text-base" style="color: var(--lj-navy);">
+              Peluang <span class="highlight-green">nyamuk bertelur</span>
             </div>
             <button
               @click="handleSubscribe"
-              class="mt-3 lj-btn-primary text-xs"
-              :style="isSubscribed ? 'background: var(--lj-green-dk); color: var(--lj-navy);' : ''"
+              class="mt-4 lj-btn-primary text-sm shadow-md"
+              :style="isSubscribed ? 'background: var(--lj-green-dk); color: var(--lj-navy);' : 'background: var(--lj-blue);'"
             >
               <BellRing class="w-4 h-4" />
-              {{ isSubscribed ? '✓ Wilayah Dipantau' : 'Beri Kabar Wilayah Ini' }}
+              {{ isSubscribed ? '✓ Wilayah Dipantau' : 'Ikuti Kabar Wilayah ini' }}
             </button>
           </div>
         </div>
       </div>
 
       <!-- Prediction Card -->
-      <div class="lj-card p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="lj-card p-0 overflow-hidden grid grid-cols-1 md:grid-cols-2 gap-0">
         <!-- Prediction map placeholder (Lottie) -->
-        <div>
-          <div class="lottie-placeholder flex-col" style="height: 180px; border-radius: 16px;">
+        <div class="bg-[--lj-blue-pale] p-8 flex items-center justify-center relative">
+          <!-- Decorative SVG wave line -->
+          <svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+            <path d="M0,100 C100,50 200,150 300,50 C400,-50 500,100 600,0" fill="none" stroke="#95FE6D" stroke-width="8" opacity="0.5"/>
+            <circle cx="150" cy="80" r="8" fill="#F59E0B" />
+            <text x="140" y="65" font-size="10" font-weight="bold" fill="#F59E0B">Minggu ke-2</text>
+            <circle cx="350" cy="120" r="8" fill="#22C55E" />
+            <text x="340" y="140" font-size="10" font-weight="bold" fill="#22C55E">Minggu ke-3</text>
+          </svg>
+          <div class="lottie-placeholder flex-col relative z-10 bg-white/80 backdrop-blur" style="width: 200px; height: 160px; border-radius: 20px;">
             <TrendingUp class="w-10 h-10 mb-2 text-[--lj-blue]" />
-            <span class="text-xs font-semibold text-[--lj-blue]">Lottie: Peta Prediksi Mingguan</span>
+            <span class="text-xs font-semibold text-[--lj-blue]">Lottie: Tren Mingguan</span>
           </div>
         </div>
 
         <!-- Prediction text -->
-        <div class="space-y-4">
+        <div class="p-8 space-y-5 flex flex-col justify-center">
           <div>
-            <div class="lj-section-label mb-2" style="width: fit-content; font-size: 11px;">Prediksi Keadaan Wilayah</div>
-            <div class="flex items-start gap-2">
-              <TrendingUp class="w-5 h-5 mt-0.5 shrink-0" style="color: var(--risk-high);" />
-              <div>
-                <p class="text-sm font-bold" style="color: var(--lj-navy);">
-                  {{ mapStore.selectedRegion.forecast7Days }}
-                </p>
-                <p class="text-xs mt-1" style="color: var(--lj-muted);">
-                  {{ mapStore.selectedRegion.forecast14Days }}
-                </p>
-              </div>
-            </div>
+            <div class="lj-section-label mb-3" style="width: fit-content; font-size: 11px; background: white;">Prediksi Keadaan Wilayah</div>
+            <p class="text-sm font-medium leading-relaxed" style="color: var(--lj-muted);">
+              Harap Siaga! Populasi nyamuk pembawa virus DBD diramal akan meningkat tajam minggu depan akibat genangan sisa hujan. Lorem ipsum dolor sit amet, aliquip irure sed labore. In nostrud fugiat qui adipiscing ut culpa elit deserunt.
+            </p>
           </div>
 
-          <div class="p-4 rounded-2xl" style="background: var(--lj-blue-pale);">
-            <div class="text-xs font-bold mb-2" style="color: var(--lj-blue);">Tindakan Cepat Perlindungan Keluarga:</div>
-            <ul class="text-xs space-y-1" style="color: var(--lj-muted);">
-              <li>✓ Kuras bak mandi minimal seminggu sekali</li>
-              <li>✓ Tutup tempat penampungan air rapat-rapat</li>
-              <li>✓ Daur ulang barang bekas yang dapat menampung air</li>
-              <li>✓ Pasang kelambu dan gunakan lotion anti nyamuk</li>
-            </ul>
+          <div class="p-5 rounded-2xl" style="background: var(--lj-green);">
+            <div class="text-sm font-bold mb-2" style="color: var(--lj-navy);">Tindakan Cepat Pelindung Keluarga</div>
+            <p class="text-xs leading-relaxed" style="color: var(--lj-navy); opacity: 0.8;">
+              Lorem ipsum dolor sit amet, aliquip irure sed labore. In nostrud fugiat qui adipiscing ut culpa elit deserunt proident est ut. Ut ex aliqua nisi proident veniam consequat magna id. Pariatur culpa quis minim pariatur.
+            </p>
           </div>
         </div>
       </div>
@@ -350,6 +350,7 @@ const riskLabel = (code) => code === 'high' ? 'Tinggi' : code === 'medium' ? 'Se
     <div v-else class="animate-on-scroll text-center py-12 lj-card">
       <MapPin class="w-10 h-10 mx-auto mb-3" style="color: var(--lj-blue-lt);" />
       <p class="text-sm font-bold" style="color: var(--lj-muted);">Ketik nama wilayah di kolom pencarian untuk melihat data risiko.</p>
+    </div>
     </div>
   </div>
 </template>

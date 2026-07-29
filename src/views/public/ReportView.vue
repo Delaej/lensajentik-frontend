@@ -177,9 +177,14 @@ const resetForm = () => {
 <template>
   <div>
     <!-- ─── Header illustration (Lottie placeholder) ─── -->
-    <div class="lottie-placeholder" style="height: 220px; border-radius: 0;">
-      <Map class="w-12 h-12 mb-2 mx-auto text-[--lj-blue]" />
-      <span class="font-semibold" style="color: var(--lj-blue);">Lottie: Ilustrasi Laporan Warga</span>
+    <div class="hero-full-width lottie-placeholder relative" style="height: 280px; border-radius: 0;">
+      <Map class="w-16 h-16 mb-2 mx-auto text-[--lj-blue]" />
+      <span class="font-semibold text-lg text-glow" style="color: var(--lj-blue);">Lottie: Ilustrasi Laporan Warga</span>
+      
+      <!-- Sway wave bottom -->
+      <div class="absolute bottom-0 left-0 w-full z-10" style="transform: translateY(1px);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
+      </div>
     </div>
 
     <div class="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-8">
@@ -188,10 +193,16 @@ const resetForm = () => {
       <!-- STEP: FORM                                          -->
       <!-- ════════════════════════════════════════════════════ -->
       <template v-if="step === 'form'">
-        <!-- Section label -->
-        <div class="text-center animate-on-scroll">
-          <div class="lj-section-label mb-2 mx-auto" style="width: fit-content;">LENGKAPI LAPORAN ANDA</div>
+        
+        <!-- Page Title -->
+        <div class="text-center animate-on-scroll mb-8">
+          <div class="lj-section-label mb-3 mx-auto" style="width: fit-content;">LAPORAN JENTIK</div>
+          <h1 class="lj-heading">Buat <span class="font-garamond" style="color: var(--lj-blue);">Laporan</span></h1>
+          <p class="text-sm mt-3 mx-auto" style="color: var(--lj-muted); max-width: 460px;">Bantu komunitas dengan melaporkan temuan jentik nyamuk di sekitarmu. Setiap laporan berarti bagi pencegahan wabah.</p>
         </div>
+
+        <!-- Form (no floating card) -->
+        <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border" style="border-color: var(--lj-border);">
 
         <!-- Map GIS -->
         <div class="lj-card overflow-hidden animate-on-scroll" style="border: 2px solid var(--lj-green-dk);">
@@ -348,12 +359,13 @@ const resetForm = () => {
           <button
             type="submit"
             :disabled="isSubmitting"
-            class="lj-btn-primary w-full justify-center py-4 text-base disabled:opacity-50"
+            class="lj-btn-primary w-full justify-center py-4 text-base disabled:opacity-50 mt-4 shadow-lg hover:scale-[1.02]"
           >
             <FileText class="w-5 h-5" />
             {{ isSubmitting ? 'Mengirim...' : 'Kirim Laporan' }}
           </button>
         </form>
+        </div> <!-- End of Big Card Container -->
       </template>
 
       <!-- ════════════════════════════════════════════════════ -->
@@ -384,63 +396,47 @@ const resetForm = () => {
         </div>
 
         <!-- Reward 1: Share Sosmed -->
-        <div class="lj-card overflow-hidden animate-on-scroll" style="border-color: var(--lj-green);">
+        <div class="lj-card overflow-hidden animate-on-scroll border-2" style="border-color: var(--lj-green);">
           <button
             @click="openReward1 = !openReward1"
-            class="w-full flex items-center justify-between p-4 hover:bg-[--lj-blue-pale] transition-colors"
+            class="w-full flex items-center justify-between p-5 hover:bg-[--lj-blue-pale] transition-colors"
           >
-            <span class="text-sm font-bold" style="color: var(--lj-navy);">Share ke media sosial anda</span>
+            <span class="text-base font-bold" style="color: var(--lj-navy);">Share ke media sosial anda</span>
             <ChevronDown v-if="!openReward1" class="w-5 h-5" style="color: var(--lj-blue);" />
             <ChevronUp v-else class="w-5 h-5" style="color: var(--lj-blue);" />
           </button>
           <Transition name="accordion-content">
-            <div v-if="openReward1" class="p-4 pt-0 space-y-3">
-              <div class="p-4 rounded-2xl text-sm leading-relaxed" style="background: var(--lj-green); color: var(--lj-navy);">
+            <div v-if="openReward1" class="p-5 pt-0 space-y-4">
+              <div class="p-5 rounded-2xl text-sm leading-relaxed font-medium" style="background: var(--lj-green); color: var(--lj-navy);">
                 Ceritakan ke temanmu bahwa kamu baru saja bantu jaga lingkungan dari DBD. Bagikan lewat story Instagram atau status WhatsApp.
               </div>
-              <div class="flex gap-2">
-                <button
-                  @click="alert('Template Instagram Story siap diunduh!')"
-                  class="flex-1 py-3 rounded-2xl text-sm font-bold text-white transition-all hover:opacity-90 flex justify-center items-center gap-2"
-                  style="background: #E1306C;"
-                >
-                  <ImageIcon class="w-4 h-4" /> IG Story
-                </button>
-                <button
-                  @click="alert('Template WhatsApp Status siap dibagikan!')"
-                  class="flex-1 py-3 rounded-2xl text-sm font-bold text-white transition-all hover:opacity-90 flex justify-center items-center gap-2"
-                  style="background: #25D366;"
-                >
-                  <Share2 class="w-4 h-4" /> WA Status
-                </button>
-              </div>
               <button
-                class="lj-btn-green w-full justify-center"
+                class="lj-btn-green w-full justify-center py-3.5 shadow-md"
                 @click="alert('Template dibuka!')"
               >
-                <Share2 class="w-4 h-4" /> Bagikan Sekarang
+                <Share2 class="w-5 h-5" /> Bagikan Sekarang
               </button>
             </div>
           </Transition>
         </div>
 
         <!-- Reward 2: Bonus Kuota Subscribe -->
-        <div class="lj-card overflow-hidden animate-on-scroll" style="border-color: #F59E0B;">
+        <div class="lj-card overflow-hidden animate-on-scroll border-2" style="border-color: #F59E0B;">
           <button
             @click="openReward2 = !openReward2"
-            class="w-full flex items-center justify-between p-4 hover:bg-amber-50 transition-colors"
+            class="w-full flex items-center justify-between p-5 hover:bg-amber-50 transition-colors"
           >
-            <span class="text-sm font-bold" style="color: var(--lj-navy);">Bonus Kuota Subscribe Wilayah</span>
+            <span class="text-base font-bold" style="color: var(--lj-navy);">Bonus Kuota Subscribe Wilayah</span>
             <ChevronDown v-if="!openReward2" class="w-5 h-5" style="color: #F59E0B;" />
             <ChevronUp v-else class="w-5 h-5" style="color: #F59E0B;" />
           </button>
           <Transition name="accordion-content">
-            <div v-if="openReward2" class="p-4 pt-0 space-y-3">
-              <div class="p-4 rounded-2xl text-sm leading-relaxed" style="background: #FFFBEB; color: #92400E;">
+            <div v-if="openReward2" class="p-5 pt-0 space-y-4">
+              <div class="p-5 rounded-2xl text-sm leading-relaxed font-medium" style="background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A;">
                 Biasanya warga hanya bisa mengikuti notifikasi 1 wilayah. Berkat laporan ini, kamu dapat bonus untuk memantau 1 wilayah tambahan — pantau rumah dan sekolah anak sekaligus, misalnya.
               </div>
-              <RouterLink to="/peta-resiko" class="lj-btn-primary w-full justify-center" style="background: #F59E0B;">
-                <MapPin class="w-4 h-4" /> Pilih Wilayah
+              <RouterLink to="/peta-resiko" class="lj-btn-primary w-full justify-center py-3.5 shadow-md" style="background: #F59E0B; color: white;">
+                <MapPin class="w-5 h-5" /> Pilih Wilayah
               </RouterLink>
             </div>
           </Transition>

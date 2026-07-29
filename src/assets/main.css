@@ -10,7 +10,7 @@
   --lj-green-dk:  #5AF61F;
   --lj-lime:      #CEFF82;
   --lj-navy:      #1E2B5B;
-  --lj-bg:        #F5F8FF;
+  --lj-bg:        #F4F9F6;
   --lj-text:      #000000;
   --lj-muted:     #6B7280;
   --lj-white:     #FFFFFF;
@@ -250,6 +250,64 @@
   font-family: 'Apple Garamond', 'Garamond', Georgia, serif;
   font-style: italic;
   font-weight: 700;
+}
+
+/* ─── Hero & Dividers ──────────────────────────────────────────────────────── */
+.hero-full-width {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  position: relative;
+}
+
+.sway-divider {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  transform: translateY(98%);
+  z-index: 10;
+}
+.sway-divider svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 60px;
+}
+.sway-divider.top {
+  bottom: auto;
+  top: 0;
+  transform: translateY(-98%) rotate(180deg);
+}
+
+.text-glow {
+  text-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.6);
+}
+
+.highlight-green {
+  background: var(--lj-green);
+  padding: 0 12px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.highlight-blue {
+  background: var(--lj-blue);
+  padding: 0 12px;
+  border-radius: 999px;
+  display: inline-block;
+  color: white;
+}
+
+.blob-bg {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.3;
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* ─── Lottie Placeholder ───────────────────────────────────────────────────── */
