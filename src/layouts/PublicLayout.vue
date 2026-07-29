@@ -1,204 +1,229 @@
 <script setup>
-import { ref } from 'vue'
-import { RouterLink, RouterView, useRoute } from 'vue-router'
-import {
-  ShieldAlert,
-  MapPin,
-  FileSpreadsheet,
-  BarChart3,
-  Bell,
-  BookOpen,
-  UserCheck,
-  Menu,
-  X,
-  Award,
-  ChevronRight,
-  HeartPulse,
-} from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+import { Bell, User, HelpCircle, Menu, X, ChevronDown, Facebook, Twitter, Instagram, Linkedin, Youtube, Clock } from 'lucide-vue-next'
 import { useGamificationStore } from '@/stores/useGamificationStore'
 
 const route = useRoute()
+const router = useRouter()
 const gamificationStore = useGamificationStore()
+
 const isMobileMenuOpen = ref(false)
+const scrolled = ref(false)
 
 const navItems = [
-  { name: 'Beranda', path: '/', icon: ShieldAlert },
-  { name: 'Peta Risiko', path: '/peta-resiko', icon: MapPin },
-  { name: 'Lapor Genangan', path: '/laporan', icon: FileSpreadsheet },
-  { name: 'Statistik', path: '/statistik', icon: BarChart3 },
-  { name: 'Notifikasi', path: '/notifikasi', icon: Bell },
-  { name: 'Edukasi', path: '/edukasi', icon: BookOpen },
+  { name: 'Beranda',    path: '/' },
+  { name: 'Peta Resiko', path: '/peta-resiko' },
+  { name: 'Laporan',    path: '/laporan' },
+  { name: 'Edukasi',    path: '/edukasi' },
+  { name: 'Statistik',  path: '/statistik' },
 ]
+
+const isActive = (path) => {
+  if (path === '/') return route.path === '/'
+  return route.path.startsWith(path)
+}
+
+const handleScroll = () => {
+  scrolled.value = window.scrollY > 10
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll)
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible')
+        }
+      })
+    },
+    { threshold: 0.1 }
+  )
+  const observeElements = () => {
+    setTimeout(() => {
+      document.querySelectorAll('.animate-on-scroll').forEach((el) => {
+        observer.observe(el)
+      })
+    }, 100)
+  }
+  router.afterEach(observeElements)
+  observeElements()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
+
+const emit = defineEmits(['trigger-onboarding'])
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-slate-50 text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
-    <!-- Sticky Top Navbar -->
-    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm transition-all duration-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        
+  <div class="min-h-screen flex flex-col" style="background: var(--lj-bg); color: var(--lj-text);">
+
+    <!-- ─── Sticky Navbar ───────────────────────────────────────────────── -->
+    <header
+      class="sticky top-0 z-50 transition-all duration-300"
+      :class="scrolled
+        ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-[--lj-border]'
+        : 'bg-white/80 backdrop-blur-sm border-b border-transparent'"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+
         <!-- Brand Logo -->
-        <RouterLink to="/" class="flex items-center gap-3 group">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-            <ShieldAlert class="w-6 h-6 stroke-[2.5]" />
+        <RouterLink to="/" class="flex items-center gap-2 shrink-0 group">
+          <div
+            class="w-6 h-6 rounded-md flex items-center justify-center text-white font-black text-[10px] shadow-sm transition-transform group-hover:scale-110"
+            style="background: var(--lj-green-dk);"
+          >
+            <div class="w-3 h-3 bg-white rounded-sm" style="border-radius: 2px 6px 2px 2px;" />
           </div>
-          <div>
-            <div class="flex items-center gap-1.5">
-              <span class="font-bold text-xl tracking-tight text-slate-900">Lensa<span class="text-blue-600">Jentik</span></span>
-              <span class="px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 rounded-full border border-blue-200">GIS Web</span>
-            </div>
-            <p class="text-[11px] text-slate-500 font-medium hidden sm:block">Pemetaan & Mitigasi Risiko DBD / Malaria</p>
-          </div>
+          <span class="font-bold text-lg tracking-tight" style="color: var(--lj-navy);">
+            Lensa<span style="color: var(--lj-green-dk);">Jentik</span>
+          </span>
         </RouterLink>
 
-        <!-- Desktop Navigation Links -->
-        <nav class="hidden md:flex items-center gap-1 lg:gap-2">
+        <!-- Desktop Nav -->
+        <nav class="hidden md:flex items-center gap-1 ml-8">
           <RouterLink
             v-for="item in navItems"
             :key="item.path"
             :to="item.path"
-            class="px-3 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5"
-            :class="[
-              route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path))
-                ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200/60 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-            ]"
+            class="px-5 py-2 rounded-full text-xs font-bold transition-all duration-200"
+            :style="isActive(item.path)
+              ? 'background: var(--lj-blue); color: white;'
+              : 'color: var(--lj-navy);'"
+            :class="!isActive(item.path) ? 'hover:bg-[--lj-blue-pale] hover:text-[--lj-blue]' : ''"
           >
-            <component :is="item.icon" class="w-4 h-4" />
-            <span>{{ item.name }}</span>
+            {{ item.name }}
           </RouterLink>
         </nav>
 
-        <!-- Action Items (Gamification Pill & Kader Login) -->
-        <div class="flex items-center gap-3">
-          <!-- Gamification Points Pill -->
+        <!-- Right Actions -->
+        <div class="flex items-center gap-2 ml-auto">
+          <!-- Notification Bell -->
           <RouterLink
-            to="/laporan"
-            class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-full text-xs font-semibold hover:bg-amber-100 transition-colors shadow-2xs"
-            title="Poin Warga Peduli Lingkungan"
+            to="/notifikasi"
+            class="relative w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-[--lj-green-pale]"
+            title="Notifikasi"
           >
-            <Award class="w-4 h-4 text-amber-500 fill-amber-400" />
-            <span>{{ gamificationStore.userPoints }} Poin</span>
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <Bell class="w-5 h-5" style="color: var(--lj-green-dk);" />
           </RouterLink>
 
-          <!-- Kader Login Button -->
+          <!-- Kader Login -->
           <RouterLink
             to="/kader/login"
-            class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 text-white hover:bg-blue-600 text-xs sm:text-sm font-semibold transition-all shadow-md hover:shadow-blue-500/25 active:scale-95"
+            class="w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-[--lj-green-pale]"
+            title="Login Kader"
           >
-            <UserCheck class="w-4 h-4 text-blue-400" />
-            <span>Portal Kader</span>
+            <User class="w-5 h-5" style="color: var(--lj-green-dk);" />
           </RouterLink>
 
-          <!-- Mobile Menu Button -->
+          <!-- Mobile menu toggle -->
           <button
             @click="isMobileMenuOpen = !isMobileMenuOpen"
-            class="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none"
-            aria-label="Toggle menu"
+            class="md:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-[--lj-blue-pale]"
           >
-            <Menu v-if="!isMobileMenuOpen" class="w-6 h-6" />
-            <X v-else class="w-6 h-6" />
+            <Menu v-if="!isMobileMenuOpen" class="w-5 h-5" />
+            <X v-else class="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      <!-- Mobile Dropdown Navigation -->
-      <div v-if="isMobileMenuOpen" class="md:hidden border-t border-slate-200 bg-white px-4 pt-2 pb-4 space-y-1 shadow-lg animate-in slide-in-from-top-2">
-        <RouterLink
-          v-for="item in navItems"
-          :key="item.path"
-          :to="item.path"
-          @click="isMobileMenuOpen = false"
-          class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
-          :class="[
-            route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path))
-              ? 'bg-blue-50 text-blue-700 font-bold'
-              : 'text-slate-700 hover:bg-slate-100'
-          ]"
+      <!-- Mobile Menu Dropdown -->
+      <Transition name="slide-down">
+        <div
+          v-if="isMobileMenuOpen"
+          class="md:hidden bg-white border-t border-[--lj-border] px-4 py-3 space-y-1 shadow-lg"
         >
-          <div class="flex items-center gap-3">
-            <component :is="item.icon" class="w-5 h-5 text-slate-500" />
+          <RouterLink
+            v-for="item in navItems"
+            :key="item.path"
+            :to="item.path"
+            @click="isMobileMenuOpen = false"
+            class="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-600 transition-colors"
+            :style="isActive(item.path)
+              ? 'background: var(--lj-blue-pale); color: var(--lj-blue); font-weight: 700;'
+              : 'color: var(--lj-muted);'"
+          >
             <span>{{ item.name }}</span>
-          </div>
-          <ChevronRight class="w-4 h-4 text-slate-400" />
-        </RouterLink>
-        <div class="pt-2 border-t border-slate-100 flex items-center justify-between px-3 py-2">
-          <span class="text-xs text-slate-500 font-medium">Poin Partisipasi:</span>
-          <span class="px-2.5 py-1 bg-amber-100 text-amber-800 font-bold text-xs rounded-full flex items-center gap-1">
-            <Award class="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
-            {{ gamificationStore.userPoints }} Poin
-          </span>
+            <ChevronDown v-if="!isActive(item.path)" class="w-4 h-4 -rotate-90" />
+          </RouterLink>
         </div>
-      </div>
+      </Transition>
     </header>
 
-    <!-- Main Dynamic Content Body -->
-    <main class="flex-1">
-      <RouterView />
+    <!-- ─── Page Content ──────────────────────────────────────────────────────── -->
+    <main class="flex-1 relative z-10 w-full flex flex-col">
+      <RouterView v-slot="{ Component, route }">
+        <component :is="Component" :key="route.fullPath" @trigger-onboarding="$emit('trigger-onboarding')" />
+      </RouterView>
     </main>
 
-    <!-- Footer Component -->
-    <footer class="bg-slate-900 text-slate-400 border-t border-slate-800 text-sm mt-12">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <!-- Col 1: Brand Info -->
-          <div class="space-y-4 md:col-span-1">
-            <div class="flex items-center gap-2 text-white font-bold text-lg">
-              <ShieldAlert class="w-6 h-6 text-blue-400" />
-              <span>LensaJentik</span>
-            </div>
-            <p class="text-xs leading-relaxed text-slate-400">
-              Platform Web-GIS terintegrasi pemetaan risiko dan mitigasi dinamis kasus DBD & Malaria berbasis partisipasi warga dan kader kesehatan.
-            </p>
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-800 border border-slate-700 text-blue-300 rounded-full text-xs font-mono">
-              <HeartPulse class="w-3.5 h-3.5 text-red-400 animate-pulse" />
-              Target Kompetisi 2026
-            </div>
-          </div>
+    <!-- ─── Footer ─────────────────────────────────────────────────────────── -->
+    <footer class="relative mt-auto w-full pt-32" style="background: linear-gradient(180deg, #4E63DA 0%, #63D097 100%);">
+      <!-- City Silhouette Overlay -->
+      <div class="absolute bottom-full w-full pointer-events-none" style="margin-bottom: -1px; transform: translateY(100%); z-index: 1;">
+        <svg viewBox="0 0 1440 320" class="w-full h-auto block" preserveAspectRatio="none">
+          <path fill="#4E63DA" d="M0,192 L48,192 L48,160 L96,160 L96,192 L144,192 L144,128 L192,128 L192,192 L240,192 L240,256 L288,256 L288,224 L336,224 L336,256 L384,256 L384,192 L432,192 L432,256 L480,256 L480,224 L528,224 L528,256 L576,256 L576,288 L624,288 L624,224 L672,224 L672,256 L720,256 L720,224 L768,224 L768,192 L816,192 L816,256 L864,256 L864,192 L912,192 L912,224 L960,224 L960,256 L1008,256 L1008,192 L1056,192 L1056,256 L1104,256 L1104,192 L1152,192 L1152,256 L1200,256 L1200,224 L1248,224 L1248,192 L1296,192 L1296,224 L1344,224 L1344,192 L1392,192 L1392,256 L1440,256 L1440,320 L0,320 Z"/>
+          <!-- Simplified silhouette for the buildings to match mockup roughly -->
+          <path fill="#4E63DA" d="M60,160 h40 v60 h-40 z M70,170 h10 v10 h-10 z M90,170 h10 v10 h-10 z M70,190 h10 v10 h-10 z M90,190 h10 v10 h-10 z"/>
+          <path fill="#4E63DA" d="M300,180 l30,-30 l30,30 v50 h-60 z M320,190 h20 v10 h-20 z M320,210 h20 v20 h-20 z"/>
+          <path fill="#4E63DA" d="M550,150 h50 v80 h-50 z M560,160 h10 v10 h-10 z M580,160 h10 v10 h-10 z M560,180 h10 v10 h-10 z M580,180 h10 v10 h-10 z"/>
+          <path fill="#4E63DA" d="M800,120 l40,-40 l40,40 v100 h-80 z M820,140 h10 v10 h-10 z M850,140 h10 v10 h-10 z M820,170 h10 v10 h-10 z M850,170 h10 v10 h-10 z"/>
+          <path fill="#4E63DA" d="M1050,160 l30,-20 l30,20 v60 h-60 z M1070,180 h20 v10 h-20 z M1070,200 h20 v20 h-20 z"/>
+          <path fill="#4E63DA" d="M1250,90 l20,-30 l20,30 v130 h-40 z M1260,110 h10 v10 h-10 z M1260,130 h10 v10 h-10 z M1260,150 h10 v10 h-10 z"/>
+          <!-- Trees -->
+          <path fill="#4E63DA" d="M220,200 l-15,30 h10 l-15,30 h40 l-15,-30 h10 z"/>
+          <path fill="#4E63DA" d="M480,210 l-10,20 h5 l-10,20 h30 l-10,-20 h5 z"/>
+          <path fill="#4E63DA" d="M720,190 l-15,30 h10 l-15,30 h40 l-15,-30 h10 z"/>
+          <path fill="#4E63DA" d="M960,200 l-10,20 h5 l-10,20 h30 l-10,-20 h5 z"/>
+          <path fill="#4E63DA" d="M1180,180 l-12,24 h8 l-12,24 h32 l-12,-24 h8 z"/>
+          
+          <!-- Clock on right tower -->
+          <circle cx="1270" cy="115" r="5" fill="white" />
+          <path d="M1270,115 v-3 M1270,115 h2" stroke="#4E63DA" stroke-width="1" />
+        </svg>
+      </div>
 
-          <!-- Col 2: Navigation Quicklinks -->
-          <div>
-            <h4 class="text-white font-semibold mb-3 text-xs uppercase tracking-wider">Navigasi Utama</h4>
-            <ul class="space-y-2 text-xs">
-              <li><RouterLink to="/" class="hover:text-white transition-colors">Beranda</RouterLink></li>
-              <li><RouterLink to="/peta-resiko" class="hover:text-white transition-colors">Peta Web-GIS Interaktif</RouterLink></li>
-              <li><RouterLink to="/laporan" class="hover:text-white transition-colors">Lapor Genangan Air</RouterLink></li>
-              <li><RouterLink to="/statistik" class="hover:text-white transition-colors">Data & Analisis ABJ</RouterLink></li>
-            </ul>
-          </div>
+      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-10 text-white">
+        <!-- Links Row -->
+        <div class="flex flex-col md:flex-row items-center justify-between mb-8 gap-6">
+          <ul class="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-8 text-xs font-medium">
+            <li><RouterLink to="/" class="hover:text-white/80 transition-colors">Home</RouterLink></li>
+            <li class="flex items-center gap-1 cursor-pointer hover:text-white/80 transition-colors">Services <ChevronDown class="w-3 h-3" /></li>
+            <li><RouterLink to="/edukasi" class="hover:text-white/80 transition-colors">Blog</RouterLink></li>
+            <li><span class="cursor-pointer hover:text-white/80 transition-colors">Help Center</span></li>
+            <li><span class="cursor-pointer hover:text-white/80 transition-colors">About</span></li>
+          </ul>
 
-          <!-- Col 3: Edukasi & Bantuan -->
-          <div>
-            <h4 class="text-white font-semibold mb-3 text-xs uppercase tracking-wider">Edukasi & Fitur</h4>
-            <ul class="space-y-2 text-xs">
-              <li><RouterLink to="/edukasi/kuis" class="hover:text-white transition-colors">Kalkulator Risiko Personal</RouterLink></li>
-              <li><RouterLink to="/edukasi" class="hover:text-white transition-colors">Panduan 3M Plus</RouterLink></li>
-              <li><RouterLink to="/notifikasi" class="hover:text-white transition-colors">Pusat Notifikasi Dini</RouterLink></li>
-              <li><RouterLink to="/kader/login" class="hover:text-white transition-colors">Login Kader Kesehatan</RouterLink></li>
-            </ul>
-          </div>
-
-          <!-- Col 4: Emergency Hotline -->
-          <div class="space-y-3">
-            <h4 class="text-white font-semibold text-xs uppercase tracking-wider">Layanan Darurat Kesehatan</h4>
-            <p class="text-xs text-slate-400">Temukan gejala DBD atau demam tinggi berulang? Hubungi fasilitas kesehatan terdekat.</p>
-            <div class="p-3 bg-slate-800/80 rounded-xl border border-slate-700/60 space-y-1">
-              <span class="text-[10px] uppercase font-bold text-slate-400">Call Center DBD Bandung:</span>
-              <div class="text-emerald-400 font-bold font-mono text-base">119 / (022) 4203736</div>
-            </div>
+          <div class="flex items-center gap-4">
+            <a href="#" class="hover:text-white/80 transition-colors"><Youtube class="w-4 h-4" /></a>
+            <a href="#" class="hover:text-white/80 transition-colors"><Facebook class="w-4 h-4" /></a>
+            <a href="#" class="hover:text-white/80 transition-colors"><Twitter class="w-4 h-4" /></a>
+            <a href="#" class="hover:text-white/80 transition-colors"><Instagram class="w-4 h-4" /></a>
+            <a href="#" class="hover:text-white/80 transition-colors"><Linkedin class="w-4 h-4" /></a>
           </div>
         </div>
 
-        <div class="border-t border-slate-800 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
-          <p>© 2026 LensaJentik Platform. Hak Cipta Dilindungi Undang-Undang.</p>
-          <div class="flex items-center gap-4 mt-2 sm:mt-0">
-            <span class="hover:text-slate-400 cursor-pointer">Kebijakan Privasi</span>
-            <span>•</span>
-            <span class="hover:text-slate-400 cursor-pointer">Syarat & Ketentuan</span>
-          </div>
+        <div class="border-t border-white/20 pt-6 text-center">
+          <p class="text-[10px] font-medium" style="color: rgba(255,255,255,0.9);">
+            LensaJentik @ 2026. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
   </div>
 </template>
+
+<style scoped>
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+</style>

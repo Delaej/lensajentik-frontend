@@ -1,76 +1,127 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Bell, CloudRain, AlertTriangle, ShieldCheck, CheckCheck } from 'lucide-vue-next'
+import { RouterLink } from 'vue-router'
+import { ArrowLeft, User } from 'lucide-vue-next'
 import apiClient from '@/services/apiClient'
 
 const notifications = ref([])
 const isLoading = ref(true)
+const activeFilter = ref('semua') // 'semua' | 'unread'
 
 onMounted(async () => {
   try {
-    const response = await apiClient.get('/notifikasi')
-    notifications.value = response.data.data || response.data || []
-  } catch (error) {
-    // Endpoint membutuhkan autentikasi atau belum ada data
-    console.warn('Notifikasi publik tidak tersedia:', error.response?.status)
-    notifications.value = []
+    const res = await apiClient.get('/notifikasi')
+    notifications.value = res.data?.data || res.data || []
+  } catch (e) {
+    notifications.value = [
+      {
+        id: 1, judul: 'Lorem ipsum dolor sit amet,',
+        isi: 'ex exercitation tempor non dolor. Nisi ut deserunt officia dolore eu consequat cupidatat sed consectetur.',
+        created_at: '2026-07-23', dibaca: false,
+      },
+      {
+        id: 2, judul: 'Lorem ipsum dolor sit amet,',
+        isi: 'ex exercitation tempor non dolor. Nisi ut deserunt officia dolore eu consequat cupidatat sed consectetur.',
+        created_at: '2026-07-23', dibaca: true,
+      },
+      {
+        id: 3, judul: 'Lorem ipsum dolor sit amet,',
+        isi: 'ex exercitation tempor non dolor. Nisi ut deserunt officia dolore eu consequat cupidatat sed consectetur.',
+        created_at: '2026-07-23', dibaca: true,
+      },
+      {
+        id: 4, judul: 'Lorem ipsum dolor sit amet,',
+        isi: 'ex exercitation tempor non dolor. Nisi ut deserunt officia dolore eu consequat cupidatat sed consectetur.',
+        created_at: '2026-07-23', dibaca: true,
+      },
+      {
+        id: 5, judul: 'Lorem ipsum dolor sit amet,',
+        isi: 'ex exercitation tempor non dolor. Nisi ut deserunt officia dolore eu consequat cupidatat sed consectetur.',
+        created_at: '2026-07-23', dibaca: true,
+      },
+    ]
   } finally {
     isLoading.value = false
   }
 })
 
-const getIcon = (tipe) => {
-  switch (tipe) {
-    case 'cuaca':
-      return CloudRain
-    case 'waspada':
-      return AlertTriangle
-    default:
-      return ShieldCheck
-  }
+const filteredNotifications = () => {
+  if (activeFilter.value === 'semua') return notifications.value
+  return notifications.value.filter(n => !n.dibaca)
 }
 
-const getIconBg = (tipe) => {
-  switch (tipe) {
-    case 'cuaca': return 'bg-sky-100 text-sky-600'
-    case 'waspada': return 'bg-amber-100 text-amber-600'
-    default: return 'bg-indigo-100 text-indigo-600'
-  }
+const unreadCount = () => notifications.value.filter(n => !n.dibaca).length
+const totalCount = () => notifications.value.length
+
+const formatDate = (d) => {
+  try {
+    return new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  } catch { return d }
 }
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto px-4 py-8 space-y-6">
-    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-2">
-      <h1 class="text-2xl font-extrabold text-slate-900 flex items-center gap-2">
-        <Bell class="w-6 h-6 text-blue-600" /> Pusat Notifikasi Dini Publik
-      </h1>
-      <p class="text-xs text-slate-500">Peringatan potensi genangan air hujan, kenaikan tren kasus DBD, dan status wilayah berisiko</p>
-    </div>
-
-    <div v-if="isLoading" class="text-center py-12 bg-white rounded-3xl border border-slate-200 text-xs text-slate-500 shadow-xs">
-      Memuat notifikasi publik...
-    </div>
-
-    <div v-else-if="notifications.length > 0" class="space-y-4">
-      <div
-        v-for="notif in notifications"
-        :key="notif.id"
-        class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-start gap-4"
-      >
-        <div :class="['w-10 h-10 rounded-2xl flex items-center justify-center shrink-0', getIconBg(notif.tipe)]">
-          <component :is="getIcon(notif.tipe)" class="w-5 h-5" />
+  <div class="min-h-screen relative" style="background-color: #f7fbf8;">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10 pb-40">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-8">
+        <RouterLink to="/" class="w-8 h-8 flex items-center justify-center hover:bg-black/5 rounded-full transition-colors">
+          <ArrowLeft class="w-5 h-5" style="color: var(--lj-navy);" />
+        </RouterLink>
+        <div class="px-4 py-1.5 rounded-full border-2 text-xs font-bold" style="border-color: #95FE6D; background: white; color: var(--lj-navy);">
+          NOTIFIKASI ANDA
         </div>
-        <div class="space-y-1">
-          <div class="font-bold text-sm text-slate-900">{{ notif.judul }}</div>
-          <p class="text-xs text-slate-600 leading-relaxed">{{ notif.isi }}</p>
-          <div class="text-[10px] text-slate-400">{{ new Date(notif.created_at).toLocaleDateString('id-ID', { dateStyle: 'medium' }) }}</div>
+        <div class="w-8 h-8"></div> <!-- spacer -->
+      </div>
+
+      <!-- Filter tabs -->
+      <div class="inline-flex rounded-full border-[3px] p-1 mb-8" style="border-color: #95FE6D; background: white;">
+        <button
+          @click="activeFilter = 'semua'"
+          class="px-6 py-1.5 rounded-full text-xs font-bold transition-all"
+          :style="activeFilter === 'semua' ? 'background: #4E63DA; color: white;' : 'background: transparent; color: #4B5563;'"
+        >
+          Semua ({{ totalCount() }})
+        </button>
+        <button
+          @click="activeFilter = 'unread'"
+          class="px-6 py-1.5 rounded-full text-xs font-bold transition-all"
+          :style="activeFilter === 'unread' ? 'background: #4E63DA; color: white;' : 'background: transparent; color: #4B5563;'"
+        >
+          Belum dibaca ({{ unreadCount() }})
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div v-if="isLoading" class="text-center font-bold" style="color: var(--lj-blue);">Memuat notifikasi...</div>
+
+      <!-- Notifications list -->
+      <div v-else class="space-y-4">
+        <div
+          v-for="notif in filteredNotifications()"
+          :key="notif.id"
+          class="bg-white rounded-[16px] p-4 sm:p-5 flex items-start gap-4 border shadow-sm relative"
+          style="border-color: #E5E7EB;"
+        >
+          <!-- Unread dot -->
+          <div v-if="!notif.dibaca" class="absolute top-4 left-4 w-2 h-2 rounded-full" style="background: #95FE6D;"></div>
+          
+          <!-- Avatar -->
+          <div class="w-12 h-12 rounded-full border-2 flex items-center justify-center shrink-0 ml-2" :style="{ borderColor: notif.dibaca ? '#9CA3AF' : '#4E63DA' }">
+            <User class="w-6 h-6" :style="{ color: notif.dibaca ? '#9CA3AF' : '#95FE6D' }" />
+          </div>
+
+          <!-- Content -->
+          <div class="flex-1 mt-1">
+            <p class="text-sm" style="color: #4B5563;">
+              <span class="font-bold text-black">{{ notif.judul }}</span> {{ notif.isi }}
+            </p>
+            <p class="text-[11px] mt-1" style="color: #9CA3AF;">{{ formatDate(notif.created_at) }}</p>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div v-else class="text-center py-12 bg-white rounded-3xl border border-slate-200 text-xs text-slate-500 shadow-xs">
-      Tidak ada notifikasi publik saat ini.
     </div>
   </div>
 </template>

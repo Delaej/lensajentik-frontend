@@ -1,15 +1,10 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import {
-  MapPin,
-  Filter,
-  Search,
-  BellRing,
-  TrendingUp,
-  CheckCircle2,
-  AlertTriangle,
-  Activity,
-  Layers,
+  Search, Filter, BellRing, Maximize2, Minimize2,
+  ChevronLeft, ChevronRight, AlertTriangle,
+  TrendingUp, Thermometer, Droplets, MapPin, Map
 } from 'lucide-vue-next'
 import { useMapStore } from '@/stores/useMapStore'
 
@@ -17,38 +12,48 @@ const mapStore = useMapStore()
 const mapContainer = ref(null)
 let mapInstance = null
 let activeLayers = []
+const isMaximized = ref(false)
+const hoverPopupVisible = ref(false)
+const hoverPopupIndex = ref(0)
+const hoverPopupX = ref(0)
+const hoverPopupY = ref(0)
+
+const riskLegend = [
+  { color: '#EF4444', label: 'Merah — Risiko Tinggi', desc: 'ABJ < 90%. Wilayah ini memiliki banyak titik genangan aktif. Kader perlu segera turun lapangan.' },
+  { color: '#F59E0B', label: 'Kuning — Risiko Sedang', desc: 'ABJ 90–94%. Perlu kewaspadaan. Warga diminta melakukan 3M Plus secara mandiri.' },
+  { color: '#22C55E', label: 'Hijau — Risiko Rendah', desc: 'ABJ ≥ 95%. Wilayah relatif aman, namun tetap jaga kebersihan lingkungan.' },
+]
 
 const drawLayers = (L) => {
-  // Clear existing layers
-  activeLayers.forEach(layer => mapInstance.removeLayer(layer))
+  activeLayers.forEach((l) => mapInstance.removeLayer(l))
   activeLayers = []
-
-  // Render polygon areas and markers
   mapStore.diseaseRiskData.forEach((region) => {
-    const color = region.riskCode === 'high' ? '#EF4444' : region.riskCode === 'medium' ? '#F59E0B' : '#10B981'
-
+    const color = region.riskCode === 'high' ? '#EF4444' : region.riskCode === 'medium' ? '#F59E0B' : '#22C55E'
     const polygon = L.polygon(region.latLngs, {
-      color: color,
+      color,
       fillColor: color,
-      fillOpacity: 0.35,
+      fillOpacity: 0.32,
       weight: 2,
     }).addTo(mapInstance)
 
+    polygon.on('mouseover', (e) => {
+      hoverPopupVisible.value = true
+      hoverPopupIndex.value = region.riskCode === 'high' ? 0 : region.riskCode === 'medium' ? 1 : 2
+    })
+    polygon.on('mouseout', () => {
+      hoverPopupVisible.value = false
+    })
+
     polygon.bindPopup(`
-      <div style="font-family: sans-serif; padding: 4px; color: black;">
-        <h4 style="margin: 0; font-weight: bold; font-size: 14px;">${region.name}</h4>
-        <p style="margin: 4px 0; font-size: 12px; color: #64748b;">${region.district}</p>
-        <div style="display: inline-block; padding: 2px 8px; background: ${color}; color: white; border-radius: 999px; font-weight: bold; font-size: 11px;">
-          Risiko: ${region.riskLevel} (${region.abj}% ABJ)
+      <div style="font-family:'Satoshi',sans-serif;padding:6px 4px;min-width:180px;">
+        <div style="font-weight:700;font-size:14px;color:#1E2B5B;">${region.name}</div>
+        <div style="font-size:11px;color:#6B7280;margin-bottom:6px;">${region.district}</div>
+        <div style="display:inline-block;padding:2px 10px;background:${color};color:white;border-radius:999px;font-weight:700;font-size:11px;">
+          Risiko ${region.riskLevel} · ABJ ${region.abj}%
         </div>
       </div>
     `)
-
-    polygon.on('click', () => {
-      // Fetch detailed calculation (real-time Open-Meteo & risk forecasts)
-      mapStore.fetchRegionDetail(region.id)
-    })
-
+    polygon.on('click', () => mapStore.fetchRegionDetail(region.id))
     activeLayers.push(polygon)
   })
 }
@@ -56,178 +61,305 @@ const drawLayers = (L) => {
 onMounted(async () => {
   if (typeof window !== 'undefined') {
     const L = (await import('leaflet')).default
-    
-    // Initialize map centered at Bandung area
     mapInstance = L.map(mapContainer.value, {
-      center: [-6.9175, 107.6191], // Bandung center
+      center: [-6.9175, 107.6191],
       zoom: 13,
       zoomControl: true,
     })
-
-    // OpenStreetMap Tile Layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors | LensaJentik GIS',
+      attribution: '© OpenStreetMap contributors | LensaJentik',
       maxZoom: 18,
     }).addTo(mapInstance)
 
-    // Load data from backend
     await mapStore.fetchRiskMap()
     await mapStore.fetchSubscribedRegions()
-
-    // Draw initial layers
     drawLayers(L)
 
-    // Watch for risk data updates to redraw
-    watch(() => mapStore.diseaseRiskData, () => {
-      drawLayers(L)
-    }, { deep: true })
+    watch(() => mapStore.diseaseRiskData, () => drawLayers(L), { deep: true })
   }
 })
 
-// Watch selected disease type filter to reload map data
-watch(() => mapStore.selectedDisease, async () => {
-  await mapStore.fetchRiskMap()
-})
+watch(() => mapStore.selectedDisease, async () => { await mapStore.fetchRiskMap() })
 
+const toggleMaximize = () => {
+  isMaximized.value = !isMaximized.value
+  setTimeout(() => mapInstance?.invalidateSize(), 300)
+}
+
+const handleSubscribe = () => {
+  if (mapStore.selectedRegion) {
+    mapStore.toggleSubscription(mapStore.selectedRegion.id)
+  }
+}
+
+const isSubscribed = computed(() =>
+  mapStore.selectedRegion && mapStore.subscribedRegions.includes(mapStore.selectedRegion.id)
+)
+
+const riskColor = (code) => code === 'high' ? '#EF4444' : code === 'medium' ? '#F59E0B' : '#22C55E'
+const riskLabel = (code) => code === 'high' ? 'Tinggi' : code === 'medium' ? 'Sedang' : 'Rendah'
 </script>
 
 <template>
-  <div class="h-[calc(100vh-4rem)] flex flex-col lg:flex-row overflow-hidden bg-slate-900 text-white">
-    <!-- Left Sidebar Controls & Region Details -->
-    <aside class="w-full lg:w-96 bg-slate-900 border-r border-slate-800 flex flex-col h-1/2 lg:h-full z-10 shrink-0">
-      <!-- Search & Filters -->
-      <div class="p-4 border-b border-slate-800 space-y-3">
-        <div class="flex items-center justify-between">
-          <h2 class="font-black text-lg flex items-center gap-2 text-white">
-            <MapPin class="w-5 h-5 text-blue-400" /> Web-GIS Pemetaan
-          </h2>
-          <span class="text-[10px] font-bold bg-blue-900 text-blue-300 px-2 py-0.5 rounded-full border border-blue-700">Live GIS</span>
-        </div>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
 
-        <!-- Search Input -->
-        <div class="relative">
-          <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            v-model="mapStore.searchQuery"
-            type="text"
-            placeholder="Cari Kelurahan / Kecamatan..."
-            class="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none text-white"
-          />
-        </div>
+    <!-- ─── Hero banner (Lottie placeholder) ─── -->
+    <div class="lottie-placeholder animate-on-scroll flex-col" style="height: 180px; border-radius: 24px;">
+      <Map class="w-12 h-12 mb-2 text-[--lj-blue]" />
+      <span class="font-semibold text-sm" style="color: var(--lj-blue);">Lottie: Ilustrasi Peta Risiko Nyamuk</span>
+    </div>
 
-        <!-- Filter Selects -->
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <label class="block text-[10px] text-slate-400 mb-1">Jenis Penyakit</label>
-            <select v-model="mapStore.selectedDisease" class="w-full bg-slate-800 border border-slate-700 p-2 rounded-xl text-xs outline-none">
-              <option value="all">Semua Vektor</option>
-              <option value="dbd">DBD (Aedes)</option>
-              <option value="malaria">Malaria (Anopheles)</option>
-            </select>
+    <!-- ─── Search + Filter Bar ─── -->
+    <div class="animate-on-scroll flex flex-col sm:flex-row gap-3">
+      <div class="relative flex-1">
+        <Search class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style="color: var(--lj-blue);" />
+        <input
+          v-model="mapStore.searchQuery"
+          type="text"
+          placeholder="Cari kecamatan anda...."
+          class="w-full pl-10 pr-4 py-3.5 rounded-2xl border text-sm font-medium outline-none transition-all focus:ring-2"
+          style="border-color: var(--lj-blue); focus:ring-color: var(--lj-blue); background: white;"
+        />
+      </div>
+      <div class="relative">
+        <select
+          v-model="mapStore.selectedRiskLevel"
+          class="appearance-none pl-4 pr-10 py-3.5 rounded-2xl border text-sm font-bold cursor-pointer outline-none transition-all"
+          style="border-color: var(--lj-blue); color: var(--lj-blue); background: white;"
+        >
+          <option value="all">Semua level risiko</option>
+          <option value="high">Risiko Tinggi (Merah)</option>
+          <option value="medium">Risiko Sedang (Kuning)</option>
+          <option value="low">Risiko Rendah (Hijau)</option>
+        </select>
+        <Filter class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style="color: var(--lj-blue);" />
+      </div>
+      <div class="relative">
+        <select
+          v-model="mapStore.selectedDisease"
+          class="appearance-none pl-4 pr-10 py-3.5 rounded-2xl border text-sm font-bold cursor-pointer outline-none"
+          style="border-color: var(--lj-border); color: var(--lj-muted); background: white;"
+        >
+          <option value="all">Semua penyakit</option>
+          <option value="dbd">DBD</option>
+          <option value="malaria">Malaria</option>
+        </select>
+        <Filter class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style="color: var(--lj-muted);" />
+      </div>
+    </div>
+
+    <!-- ─── Map Container ─── -->
+    <div
+      class="animate-on-scroll relative lj-card overflow-hidden"
+      :class="{ 'map-maximized': isMaximized }"
+      style="border: 2px solid var(--lj-blue);"
+    >
+      <!-- Map -->
+      <div ref="mapContainer" :style="{ height: isMaximized ? '100vh' : '420px' }" class="w-full z-0" />
+
+      <!-- Maximize toggle -->
+      <button
+        @click="toggleMaximize"
+        class="absolute top-3 right-3 z-20 w-9 h-9 rounded-xl bg-white shadow-md flex items-center justify-center hover:scale-110 transition-transform"
+        style="border: 1px solid var(--lj-border);"
+      >
+        <Maximize2 v-if="!isMaximized" class="w-4 h-4" style="color: var(--lj-blue);" />
+        <Minimize2 v-else class="w-4 h-4" style="color: var(--lj-blue);" />
+      </button>
+
+      <!-- Legend overlay (hover popup) -->
+      <Transition name="slide-up">
+        <div
+          v-if="hoverPopupVisible"
+          class="absolute top-3 right-14 z-20 bg-white rounded-2xl p-4 shadow-xl text-xs space-y-3"
+          style="border: 1.5px solid var(--lj-blue); min-width: 220px;"
+        >
+          <!-- Slider dots for popup -->
+          <div class="flex gap-1.5 mb-2">
+            <button
+              v-for="(_, i) in riskLegend"
+              :key="i"
+              @click="hoverPopupIndex = i"
+              class="rounded-full transition-all"
+              :style="{ width: hoverPopupIndex === i ? '16px' : '8px', height: '8px', background: riskLegend[i].color }"
+            />
           </div>
-          <div>
-            <label class="block text-[10px] text-slate-400 mb-1">Tingkat Risiko</label>
-            <select v-model="mapStore.selectedRiskLevel" class="w-full bg-slate-800 border border-slate-700 p-2 rounded-xl text-xs outline-none">
-              <option value="all">Semua Tingkat</option>
-              <option value="high">Merah (Tinggi)</option>
-              <option value="medium">Kuning (Sedang)</option>
-              <option value="low">Hijau (Rendah)</option>
-            </select>
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full shrink-0" :style="{ background: riskLegend[hoverPopupIndex].color }" />
+            <span class="font-bold" :style="{ color: riskLegend[hoverPopupIndex].color }">{{ riskLegend[hoverPopupIndex].label }}</span>
           </div>
+          <p style="color: var(--lj-muted);">{{ riskLegend[hoverPopupIndex].desc }}</p>
+          <div class="flex justify-between pt-1">
+            <button @click="hoverPopupIndex = Math.max(0, hoverPopupIndex - 1)" class="text-[--lj-blue] font-bold">←</button>
+            <button @click="hoverPopupIndex = Math.min(riskLegend.length - 1, hoverPopupIndex + 1)" class="text-[--lj-blue] font-bold">→</button>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- Static legend bottom left -->
+      <div class="absolute bottom-3 left-3 z-20 bg-white/95 backdrop-blur-sm rounded-xl p-3 shadow text-xs space-y-1.5" style="border: 1px solid var(--lj-border);">
+        <div class="font-bold mb-1" style="color: var(--lj-navy); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Legenda</div>
+        <div v-for="item in riskLegend" :key="item.color" class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ background: item.color }" />
+          <span style="color: var(--lj-muted);">{{ item.label.split('—')[0] }}</span>
         </div>
       </div>
+    </div>
 
-      <!-- Region Details Card or List -->
-      <div class="flex-1 overflow-y-auto p-4 space-y-4">
-        <!-- If Region Selected -->
-        <div v-if="mapStore.selectedRegion" class="bg-slate-800/90 border border-slate-700 rounded-2xl p-5 space-y-4 animate-in fade-in">
-          <div class="flex items-start justify-between">
-            <div>
-              <h3 class="font-extrabold text-base text-white">{{ mapStore.selectedRegion.name }}</h3>
-              <p class="text-xs text-slate-400">{{ mapStore.selectedRegion.district }}</p>
-            </div>
-            <button
-              @click="mapStore.toggleSubscription(mapStore.selectedRegion.id)"
-              class="p-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1"
-              :class="mapStore.subscribedRegions.includes(mapStore.selectedRegion.id) ? 'bg-amber-500 text-slate-900' : 'bg-slate-700 text-white hover:bg-slate-600'"
-            >
-              <BellRing class="w-3.5 h-3.5" />
-              <span>{{ mapStore.subscribedRegions.includes(mapStore.selectedRegion.id) ? 'Subscribed' : 'Subscribe' }}</span>
-            </button>
-          </div>
+    <!-- ─── Hasil Pemeriksaan ─── -->
+    <div v-if="mapStore.selectedRegion" class="animate-on-scroll space-y-6">
+      <div class="text-center">
+        <div class="lj-section-label mb-3 mx-auto" style="width: fit-content;">HASIL PEMERIKSAAN</div>
+        <h2 class="text-2xl sm:text-3xl font-bold" style="color: var(--lj-navy);">
+          {{ mapStore.selectedRegion.name }}
+        </h2>
+      </div>
 
-          <!-- Confidence Level & ABJ Badge -->
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <div class="p-3 bg-slate-900/80 rounded-xl">
-              <div class="text-[10px] text-slate-400">Skor ABJ Real-time</div>
-              <div class="text-lg font-black" :class="mapStore.selectedRegion.abj >= 95 ? 'text-emerald-400' : 'text-rose-400'">
-                {{ mapStore.selectedRegion.abj }}%
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Kondisi Wilayah Card -->
+        <div class="lj-card p-6 space-y-4">
+          <h3 class="font-bold text-base" style="color: var(--lj-navy);">Keadaan Wilayah</h3>
+          <p class="text-sm leading-relaxed" style="color: var(--lj-muted);">
+            Kondisi lingkungan di wilayah ini saat ini cukup mendukung bagi nyamuk untuk berkembang biak.
+            Terdapat beberapa titik genangan air di area permukiman.
+          </p>
+
+          <!-- Kondisi Iklim -->
+          <div class="p-4 rounded-2xl space-y-2" style="background: var(--lj-blue-pale);">
+            <div class="text-xs font-bold" style="color: var(--lj-blue);">Kondisi Iklim:</div>
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-1.5 text-sm">
+                <Thermometer class="w-4 h-4" style="color: var(--risk-high);" />
+                <span class="font-bold">28.5°C</span>
+                <span class="text-xs" style="color: var(--lj-blue);">Sering Berawan</span>
+              </div>
+              <div class="flex items-center gap-1.5 text-sm">
+                <Droplets class="w-4 h-4" style="color: var(--lj-blue);" />
+                <span class="font-bold">{{ mapStore.selectedRegion.abj }}% ABJ</span>
               </div>
             </div>
-            <div class="p-3 bg-slate-900/80 rounded-xl">
-              <div class="text-[10px] text-slate-400">Confidence Level</div>
-              <div class="text-lg font-black text-blue-400">{{ mapStore.selectedRegion.confidenceLevel }}%</div>
-            </div>
           </div>
 
-          <!-- 7-14 Days Forecast Box -->
-          <div class="p-3.5 bg-blue-950/60 border border-blue-800/60 rounded-xl space-y-2 text-xs">
-            <div class="font-bold text-blue-300 flex items-center gap-1.5">
-              <TrendingUp class="w-4 h-4 text-blue-400" /> Prediksi Tren 7-14 Hari
-            </div>
-            <div class="text-slate-300 text-[11px] leading-relaxed">
-              <strong>7 Hari:</strong> {{ mapStore.selectedRegion.forecast7Days }}
-            </div>
-            <div class="text-slate-300 text-[11px] leading-relaxed">
-              <strong>14 Hari:</strong> {{ mapStore.selectedRegion.forecast14Days }}
-            </div>
+          <!-- Sumber Info -->
+          <div class="text-xs" style="color: var(--lj-muted);">
+            <span class="font-bold" style="color: var(--lj-navy);">Sumber Informasi:</span> Data ABJ diperoleh dari pemeriksaan langsung kader di {{ mapStore.selectedRegion.name }}.
           </div>
         </div>
 
-        <!-- Region List -->
-        <div class="space-y-2">
-          <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Daftar Wilayah Multi-Risk ({{ mapStore.filteredRegions.length }})</div>
-          <div
-            v-for="region in mapStore.filteredRegions"
-            :key="region.id"
-            @click="mapStore.setSelectedRegion(region)"
-            class="p-3 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 rounded-xl cursor-pointer transition-colors flex items-center justify-between text-xs"
-          >
-            <div>
-              <div class="font-bold text-white">{{ region.name }}</div>
-              <div class="text-[10px] text-slate-400">{{ region.district }}</div>
+        <!-- Risk Gauge Card -->
+        <div class="lj-card p-6 flex flex-col items-center justify-center gap-4">
+          <!-- Circular gauge -->
+          <div class="relative w-32 h-32">
+            <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+              <circle cx="60" cy="60" r="50" fill="none" stroke="#E5E9F5" stroke-width="12" />
+              <circle
+                cx="60" cy="60" r="50" fill="none"
+                :stroke="riskColor(mapStore.selectedRegion.riskCode)"
+                stroke-width="12"
+                stroke-linecap="round"
+                :stroke-dasharray="`${mapStore.selectedRegion.abj * 3.14} 999`"
+              />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-2xl font-bold" :style="{ color: riskColor(mapStore.selectedRegion.riskCode) }">
+                {{ mapStore.selectedRegion.abj }}%
+              </span>
             </div>
-            <span
-              class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-              :class="region.riskCode === 'high' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : region.riskCode === 'medium' ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'"
+          </div>
+          <div class="text-center">
+            <div class="font-bold text-sm" style="color: var(--lj-navy);">
+              Peluang <span style="color: var(--lj-green-dk);">nyamuk bertelur</span>
+            </div>
+            <button
+              @click="handleSubscribe"
+              class="mt-3 lj-btn-primary text-xs"
+              :style="isSubscribed ? 'background: var(--lj-green-dk); color: var(--lj-navy);' : ''"
             >
-              {{ region.riskLevel }} ({{ region.abj }}%)
-            </span>
+              <BellRing class="w-4 h-4" />
+              {{ isSubscribed ? '✓ Wilayah Dipantau' : 'Beri Kabar Wilayah Ini' }}
+            </button>
           </div>
         </div>
       </div>
-    </aside>
 
-    <!-- Right Web-GIS Leaflet Map Container -->
-    <main class="flex-1 h-1/2 lg:h-full relative">
-      <div ref="mapContainer" class="w-full h-full z-0"></div>
+      <!-- Prediction Card -->
+      <div class="lj-card p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Prediction map placeholder (Lottie) -->
+        <div>
+          <div class="lottie-placeholder flex-col" style="height: 180px; border-radius: 16px;">
+            <TrendingUp class="w-10 h-10 mb-2 text-[--lj-blue]" />
+            <span class="text-xs font-semibold text-[--lj-blue]">Lottie: Peta Prediksi Mingguan</span>
+          </div>
+        </div>
 
-      <!-- Map Legend Overlay -->
-      <div class="absolute bottom-6 right-6 z-10 bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-700 text-xs text-white space-y-2 shadow-2xl">
-        <div class="font-bold text-slate-300 text-[11px] uppercase">Legenda Kode Warna Risiko</div>
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-          <span>Hijau: Risiko Rendah (ABJ &ge; 95%)</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 rounded-full bg-amber-500"></span>
-          <span>Kuning: Risiko Sedang (ABJ 90-94%)</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 rounded-full bg-rose-500"></span>
-          <span>Merah: Risiko Tinggi (ABJ &lt; 90%)</span>
+        <!-- Prediction text -->
+        <div class="space-y-4">
+          <div>
+            <div class="lj-section-label mb-2" style="width: fit-content; font-size: 11px;">Prediksi Keadaan Wilayah</div>
+            <div class="flex items-start gap-2">
+              <TrendingUp class="w-5 h-5 mt-0.5 shrink-0" style="color: var(--risk-high);" />
+              <div>
+                <p class="text-sm font-bold" style="color: var(--lj-navy);">
+                  {{ mapStore.selectedRegion.forecast7Days }}
+                </p>
+                <p class="text-xs mt-1" style="color: var(--lj-muted);">
+                  {{ mapStore.selectedRegion.forecast14Days }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl" style="background: var(--lj-blue-pale);">
+            <div class="text-xs font-bold mb-2" style="color: var(--lj-blue);">Tindakan Cepat Perlindungan Keluarga:</div>
+            <ul class="text-xs space-y-1" style="color: var(--lj-muted);">
+              <li>✓ Kuras bak mandi minimal seminggu sekali</li>
+              <li>✓ Tutup tempat penampungan air rapat-rapat</li>
+              <li>✓ Daur ulang barang bekas yang dapat menampung air</li>
+              <li>✓ Pasang kelambu dan gunakan lotion anti nyamuk</li>
+            </ul>
+          </div>
         </div>
       </div>
-    </main>
+    </div>
+
+    <!-- Region List when no selection -->
+    <div v-else-if="mapStore.filteredRegions.length > 0" class="animate-on-scroll">
+      <div class="lj-section-label mb-4" style="width: fit-content;">DAFTAR WILAYAH ({{ mapStore.filteredRegions.length }})</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          v-for="region in mapStore.filteredRegions.slice(0, 6)"
+          :key="region.id"
+          @click="mapStore.setSelectedRegion(region)"
+          class="lj-card p-4 cursor-pointer flex items-center justify-between gap-3"
+        >
+          <div>
+            <div class="font-bold text-sm" style="color: var(--lj-navy);">{{ region.name }}</div>
+            <div class="text-xs" style="color: var(--lj-muted);">{{ region.district }}</div>
+          </div>
+          <div
+            class="px-3 py-1 rounded-full text-xs font-bold text-white shrink-0"
+            :style="{ background: riskColor(region.riskCode) }"
+          >
+            {{ riskLabel(region.riskCode) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div v-else class="animate-on-scroll text-center py-12 lj-card">
+      <MapPin class="w-10 h-10 mx-auto mb-3" style="color: var(--lj-blue-lt);" />
+      <p class="text-sm font-bold" style="color: var(--lj-muted);">Ketik nama wilayah di kolom pencarian untuk melihat data risiko.</p>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.slide-up-enter-active, .slide-up-leave-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.slide-up-enter-from, .slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+</style>

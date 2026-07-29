@@ -1,0 +1,149 @@
+---
+title: "Prompt Pengembangan Frontend Publik LensaJentik"
+subtitle: "Untuk Antigravity — Integrasi dengan Backend & Modul Kader yang Sudah Ada"
+output: html_document
+---
+
+## 0. Konteks & Batasan Utama Proyek
+
+Saya sedang mengembangkan **LensaJentik**, platform web pemetaan risiko DBD/Malaria. Bagian **backend** dan **modul kader kesehatan** sudah selesai dikerjakan sebelumnya. Tugas kamu sekarang adalah membangun bagian **frontend untuk sisi publik (warga)** saja.
+
+Batasan yang wajib dipatuhi:
+
+1. **JANGAN mengubah kode backend dalam bentuk apa pun.** Backend dianggap sebagai kontrak yang tetap (fixed contract) — seluruh penyesuaian harus dilakukan dari sisi frontend, menyesuaikan fungsional, struktur response, dan endpoint yang sudah disediakan backend.
+2. Frontend dibangun menggunakan **Vue.js**, dan wajib terintegrasi penuh dengan endpoint backend yang sudah ada (bukan data dummy/hardcoded), kecuali secara eksplisit disebutkan sebagai placeholder pada bagian ilustrasi (lihat Bagian 4).
+3. Seluruh halaman harus **responsif** — tata letak menyesuaikan berbagai ukuran layar (mobile, tablet, desktop), dan tidak boleh ada elemen yang terpotong, bertumpuk tidak rapi, atau pecah proporsinya di ukuran layar mana pun.
+4. Website harus terasa **interaktif dan hidup**: elemen di layar merespons aksi pengguna (scroll, klik, hover) dengan animasi, disertai transisi antar halaman yang halus (smooth page transition), sehingga pengalaman menggunakannya terasa seperti menonton video interaktif — bukan halaman statis.
+
+Acuan visual yang wajib diikuti adalah rancangan UI (mockup) yang saya lampirkan. **Tampilan akhir harus semirip mungkin dengan mockup tersebut** — dari segi tata letak, urutan section, warna, dan gaya komponen.
+
+---
+
+## 1. Desain Sistem (Design System)
+
+### 1.1 Tipografi
+- Font utama: **Satoshi**, digunakan dalam varian **Bold** (untuk judul/heading) dan **Regular** (untuk body text/paragraf).
+- Font aksen: **Apple Garamond**, varian **Bold Italic**, dipakai secara selektif sebagai elemen dekoratif/penekanan pada teks tertentu (misalnya kata kunci pada headline) — bukan untuk body text.
+
+### 1.2 Palet Warna
+| Elemen | Kode Warna |
+| --- | --- |
+| Warna teks utama | `#000000` |
+| Warna aksen biru (primary) | `#4E63DA` |
+| Warna aksen hijau (secondary) | `#95FE6D` |
+
+### 1.3 Prinsip Ikonografi
+- **Hindari penggunaan emoji bawaan sistem** (native emoji) di seluruh bagian UI. Gunakan icon set custom/SVG yang konsisten dengan gaya desain, agar tampilan tidak terkesan seperti hasil generate AI generik.
+
+---
+
+## 2. Prinsip Interaksi & Motion secara Global
+
+- Setiap section pada seluruh halaman harus memiliki animasi masuk (entrance animation) saat elemen tersebut muncul di viewport ketika pengguna melakukan scroll (scroll-triggered animation).
+- Transisi antar halaman (page transition) harus halus, bukan perpindahan instan/hard-cut.
+- Elemen interaktif (tombol, kartu, ikon) harus memiliki respons visual saat di-hover dan di-klik (micro-interaction), misalnya perubahan skala, warna, atau posisi ringan.
+
+---
+
+## 3. Rincian Per Halaman
+
+### 3.1 Landing Page
+
+**Header:**
+- Ikon lonceng (notifikasi) pada heading mengarahkan pengguna ke halaman Notifikasi.
+- Ikon user pada heading mengarahkan pengguna ke halaman Login Kader.
+- Tombol tanda tanya (`?`) diletakkan di ujung kanan heading, berfungsi memicu ulang onboarding kapan saja (lihat sub-bagian Onboarding di bawah).
+
+**Section Fitur (slider):**
+- Section ini dapat digeser ke kanan dan ke kiri menggunakan tombol navigasi.
+- Setiap kartu fitur pada slider ini adalah tombol yang mengarahkan ke halaman lain:
+  - "Lihat Peta Sekarang" → halaman **Peta Risiko**
+  - "Laporkan Genangan" → halaman **Laporan**
+  - "Pelajari Sekarang" → halaman **Edukasi**
+  - "Lihat Statistik" → halaman **Statistik**
+
+**Section Cara Kerja (4 langkah interaktif):**
+- Ditampilkan sebagai 4 langkah, namun **angka 1–2–3–4 diganti dengan simbol/ikon** (bukan angka polos).
+- Setiap simbol bersifat interaktif: pengguna dapat menggeser (slide) atau mengklik simbol langkah tertentu, dan konten penjelasan cara kerja website akan berubah sesuai langkah yang dipilih (mis. klik simbol langkah 2 → tampil penjelasan Langkah 2), dengan transisi animasi antar langkah.
+
+**Section FAQ:**
+- Berisi **5 pertanyaan** dalam format accordion.
+- Saat sebuah pertanyaan diklik, jawaban akan muncul dengan animasi *dropdown/expand* (bukan langsung muncul instan).
+
+**Onboarding:**
+- Berupa panduan yang menyorot (spotlight/highlight) bagian-bagian penting dari website, masing-masing disertai penjelasan singkat dan mudah dipahami di bawah area yang disorot.
+- Onboarding ini **hanya tampil otomatis satu kali**, yaitu pada saat pengguna pertama kali membuka website.
+- Setelah itu, onboarding tetap dapat diakses ulang kapan saja melalui tombol tanda tanya (`?`) di ujung kanan heading.
+
+---
+
+### 3.2 Halaman Peta Risiko
+
+- Peta yang ditampilkan adalah **peta GIS asli** (bukan ilustrasi statis) yang terintegrasi dengan backend, menampilkan data sesuai wilayah yang dimasukkan/dicari oleh pengguna, lengkap dengan data tingkat risiko wilayah tersebut dari backend.
+- Peta dapat **disortir** berdasarkan:
+  - Tingkat risiko wilayah
+  - Jenis penyakit (DBD/Malaria)
+- **Interaksi hover pada wilayah di peta:** saat kursor diarahkan ke suatu wilayah tertentu, akan muncul modal/popup berwarna biru yang menjelaskan arti warna wilayah tersebut saat ini. Modal ini dapat **digeser (slide)** untuk melihat penjelasan arti warna-warna lainnya (tanpa perlu menutup modal dan hover ulang).
+- Peta dilengkapi tombol **maximize** dan **minimize** untuk memperbesar/mengecilkan tampilan peta.
+- **Di bawah peta**, ditampilkan hasil pemeriksaan wilayah yang diinput pengguna — data ini mengikuti hasil analisis backend untuk wilayah tersebut, termasuk **visualisasi grafik prediksi kondisi wilayah** ke depan.
+- Terdapat tombol **"Beri Kabar Wilayah Ini"** — saat diklik, pengguna akan menerima notifikasi setiap kali ada update terkait wilayah tersebut. Notifikasi ini akan muncul di halaman Notifikasi.
+
+---
+
+### 3.3 Halaman Laporan
+
+- Peta pada halaman ini juga merupakan **peta GIS asli** yang:
+  - Secara otomatis mendeteksi lokasi pengguna (auto-detect), dengan terlebih dahulu meminta izin akses lokasi ke pengguna.
+  - Setelah lokasi terdeteksi, **alamat hasil deteksi dapat diedit kembali** oleh pengguna.
+  - Pengguna juga dapat memilih untuk **memasukkan alamat secara manual**, tanpa harus melalui proses deteksi lokasi otomatis.
+
+---
+
+### 3.4 Halaman Laporan — Setelah Kirim Laporan
+
+Setelah laporan berhasil dikirim, pengguna mendapatkan **2 jenis reward**:
+
+1. **Bagikan ke media sosial** — tombol ini mengarahkan pengguna untuk membagikan laporan ke **Instagram Story** atau **WhatsApp Status**. Saat diklik, akan muncul pilihan template gambar yang sudah disediakan (dari pihak LensaJentik), berisi teks seperti *"Saya telah berperan membantu lingkungan"*, yang kemudian dibagikan pengguna ke story/status masing-masing.
+2. **Bonus kuota subscribe wilayah** — tombol **"Pilih Wilayah"** mengarahkan pengguna ke halaman Peta Risiko, di mana pengguna dapat menambahkan wilayah baru untuk diaktifkan notifikasinya. Jumlah wilayah tambahan yang bisa dipilih **mengikuti jumlah laporan yang sudah pernah dikirim pengguna** (misalnya: baru mengirim 1 laporan → hanya bisa menambah 1 wilayah baru).
+
+---
+
+### 3.5 Halaman Edukasi
+
+- Halaman ini bersifat **sarat animasi** — pastikan banyak pergerakan/motion di sepanjang halaman, bukan hanya statis.
+- Seluruh konten pada halaman ini harus **mengikuti data yang tersedia dari backend** (bukan konten statis hardcoded), meliputi:
+  - **Fakta seputar DBD** — ditampilkan dalam bentuk yang dapat **digeser ke kanan** (slider horizontal).
+  - **Panduan Gerakan 3M** — ditampilkan dalam bentuk yang dapat **digeser secara horizontal**.
+  - **Artikel terkait DBD** — bersumber dari media seperti Kompas, dll. Pada setiap kartu artikel, saat pengguna mengarahkan kursor/menyorot artikel tertentu, muncul tombol untuk membaca artikel tersebut. Saat tombol diklik, akan membuka **halaman detail artikel di dalam website LensaJentik sendiri** (bukan redirect keluar ke situs media aslinya) — isi artikel ditampilkan langsung di halaman kami, dengan **sumber asli dicantumkan di bagian bawah artikel** sebagai atribusi, tanpa memberikan link langsung menuju halaman media tersebut.
+- **Kalkulator Risiko DBD** — saat tombol "Mulai" diklik, akan terbuka alur kuis singkat yang pada akhirnya menghasilkan halaman hasil berupa **persentase risiko DBD di rumah pengguna**. Sertakan juga tombol **kembali (back)** pada alur kuis ini.
+
+---
+
+### 3.6 Halaman Statistik
+
+- Seluruh isi halaman ini **disesuaikan dengan data yang tersedia dari backend**.
+- Pengguna dapat **mengekspor hasil analisis dalam format PDF**.
+- Pengguna dapat **mengakses sumber data** yang digunakan dalam analisis/riset.
+- Halaman ini menampilkan **grafik-grafik terkait kondisi DBD di Indonesia saat ini**, dengan fokus utama memberikan *insight* statistik yang informatif kepada pengguna.
+
+---
+
+## 4. Ketentuan Ilustrasi & Placeholder Motion Graphic (Lottie)
+
+- Pada rancangan UI yang dilampirkan, terdapat beberapa ilustrasi yang **nantinya akan berupa motion graphic** — dibuat secara terpisah menggunakan After Effects, lalu dikonversi ke format **Lottie** agar ringan saat ditampilkan di website.
+- **Untuk saat ini, buatkan placeholder untuk seluruh ilustrasi tersebut** (posisi, ukuran, dan area tampil yang sesuai dengan mockup), sebagai penanda ruang yang nantinya akan digantikan dengan file Lottie hasil konversi.
+- **Pengecualian khusus:** ilustrasi berbentuk **peta (map)** pada mockup **bukan** placeholder motion graphic — bagian ini harus berupa **peta GIS yang benar-benar berfungsi**, yang mampu meng-highlight wilayah tertentu sesuai permintaan/input pengguna (lihat Bagian 3.2 dan 3.3).
+- Kode konversi file Lottie untuk masing-masing ilustrasi akan saya lampirkan/tempelkan secara terpisah setelah struktur placeholder ini selesai dibuat.
+
+---
+
+## 5. Ringkasan Prioritas Pengerjaan
+
+1. Setup struktur frontend Vue.js yang terintegrasi dengan endpoint backend yang sudah ada (tanpa mengubah backend).
+2. Bangun Landing Page lengkap dengan seluruh interaksi (slider fitur, cara kerja 4 langkah, FAQ accordion, onboarding).
+3. Bangun halaman Peta Risiko dengan integrasi GIS dan seluruh interaksi (hover modal, filter/sort, maximize/minimize, subscribe wilayah).
+4. Bangun halaman Laporan beserta state Setelah Kirim Laporan (2 reward).
+5. Bangun halaman Edukasi (fakta, 3M, artikel, kalkulator risiko).
+6. Bangun halaman Statistik dan Notifikasi.
+7. Terapkan placeholder Lottie di seluruh titik ilustrasi motion graphic sesuai mockup.
+8. Pastikan seluruh halaman responsif dan diuji di berbagai ukuran layar sebelum dianggap selesai.

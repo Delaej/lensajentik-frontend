@@ -2,47 +2,387 @@
 @import "leaflet/dist/leaflet.css";
 
 /* ─── LensaJentik Design System ───────────────────────────────────────────── */
-/* Color Palette:
-   --lj-lime:    #CEFF82  (Light lime accent / tag backgrounds)
-   --lj-green:   #5AF61F  (Primary green CTA, badges, pills)
-   --lj-blue-lt: #7B93F0  (Light blue / periwinkle accent)
-   --lj-blue:    #4E63DA  (Primary blue – sidebar active, buttons)
-   --lj-navy:    #1E2B5B  (Navy dark – logo dot, headings)
-   --lj-bg:      #F8FAFC  (App background)
-*/
-
 :root {
-  --lj-lime:    #CEFF82;
-  --lj-green:   #5AF61F;
-  --lj-blue-lt: #7B93F0;
-  --lj-blue:    #4E63DA;
-  --lj-navy:    #1E2B5B;
-  --lj-bg:      #F8FAFC;
+  --lj-blue:      #4E63DA;
+  --lj-blue-lt:   #7B93F0;
+  --lj-blue-pale: #EEF1FD;
+  --lj-green:     #95FE6D;
+  --lj-green-dk:  #5AF61F;
+  --lj-lime:      #CEFF82;
+  --lj-navy:      #1E2B5B;
+  --lj-bg:        #F5F8FF;
+  --lj-text:      #000000;
+  --lj-muted:     #6B7280;
+  --lj-white:     #FFFFFF;
+  --lj-border:    #E5E9F5;
+
+  /* Risk colors */
+  --risk-high:    #EF4444;
+  --risk-medium:  #F59E0B;
+  --risk-low:     #22C55E;
 }
 
+/* ─── Base ──────────────────────────────────────────────────────────────────  */
 @layer base {
   *, *::before, *::after {
     box-sizing: border-box;
   }
 
   html {
-    font-family: 'Satoshi', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    scroll-behavior: smooth;
+    font-family: 'Satoshi', system-ui, -apple-system, sans-serif;
   }
 
   body {
     background-color: var(--lj-bg);
-    color: #0f172a;
-    font-family: 'Satoshi', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--lj-text);
+    font-family: 'Satoshi', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 700;
   }
 }
 
 /* ─── Custom Scrollbar ─────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+::-webkit-scrollbar-thumb { background: var(--lj-blue-lt); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--lj-blue); }
 
-/* ─── Utility Overrides ────────────────────────────────────────────────────── */
+/* ─── Page Transitions ─────────────────────────────────────────────────────── */
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* ─── Scroll Animations ────────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    max-height: 600px;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Scroll-triggered: elements start hidden, JS adds .visible class */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-on-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.animate-on-scroll.delay-100 { transition-delay: 0.1s; }
+.animate-on-scroll.delay-200 { transition-delay: 0.2s; }
+.animate-on-scroll.delay-300 { transition-delay: 0.3s; }
+.animate-on-scroll.delay-400 { transition-delay: 0.4s; }
+.animate-on-scroll.delay-500 { transition-delay: 0.5s; }
+
+/* ─── LensaJentik Brand Utilities ─────────────────────────────────────────── */
+.lj-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--lj-blue);
+  color: white;
+  border-radius: 100px;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+.lj-btn-primary:hover {
+  background: var(--lj-navy);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(78, 99, 218, 0.35);
+}
+.lj-btn-primary:active { transform: translateY(0); }
+
+.lj-btn-green {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--lj-green);
+  color: var(--lj-navy);
+  border-radius: 100px;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+.lj-btn-green:hover {
+  background: var(--lj-green-dk);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(149, 254, 109, 0.4);
+}
+
+.lj-card {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid var(--lj-border);
+  box-shadow: 0 2px 12px rgba(78, 99, 218, 0.06);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.lj-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(78, 99, 218, 0.14);
+}
+
+.lj-section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 18px;
+  border: 1.5px solid var(--lj-blue);
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lj-blue);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--lj-blue-pale);
+}
+
+.lj-heading {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 700;
+  color: var(--lj-text);
+  line-height: 1.25;
+}
+
+.lj-heading .accent {
+  color: var(--lj-blue);
+  font-style: italic;
+}
+
+/* Garamond accent text */
+.font-garamond {
+  font-family: 'Apple Garamond', 'Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+}
+
+/* ─── Lottie Placeholder ───────────────────────────────────────────────────── */
+.lottie-placeholder {
+  background: linear-gradient(135deg, var(--lj-blue-pale) 0%, #e0e7ff 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--lj-blue-lt);
+  font-size: 12px;
+  font-weight: 600;
+  border: 2px dashed var(--lj-blue-lt);
+  position: relative;
+  overflow: hidden;
+}
+
+.lottie-placeholder::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.3) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* ─── Floating animation ────────────────────────────────────────────────────  */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+.animate-float-slow {
+  animation: float 5s ease-in-out infinite;
+}
+.animate-float-delay {
+  animation: float 3.5s ease-in-out infinite 0.8s;
+}
+
+/* ─── Leaflet overrides ─────────────────────────────────────────────────────  */
+.leaflet-container {
+  font-family: 'Satoshi', sans-serif;
+  border-radius: 16px;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.leaflet-popup-tip {
+  background: white;
+}
+
+/* ─── Accordion transition ──────────────────────────────────────────────────  */
+.accordion-content-enter-active,
+.accordion-content-leave-active {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.accordion-content-enter-from,
+.accordion-content-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+.accordion-content-enter-to,
+.accordion-content-leave-from {
+  max-height: 600px;
+  opacity: 1;
+}
+
+/* ─── Slider ────────────────────────────────────────────────────────────────  */
+.slider-track {
+  display: flex;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Step connector line ───────────────────────────────────────────────────  */
+.step-connector {
+  position: relative;
+}
+.step-connector::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--lj-blue) 0%, var(--lj-green) 100%);
+  transform: translateY(-50%);
+}
+
+/* ─── Map maximize ──────────────────────────────────────────────────────────  */
+.map-maximized {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1000 !important;
+  border-radius: 0 !important;
+  height: 100vh !important;
+}
+
+/* ─── Chart container ───────────────────────────────────────────────────────  */
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+/* ─── Prose override ────────────────────────────────────────────────────────  */
+.prose h1, .prose h2, .prose h3 {
+  color: var(--lj-text);
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 700;
+}
+.prose p { color: #374151; line-height: 1.75; }
+
+/* ─── Utility ───────────────────────────────────────────────────────────────  */
 .font-satoshi { font-family: 'Satoshi', sans-serif; }
+.text-lj-blue  { color: var(--lj-blue); }
+.text-lj-green { color: var(--lj-green-dk); }
+.text-lj-navy  { color: var(--lj-navy); }
+.bg-lj-blue    { background-color: var(--lj-blue); }
+.bg-lj-green   { background-color: var(--lj-green); }
+.bg-lj-pale    { background-color: var(--lj-blue-pale); }
+
+.risk-high   { color: var(--risk-high); }
+.risk-medium { color: var(--risk-medium); }
+.risk-low    { color: var(--risk-low); }
+
+.bg-risk-high   { background-color: var(--risk-high); }
+.bg-risk-medium { background-color: var(--risk-medium); }
+.bg-risk-low    { background-color: var(--risk-low); }
