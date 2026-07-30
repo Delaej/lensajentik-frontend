@@ -160,12 +160,12 @@ const emit = defineEmits(['trigger-onboarding'])
     <!-- ─── Footer ─────────────────────────────────────────────────────────── -->
     <footer class="relative mt-auto w-full">
       <!-- City Silhouette SVG -->
-      <img src="/footer.svg" alt="" aria-hidden="true" class="w-full h-auto block" style="margin-bottom: -2px; pointer-events: none;" />
+      <img src="/footer.svg" alt="" aria-hidden="true" class="w-full h-auto block" style="pointer-events: none;" />
 
-      <div class="w-full px-4 sm:px-6 lg:px-8 pb-5 pt-3 text-white" style="background: linear-gradient(180deg, #4E63DA 0%, #63D097 100%);">
+      <div class="absolute bottom-0 left-0 w-full px-4 sm:px-6 lg:px-8 pb-5 text-white flex flex-col justify-end">
         <!-- Links Row -->
-        <div class="flex flex-col md:flex-row items-center justify-between mb-3 gap-3 max-w-7xl mx-auto">
-          <ul class="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-8 text-[11px] font-medium opacity-90">
+        <div class="flex flex-col md:flex-row items-center justify-between mb-3 gap-3 max-w-5xl mx-auto w-full">
+          <ul class="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-8 text-[11px] sm:text-xs font-medium opacity-90">
             <li><RouterLink to="/" class="hover:text-white transition-colors">Home</RouterLink></li>
             <li class="flex items-center gap-1 cursor-pointer hover:text-white transition-colors">Services <ChevronDown class="w-3 h-3" /></li>
             <li><RouterLink to="/edukasi" class="hover:text-white transition-colors">Blog</RouterLink></li>

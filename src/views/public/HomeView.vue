@@ -182,17 +182,23 @@ const statCards = [
   <div>
     <!-- ─── Hero Section ─────────────────────────────────────────────────── -->
     <section class="hero-full-width overflow-hidden bg-[--lj-blue-pale] relative" style="min-height: 700px;">
-      <!-- Lottie Background Placeholder fills full height -->
-      <div class="absolute inset-0 lottie-placeholder" style="border-radius: 0;">
-        <span class="text-[--lj-blue] font-semibold text-xl">Lottie: Ilustrasi Hero (Animasi)</span>
+      <!-- Lottie Background fills full height -->
+      <div class="absolute inset-0 z-0 pointer-events-none" style="border-radius: 0;">
+        <Vue3Lottie
+          animationLink="/landing_page.json"
+          :loop="true"
+          :autoplay="true"
+          class="w-full h-full"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMax slice' }"
+        />
       </div>
 
       <!-- Backdrop overlay for readability -->
       <div class="absolute inset-0 bg-gradient-to-b from-white/70 via-white/30 to-transparent"></div>
 
       <!-- Sway wave bottom -->
-      <div class="absolute bottom-0 left-0 w-full z-10" style="transform: translateY(1px);">
-        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 80px; object-fit: fill;" />
+      <div class="absolute bottom-0 left-0 w-full z-10 pointer-events-none" style="transform: translateY(1px);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
       </div>
 
       <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-36 pb-28 relative z-10 text-center flex flex-col items-center justify-center" style="min-height: 700px;">
@@ -215,10 +221,10 @@ const statCards = [
     </section>
 
     <!-- ─── About LensaJentik ────────────────────────────────────────────── -->
-    <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative">
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-20">
       <!-- Decorative Blobs -->
-      <div class="blob-bg w-96 h-96 top-0 left-0" style="background: var(--lj-green);"></div>
-      <div class="blob-bg w-96 h-96 bottom-0 right-0" style="background: var(--lj-blue);"></div>
+      <div class="blob-bg w-96 h-96 -top-32 left-0" style="background: var(--lj-green);"></div>
+      <div class="blob-bg w-96 h-96 -bottom-32 right-0" style="background: var(--lj-blue);"></div>
 
       <div class="text-center mb-16 relative z-10 animate-on-scroll">
         <div class="lj-section-label mb-5 mx-auto bg-white" style="width: fit-content;">TENTANG LENSAJENTIK</div>
@@ -252,16 +258,24 @@ const statCards = [
     </section>
 
     <!-- ─── Feature Slider ───────────────────────────────────────────────── -->
-    <section class="py-24 relative hero-full-width">
-      <!-- Background Lottie Placeholder -->
-      <div class="absolute inset-0 lottie-placeholder" style="border-radius: 0;"></div>
+    <section class="pt-24 pb-48 relative hero-full-width">
+      <!-- Background Lottie -->
+      <div class="absolute inset-0 z-0 pointer-events-none" style="border-radius: 0;">
+        <Vue3Lottie
+          animationLink="/illustrasi_landing_bg_fiturkami.json"
+          :loop="true"
+          :autoplay="true"
+          class="w-full h-full"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMin slice' }"
+        />
+      </div>
       
       <!-- Sway wave top & bottom -->
-      <div class="absolute top-0 left-0 w-full z-10" style="transform: translateY(-98%) rotate(180deg);">
-        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
+      <div class="absolute left-0 w-full z-10 pointer-events-none" style="top: -2px; transform: rotate(180deg);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
       </div>
-      <div class="absolute bottom-0 left-0 w-full z-10" style="transform: translateY(98%);">
-        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
+      <div class="absolute left-0 w-full z-10 pointer-events-none" style="bottom: -2px;">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
       </div>
 
       <div class="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
@@ -341,33 +355,34 @@ const statCards = [
     </section>
 
     <!-- ─── Cara Kerja ───────────────────────────────────────────────── -->
-    <section class="py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-12 animate-on-scroll">
-        <div class="lj-section-label mb-4 mx-auto" style="width: fit-content;">CARA KERJA</div>
+    <section class="py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
+      <div class="text-center mb-12 animate-on-scroll relative z-20">
+        <div class="lj-section-label mb-4 mx-auto bg-white" style="width: fit-content;">CARA KERJA</div>
       </div>
 
-      <!-- Cara Kerja Diagram SVG -->
-      <div class="w-full animate-on-scroll mb-8">
-        <img src="/cara-kerja.svg" alt="Diagram Cara Kerja LensaJentik" class="w-full h-auto block max-w-3xl mx-auto" />
-      </div>
-
-      <!-- Step selector -->
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-10 animate-on-scroll relative">
-        <template v-for="(step, i) in steps" :key="i">
-          <button
-            @click="activeStep = i"
-            class="flex flex-col items-center gap-2 group transition-all relative z-10 bg-[--lj-bg] p-2"
-          >
-            <div
-              class="w-16 h-16 rounded-full border-4 flex items-center justify-center transition-all duration-300 font-bold text-xl shadow-sm bg-white"
-              :style="activeStep === i
-                ? 'border-color: var(--lj-navy); color: var(--lj-navy); transform: scale(1.1); box-shadow: 0 10px 25px rgba(0,0,0,0.1);'
-                : 'border-color: var(--lj-border); color: var(--lj-muted);'"
+      <!-- Cara Kerja Diagram SVG with Overlaid Steps -->
+      <div class="w-full animate-on-scroll mb-16 relative max-w-3xl mx-auto">
+        <img src="/cara-kerja.svg" alt="Diagram Cara Kerja LensaJentik" class="w-full h-auto block" />
+        
+        <!-- Step selector overlaid -->
+        <div class="absolute inset-0 flex items-center">
+          <template v-for="(step, i) in steps" :key="i">
+            <button
+              @click="activeStep = i"
+              class="absolute -translate-x-1/2 group transition-all z-10"
+              :style="{ left: i === 0 ? '15.5%' : i === 1 ? '38.9%' : i === 2 ? '62.3%' : '85.8%' }"
             >
-              {{ i + 1 }}
-            </div>
-          </button>
-        </template>
+              <div
+                class="w-10 h-10 sm:w-16 sm:h-16 rounded-full border-[3px] sm:border-4 flex items-center justify-center transition-all duration-300 font-bold text-lg sm:text-xl shadow-md bg-white hover:scale-110"
+                :style="activeStep === i
+                  ? 'border-color: var(--lj-navy); color: var(--lj-navy); transform: scale(1.15); box-shadow: 0 10px 25px rgba(0,0,0,0.15);'
+                  : 'border-color: var(--lj-border); color: var(--lj-muted);'"
+              >
+                {{ i + 1 }}
+              </div>
+            </button>
+          </template>
+        </div>
       </div>
 
       <!-- Step content -->
@@ -417,8 +432,8 @@ const statCards = [
       <div class="absolute inset-0 lottie-placeholder" style="border-radius: 0;"></div>
       
       <!-- Sway wave top -->
-      <div class="absolute top-0 left-0 w-full z-10" style="transform: translateY(-98%) rotate(180deg);">
-        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
+      <div class="absolute top-0 left-0 w-full z-10 pointer-events-none" style="transform: translateY(-1px) rotate(180deg);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
       </div>
 
       <div class="max-w-3xl mx-auto px-4 sm:px-6 relative z-10 pb-8">
