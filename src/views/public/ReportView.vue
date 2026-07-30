@@ -115,14 +115,53 @@ const handleSearch = async () => {
 const selectRegion = async (region) => {
   selectedWilayahKode.value = region.kode
   selectedRegionName.value = `${region.nama} (${region.tingkat})`
-  const lat = Number(region.latitude) || latitude.value
-  const lng = Number(region.longitude) || longitude.value
-  latitude.value = lat
-  longitude.value = lng
-  address.value = region.nama
   searchResults.value = []
   searchQuery.value = ''
-  await updateMapMarker(lat, lng)
+
+  let lat = Number(region.latitude)
+  let lng = Number(region.longitude)
+
+  // Jika koordinat tidak tersedia dari search, fetch detail wilayah
+  if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+    try {
+      const { default: apiClient } = await import('@/services/apiClient')
+      const res = await apiClient.get(`/wilayah/${region.kode}`)
+      const detail = res.data?.data || res.data
+      lat = Number(detail?.latitude)
+      lng = Number(detail?.longitude)
+      console.log('📍 Koordinat dari detail wilayah:', lat, lng)
+    } catch (e) {
+      console.warn('Gagal fetch detail wilayah:', e)
+    }
+  }
+
+  if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+    latitude.value = lat
+    longitude.value = lng
+    address.value = region.nama
+    await updateMapMarker(lat, lng)
+  } else {
+    // Fallback: geocode via Nominatim
+    try {
+      const geo = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(region.nama)}&format=json&limit=1`)
+      const geoData = await geo.json()
+      if (geoData.length > 0) {
+        lat = Number(geoData[0].lat)
+        lng = Number(geoData[0].lon)
+        latitude.value = lat
+        longitude.value = lng
+        address.value = region.nama
+        await updateMapMarker(lat, lng)
+        console.log('📍 Koordinat dari Nominatim:', lat, lng)
+      } else {
+        console.warn('Koordinat tidak ditemukan untuk:', region.nama)
+        address.value = region.nama
+      }
+    } catch (e) {
+      console.warn('Nominatim geocoding gagal:', e)
+      address.value = region.nama
+    }
+  }
 }
 
 const triggerFileInput = () => fileInput.value?.click()
@@ -204,10 +243,11 @@ const resetForm = () => {
         <!-- Form (no floating card) -->
         <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border" style="border-color: var(--lj-border);">
 
-        <!-- Map GIS -->
-        <div class="lj-card overflow-hidden animate-on-scroll" style="border: 2px solid var(--lj-green-dk);">
-          <!-- Search bar inside card -->
-          <div class="p-3 border-b" style="border-color: var(--lj-border);">
+        <!-- Map GIS Section -->
+        <div class="animate-on-scroll space-y-0" style="border: 2px solid var(--lj-green-dk); border-radius: 20px;">
+
+          <!-- Search bar OUTSIDE overflow-hidden card (above map) -->
+          <div class="p-3 border-b bg-white relative" style="border-color: var(--lj-border); border-radius: 18px 18px 0 0; z-index: 9999;">
             <div class="relative">
               <Search class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style="color: var(--lj-muted);" />
               <input
@@ -218,40 +258,47 @@ const resetForm = () => {
                 class="w-full pl-9 pr-4 py-2.5 rounded-xl border text-xs font-medium outline-none"
                 style="border-color: var(--lj-border);"
               />
-            </div>
-            <div v-if="searchResults.length > 0" class="absolute z-30 mt-1 w-full max-w-[calc(100%-2rem)] bg-white border rounded-xl shadow-lg max-h-40 overflow-y-auto text-xs">
+              <!-- Dropdown di sini, BUKAN di dalam overflow:hidden -->
               <div
-                v-for="r in searchResults"
-                :key="r.kode"
-                @click="selectRegion(r)"
-                class="p-3 hover:bg-[--lj-blue-pale] cursor-pointer flex justify-between items-center font-medium"
-                style="color: var(--lj-navy);"
+                v-if="searchResults.length > 0"
+                class="absolute left-0 right-0 top-full z-50 mt-1 bg-white border rounded-xl shadow-xl max-h-48 overflow-y-auto text-xs"
+                style="border-color: var(--lj-border);"
               >
-                <span>{{ r.nama }} ({{ r.tingkat }})</span>
-                <span style="color: var(--lj-blue); font-weight: 700;">Pilih</span>
+                <div
+                  v-for="r in searchResults"
+                  :key="r.kode"
+                  @click="selectRegion(r)"
+                  class="p-3 hover:bg-[--lj-blue-pale] cursor-pointer flex justify-between items-center font-medium border-b last:border-b-0"
+                  style="color: var(--lj-navy); border-color: var(--lj-border);"
+                >
+                  <span>{{ r.nama }} ({{ r.tingkat }})</span>
+                  <span style="color: var(--lj-blue); font-weight: 700;">Pilih →</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Map -->
-          <div ref="mapContainer" style="height: 240px;" class="w-full relative">
-            <!-- Detect GPS overlay button -->
-            <div class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-              <button
-                @click="handleGetGps"
-                class="lj-btn-primary pointer-events-auto text-xs px-5 py-2.5 shadow-xl"
-                :disabled="isLocating"
-              >
-                <Navigation class="w-4 h-4" />
-                {{ isLocating ? 'Mendeteksi...' : 'Deteksi Lokasi Saya' }}
-              </button>
+          <!-- Map (overflow hidden HANYA di sini agar tiles tidak bocor) -->
+          <div class="overflow-hidden relative" style="border-radius: 0 0 18px 18px; z-index: 10;">
+            <div ref="mapContainer" style="height: 260px;" class="w-full relative">
+              <!-- GPS overlay button -->
+              <div class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                <button
+                  @click="handleGetGps"
+                  class="lj-btn-primary pointer-events-auto text-xs px-5 py-2.5 shadow-xl"
+                  :disabled="isLocating"
+                >
+                  <Navigation class="w-4 h-4" />
+                  {{ isLocating ? 'Mendeteksi...' : 'Deteksi Lokasi Saya' }}
+                </button>
+              </div>
             </div>
-          </div>
 
-          <!-- Address display -->
-          <div v-if="selectedRegionName" class="px-4 py-2 flex items-center gap-2 text-xs" style="background: var(--lj-blue-pale);">
-            <CheckCircle2 class="w-3.5 h-3.5" style="color: var(--lj-green-dk);" />
-            <span class="font-bold" style="color: var(--lj-navy);">{{ selectedRegionName }}</span>
+            <!-- Address display -->
+            <div v-if="selectedRegionName" class="px-4 py-2 flex items-center gap-2 text-xs" style="background: var(--lj-blue-pale);">
+              <CheckCircle2 class="w-3.5 h-3.5" style="color: var(--lj-green-dk);" />
+              <span class="font-bold" style="color: var(--lj-navy);">📍 {{ selectedRegionName }}</span>
+            </div>
           </div>
         </div>
 

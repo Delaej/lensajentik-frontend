@@ -94,8 +94,38 @@ export const useMapStore = defineStore('map', {
         const mainScore = details.skor_hari_ini || {}
         const predictions = details.prediksi || []
 
-        const lat = Number(details.wilayah.latitude) || -6.9175
-        const lng = Number(details.wilayah.longitude) || 107.6191
+        let lat = Number(details.wilayah.latitude)
+        let lng = Number(details.wilayah.longitude)
+        let geojson = null
+
+        // Fetch geocoding & boundary from Nominatim
+        try {
+          // Use search format to find the boundary of the region, fetching up to 5 results to filter out offices
+          // Do not append "Kecamatan" or "Kelurahan" because it causes Nominatim to return POI offices instead of administrative boundaries!
+          const geo = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(details.wilayah.nama + ', Indonesia')}&format=json&limit=5&polygon_geojson=1`)
+          const geoData = await geo.json()
+          if (geoData.length > 0) {
+            // Prefer administrative boundaries over POIs (like offices)
+            let targetGeo = geoData.find(g => g.class === 'boundary' && g.type === 'administrative')
+            // Fallback to any polygon if administrative boundary is not found
+            if (!targetGeo) {
+              targetGeo = geoData.find(g => g.geojson && g.geojson.type.includes('Polygon')) || geoData[0]
+            }
+
+            lat = Number(targetGeo.lat)
+            lng = Number(targetGeo.lon)
+            if (targetGeo.geojson && targetGeo.geojson.type.includes('Polygon')) {
+              geojson = targetGeo.geojson
+            }
+          } else if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+            lat = -6.9175; lng = 107.6191; // Bandung fallback
+          }
+        } catch (e) {
+          if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+            lat = -6.9175; lng = 107.6191; // Bandung fallback
+          }
+        }
+
         const offset = 0.007
         const latLngs = [
           [lat + offset, lng - offset],
@@ -120,8 +150,15 @@ export const useMapStore = defineStore('map', {
           confidenceLevel: mainScore.confidence_level === 'kuat' ? 94 : 45,
           coordinates: [lat, lng],
           latLngs: latLngs,
+          geojson: geojson,
           forecast7Days: day7,
           forecast14Days: day14,
+        }
+
+        // Add to map if not present so it can be highlighted
+        const exists = this.diseaseRiskData.find(r => r.id === this.selectedRegion.id)
+        if (!exists) {
+          this.diseaseRiskData.push(this.selectedRegion)
         }
       } catch (error) {
         console.error('Fetch region detail failed:', error)
