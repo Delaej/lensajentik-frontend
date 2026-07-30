@@ -143,6 +143,7 @@ export const useMapStore = defineStore('map', {
         const day14 = predictions[13] ? `Skor Prediksi: ${predictions[13].skor} (${predictions[13].level_risiko})` : 'Data prediksi belum tersedia'
 
         const faktor = mainScore.faktor_perhitungan || {}
+        const hasAbj = mainScore.confidence_level === 'kuat' && faktor.abj_persen != null
 
         this.selectedRegion = {
           id: details.wilayah.kode,
@@ -152,22 +153,30 @@ export const useMapStore = defineStore('map', {
           disease: details.jenis_penyakit,
           riskLevel: mainScore.level_risiko === 'tinggi' ? 'Tinggi' : mainScore.level_risiko === 'sedang' ? 'Sedang' : 'Rendah',
           riskCode: mainScore.level_risiko === 'tinggi' ? 'high' : mainScore.level_risiko === 'sedang' ? 'medium' : 'low',
-          riskScore: mainScore.skor || 0,
-          abj: faktor.abj_persen || 92.5,
-          confidenceLevel: mainScore.confidence_level === 'kuat' ? 94 : 45,
+          // Skor risiko dari backend (0-100,越高越危险)
+          riskScore: mainScore.skor != null ? Number(mainScore.skor) : null,
+          // ABJ hanya ditampilkan jika data lapangan tersedia
+          abj: hasAbj ? Number(faktor.abj_persen) : null,
+          confidenceLevel: mainScore.confidence_level || 'lemah',
           coordinates: [lat, lng],
           latLngs: latLngs,
           geojson: geojson,
           forecast7Days: day7,
           forecast14Days: day14,
-          // Weather data dari faktor_perhitungan
-          suhu: faktor.suhu || null,
-          kelembapan: faktor.kelembapan || null,
-          curahHujan: faktor.curah_hujan || null,
-          // Prediksi array dari backend
+          // Data cuaca dari faktor_perhitungan backend
+          suhu: faktor.suhu != null ? Number(faktor.suhu) : null,
+          kelembapan: faktor.kelembapan != null ? Number(faktor.kelembapan) : null,
+          curahHujan: faktor.curah_hujan != null ? Number(faktor.curah_hujan) : null,
+          hujan7Hari: faktor.akumulasi_hujan_7hari != null ? Number(faktor.akumulasi_hujan_7hari) : null,
+          // Komponen skor individual
+          fSuhu: faktor.f_suhu != null ? Number(faktor.f_suhu) : null,
+          fHujan: faktor.f_hujan != null ? Number(faktor.f_hujan) : null,
+          fLembap: faktor.f_lembap != null ? Number(faktor.f_lembap) : null,
+          skorCuaca: faktor.skor_cuaca != null ? Number(faktor.skor_cuaca) : null,
+          // Prediksi array dari backend (14 hari forecast)
           predictions: predictions.map(p => ({
             tanggal: p.tanggal,
-            skor: p.skor,
+            skor: Number(p.skor),
             level: p.level_risiko,
           })),
         }

@@ -197,16 +197,25 @@ const riskLabel = (code) => {
 }
 
 /* ─── Computed dari selectedRegion ──────────────────────────────────────── */
+// Skor risiko sebagai gauge utama (0-100,越高越危险)
 const gaugePercent = computed(() => {
   const r = mapStore.selectedRegion
-  if (!r) return 0
-  // Gunakan ABJ (semakin tinggi ABJ semakin bagus = persentase gauge naik)
-  return Math.round(r.abj || 0)
+  if (!r || r.riskScore == null) return 0
+  return Math.round(r.riskScore)
+})
+
+// Warna gauge berdasarkan level risiko
+const gaugeColor = computed(() => {
+  const r = mapStore.selectedRegion
+  if (!r) return '#22C55E'
+  if (r.riskCode === 'high') return '#EF4444'
+  if (r.riskCode === 'medium') return '#F59E0B'
+  return '#22C55E'
 })
 
 const suhuDisplay = computed(() => {
   const s = mapStore.selectedRegion?.suhu
-  return s != null ? `${s}°C` : '—°C'
+  return s != null ? `${s.toFixed(1)}°C` : '—°C'
 })
 
 const kondisiCuaca = computed(() => {
@@ -218,17 +227,25 @@ const kondisiCuaca = computed(() => {
   return 'Cerah'
 })
 
+const hujan7Display = computed(() => {
+  const h = mapStore.selectedRegion?.hujan7Hari
+  return h != null ? `${h.toFixed(0)} mm` : '—'
+})
+
+const kelembapanDisplay = computed(() => {
+  const k = mapStore.selectedRegion?.kelembapan
+  return k != null ? `${k.toFixed(0)}%` : '—'
+})
+
+const isDataKuat = computed(() => mapStore.selectedRegion?.confidenceLevel === 'kuat')
+
 const prediksiText = computed(() => {
   const p = mapStore.selectedRegion?.predictions
   if (!p || p.length === 0) return 'Data prediksi belum tersedia untuk wilayah ini.'
-  const nextWeek = p.find(x => {
-    const d = new Date(x.tanggal)
-    const now = new Date()
-    const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24))
-    return diff >= 5 && diff <= 9
-  }) || p[Math.min(6, p.length - 1)]
+  const nextWeek = p[6] || p[Math.min(6, p.length - 1)]
+  if (!nextWeek) return 'Data prediksi belum mencukupi.'
   const level = nextWeek.level === 'tinggi' ? 'meningkat tajam' : nextWeek.level === 'sedang' ? 'stabil' : 'menurun'
-  return `Populasi nyamuk pembawa virus DBD diprediksi akan ${level} dalam 7 hari ke depan (skor: ${nextWeek.skor}). ${nextWeek.level === 'tinggi' ? 'Segera lakukan 3M Plus dan laporkan genangan air.' : nextWeek.level === 'sedang' ? 'Tetap waspada dan jaga kebersihan lingkungan.' : 'Pertahankan kondisi lingkungan yang sudah bersih.'}`
+  return `Berdasarkan data cuaca 14 hari terakhir dan prediksi Open-Meteo, populasi nyamuk pembawa virus DBD diprediksi akan ${level} dalam 7 hari ke depan (skor risiko: ${nextWeek.skor}/100). ${nextWeek.level === 'tinggi' ? 'Segera lakukan 3M Plus dan laporkan genangan air.' : nextWeek.level === 'sedang' ? 'Tetap waspada dan jaga kebersihan lingkungan. Kuras bak mandi rutin.' : 'Pertahankan kondisi lingkungan yang sudah bersih. Lanjutkan 3M Plus.'}`
 })
 
 const rekomendasiText = computed(() => {
@@ -236,6 +253,18 @@ const rekomendasiText = computed(() => {
   if (r === 'high') return 'Segera lakukan kerja bakti 3M Plus: Menguras, Menutup, Mendaur Ulang. Laporkan genangan air melalui fitur Laporan. Koordinasi dengan kader setempat untuk fogging.'
   if (r === 'medium') return 'Tingkatkan kewaspadaan. Kuras bak mandi minggu ini, tutup rapat tempat air, dan bersihkan talang yang tersumbat. Pantau terus notifikasi LensaJentik.'
   return 'Lanjutkan kebiasaan baik! Kuras bak mandi rutin, jaga kebersihan selokan, dan pastikan tidak ada genangan di sekitar rumah.'
+})
+
+// Data untuk prediction chart
+const predictionChartData = computed(() => {
+  const p = mapStore.selectedRegion?.predictions
+  if (!p || p.length === 0) return []
+  return p.slice(0, 14).map((x, i) => ({
+    label: `+${i + 1}`,
+    skor: x.skor,
+    level: x.level,
+    color: x.level === 'tinggi' ? '#EF4444' : x.level === 'sedang' ? '#F59E0B' : '#22C55E',
+  }))
 })
 </script>
 
@@ -359,77 +388,96 @@ const rekomendasiText = computed(() => {
             <h3 class="font-bold text-lg text-left" style="color: var(--lj-navy);">Keadaan Wilayah</h3>
             <p class="text-[11px] leading-relaxed text-left" style="color: var(--lj-navy); opacity: 0.85;">
               <template v-if="mapStore.selectedRegion?.riskCode === 'high'">
-                Kondisi lingkungan saat ini sangat mendukung perkembangbiakan nyamuk. Tingkat ABJ rendah ({{ gaugePercent }}%) menunjukkan banyak rumah memiliki jentik. Dari 10 wadah air terbuka, mayoritas berpotensi menjadi tempat bertelur nyamuk.
+                Skor risiko <strong>{{ gaugePercent }}/100</strong> — kondisi lingkungan saat ini sangat mendukung perkembangbiakan nyamuk. Curah hujan 7 hari terakhir ({{ hujan7Display }}) menciptakan banyak genangan air. Dari 10 wadah air terbuka, mayoritas berpotensi menjadi tempat bertelur nyamuk jika tidak segera ditangani.
               </template>
               <template v-else-if="mapStore.selectedRegion?.riskCode === 'medium'">
-                Kondisi lingkungan cukup terkendali namun masih ada potensi genangan. Tingkat ABJ {{ gaugePercent }}% — masih di bawah target nasional 95%. Beberapa wadah air mungkin masih menjadi sarang jentik jika tidak rutin dikuras.
+                Skor risiko <strong>{{ gaugePercent }}/100</strong> — kondisi lingkungan cukup terkendali namun masih ada potensi genangan. Dengan curah hujan {{ hujan7Display }} dalam seminggu terakhir, beberapa wadah air mungkin masih menjadi sarang jentik jika tidak rutin dikuras.
               </template>
               <template v-else>
-                Kondisi lingkungan di wilayah ini relatif bersih dan aman. Tingkat ABJ {{ gaugePercent }}% menunjukkan sebagian besar rumah sudah bebas jentik. Pertahankan kebiasaan 3M Plus agar tetap aman.
+                Skor risiko <strong>{{ gaugePercent }}/100</strong> — kondisi lingkungan relatif aman. Suhu {{ suhuDisplay }} dan curah hujan rendah ({{ hujan7Display }}) membuat potensi perkembangbiakan nyamuk terbatas. Pertahankan kebiasaan 3M Plus.
               </template>
             </p>
           </div>
 
           <!-- Kondisi Udara box -->
           <div class="mt-6 mb-5">
-            <div class="text-[11px] font-bold mb-2 text-left" style="color: var(--lj-navy);">Kondisi Udara</div>
+            <div class="text-[11px] font-bold mb-2 text-left" style="color: var(--lj-navy);">Kondisi Udara (Data Open-Meteo)</div>
             <div class="flex items-center gap-4">
               <div class="border-2 rounded-2xl p-4 text-center min-w-[120px]" style="border-color: #4E63DA; background: white;">
                 <div class="text-2xl font-black" style="color: var(--lj-navy);">{{ suhuDisplay }}</div>
                 <div class="text-[10px] font-bold" style="color: #4E63DA;">{{ kondisiCuaca }}</div>
               </div>
               <p class="text-[11px] leading-relaxed flex-1" style="color: var(--lj-navy); opacity: 0.85;">
-                Suhu hangat + air hujan membuat wadah liar menampung genangan air ideal.
+                <template v-if="mapStore.selectedRegion?.curahHujan != null && mapStore.selectedRegion.curahHujan > 10">
+                  Hujan {{ mapStore.selectedRegion.curahHujan.toFixed(1) }} mm hari ini. Suhu {{ suhuDisplay }} sangat ideal bagi nyamuk <em>Aedes aegypti</em> untuk berkembang biak. Genangan air hujan perlu segera dikuras.
+                </template>
+                <template v-else>
+                  Suhu {{ suhuDisplay }} dengan kelembapan {{ kelembapanDisplay }}. Kondisi ini {{ (mapStore.selectedRegion?.suhu || 0) > 25 && (mapStore.selectedRegion?.suhu || 0) < 30 ? 'cukup ideal' : 'kurang ideal' }} untuk perkembangbiakan nyamuk.
+                </template>
               </p>
             </div>
           </div>
 
           <!-- Sumber Informasi -->
           <div>
-            <div class="text-[11px] font-bold mb-1 text-left" style="color: var(--lj-navy);">Sumber Informasi</div>
+            <div class="text-[11px] font-bold mb-1 text-left" style="color: var(--lj-navy);">Sumber Data</div>
             <p class="text-[11px] leading-relaxed text-left" style="color: var(--lj-navy); opacity: 0.85;">
-              Ibu Kader kesehatan {{ mapStore.selectedRegion.name }} sudah melakukan pemeriksaan langsung ke rumah-rumah warga setempat minggu ini.
+              <template v-if="isDataKuat">
+                Data skor risiko dihitung dari <strong>data cuaca Open-Meteo + data ABJ kader</strong> (pemeriksaan jentik langsung). Confidence level: <span style="color: #059669; font-weight: 700;">KUAT</span>.
+              </template>
+              <template v-else>
+                Data skor risiko dihitung dari <strong>data cuaca Open-Meteo</strong> (suhu, curah hujan, kelembapan). Belum ada data ABJ kader untuk wilayah ini. Confidence level: <span style="color: #D97706; font-weight: 700;">LEMAH</span> — estimasi berbasis cuaca.
+              </template>
             </p>
           </div>
         </div>
 
-        <!-- Risk Gauge Card (Figma style) -->
+        <!-- Risk Gauge Card -->
         <div class="relative flex flex-col items-center justify-center p-8 bg-gradient-to-b from-[#F9FAFB] to-[#eefcf2] rounded-[28px]" style="min-height: 380px;">
-          <!-- Green soft glow behind the gauge -->
-          <div class="absolute inset-0 bg-emerald-300 opacity-20 blur-[80px] rounded-full transform scale-75"></div>
-          
-          <!-- Circular gauge 60% -->
+          <div class="absolute inset-0 opacity-20 blur-[80px] rounded-full transform scale-75" :style="{ background: gaugeColor }"></div>
+
+          <!-- Confidence badge -->
+          <div class="absolute top-4 right-4 z-10">
+            <span
+              class="px-3 py-1 rounded-full text-[10px] font-bold"
+              :style="isDataKuat
+                ? 'background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0;'
+                : 'background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A;'"
+            >
+              {{ isDataKuat ? '✓ Data Lapangan' : '📡 Estimasi Cuaca' }}
+            </span>
+          </div>
+
+          <!-- Circular gauge -->
           <div class="relative w-52 h-52 z-10 mb-6">
             <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90 drop-shadow-sm overflow-visible">
               <circle cx="60" cy="60" r="45" fill="none" stroke="#F3F4F6" stroke-width="12" />
               <circle
                 cx="60" cy="60" r="45" fill="none"
-                stroke="url(#gradient-green-blue)"
+                :stroke="gaugeColor"
                 stroke-width="12"
                 stroke-linecap="round"
                 :stroke-dasharray="`${(gaugePercent / 100) * 282.7} 999`"
               />
               <circle cx="60" cy="15" r="5" fill="white" />
-              <defs>
-                <linearGradient id="gradient-green-blue" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#4E63DA" />
-                  <stop offset="100%" stop-color="#22C55E" />
-                </linearGradient>
-              </defs>
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span class="text-[54px] font-black" style="color: var(--lj-navy); letter-spacing: -2px;">
-                {{ gaugePercent }}%
+              <span class="text-[48px] font-black" :style="{ color: gaugeColor, letterSpacing: '-2px' }">
+                {{ gaugePercent }}
               </span>
+              <span class="text-[11px] font-bold text-gray-400 -mt-1">/ 100</span>
             </div>
           </div>
-          <div class="text-center z-10 space-y-4">
-            <div class="text-xl" style="color: var(--lj-navy);">
-              Peluang <span class="highlight-green px-2 py-0.5 rounded-lg font-bold" style="background: #A7F3D0;">nyamuk bertelur</span>
+          <div class="text-center z-10 space-y-1">
+            <div class="text-sm font-bold" style="color: var(--lj-navy);">
+              Skor Risiko <span class="highlight-green px-2 py-0.5 rounded-lg font-bold" :style="{ background: gaugeColor + '22', color: gaugeColor }">DBD</span>
             </div>
+            <p class="text-[10px]" style="color: var(--lj-muted);">
+              {{ gaugePercent < 40 ? 'Risiko rendah — lingkungan relatif aman' : gaugePercent <= 70 ? 'Risiko sedang — perlu kewaspadaan' : 'Risiko tinggi — segera lakukan tindakan!' }}
+            </p>
             <button
               @click="handleSubscribe"
-              class="px-6 py-2.5 rounded-full text-[11px] font-bold transition-transform hover:scale-105 shadow-sm"
+              class="mt-3 px-6 py-2.5 rounded-full text-[11px] font-bold transition-transform hover:scale-105 shadow-sm"
               :style="isSubscribed ? 'background: var(--lj-green-dk); color: var(--lj-navy);' : 'background: #4E63DA; color: white;'"
             >
               {{ isSubscribed ? '✓ Wilayah Dipantau' : 'Ikuti Kabar Wilayah ini' }}
@@ -438,33 +486,41 @@ const rekomendasiText = computed(() => {
         </div>
       </div>
 
-      <!-- Prediction Card -->
+      <!-- Prediction Card with REAL chart -->
       <div class="lj-card p-0 overflow-hidden grid grid-cols-1 md:grid-cols-2 gap-0 border-2" style="border-color: #E5E7EB; border-radius: 28px;">
-        <!-- Prediction chart -->
-        <div class="relative bg-gradient-to-b from-[#8ab4f8]/30 to-[#8ab4f8]/10 flex items-center justify-center p-8 overflow-hidden min-h-[220px]">
-          <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at center, white 2px, transparent 2px); background-size: 20px 40px; transform: rotate(15deg);"></div>
-
-          <svg class="absolute inset-0 w-full h-full z-10 drop-shadow-md" preserveAspectRatio="none">
-            <path d="M-10,180 C80,120 120,200 200,100 C280,150 350,220 500,130" fill="none" stroke="#22C55E" stroke-width="6" stroke-linecap="round"/>
-
-            <!-- Week 1 blob -->
-            <circle cx="20%" cy="75%" r="28" :fill="(mapStore.selectedRegion?.predictions?.[0]?.level || 'rendah') === 'tinggi' ? '#EF4444' : (mapStore.selectedRegion?.predictions?.[0]?.level || 'rendah') === 'sedang' ? '#F59E0B' : '#22C55E'" opacity="0.3" class="blur-md"/>
-            <circle cx="20%" cy="75%" r="12" :fill="(mapStore.selectedRegion?.predictions?.[0]?.level || 'rendah') === 'tinggi' ? '#EF4444' : (mapStore.selectedRegion?.predictions?.[0]?.level || 'rendah') === 'sedang' ? '#F59E0B' : '#22C55E'" />
-
-            <!-- Week 2 blob -->
-            <circle cx="45%" cy="45%" r="28" :fill="(mapStore.selectedRegion?.predictions?.[6]?.level || 'sedang') === 'tinggi' ? '#EF4444' : (mapStore.selectedRegion?.predictions?.[6]?.level || 'sedang') === 'sedang' ? '#F59E0B' : '#22C55E'" opacity="0.3" class="blur-md"/>
-            <circle cx="45%" cy="45%" r="12" :fill="(mapStore.selectedRegion?.predictions?.[6]?.level || 'sedang') === 'tinggi' ? '#EF4444' : (mapStore.selectedRegion?.predictions?.[6]?.level || 'sedang') === 'sedang' ? '#F59E0B' : '#22C55E'" />
-          </svg>
-
-          <div class="absolute inset-0 z-20 pointer-events-none">
-            <div class="absolute px-3 py-1 rounded-full text-[10px] font-bold text-white shadow-sm"
-              :style="{ background: (mapStore.selectedRegion?.predictions?.[6]?.level || 'sedang') === 'tinggi' ? '#EF4444' : (mapStore.selectedRegion?.predictions?.[6]?.level || 'sedang') === 'sedang' ? '#F59E0B' : '#22C55E', top: '35%', left: '45%', transform: 'translateX(-50%)' }">
-              Minggu ke-2
+        <!-- Real prediction bar chart -->
+        <div class="relative bg-gradient-to-b from-[#F8FAFC] to-white flex items-center justify-center p-6 min-h-[240px]">
+          <div v-if="predictionChartData.length > 0" class="w-full h-full flex flex-col">
+            <div class="text-[10px] font-bold text-gray-400 mb-2 text-center">PREDIKSI 14 HARI KE DEPAN (Skor Risiko)</div>
+            <div class="flex-1 flex items-end gap-1 px-2">
+              <div
+                v-for="(bar, i) in predictionChartData"
+                :key="i"
+                class="flex-1 flex flex-col items-center gap-1"
+                style="min-width: 0;"
+              >
+                <span class="text-[8px] font-bold" :style="{ color: bar.color }">{{ bar.skor }}</span>
+                <div
+                  class="w-full rounded-t transition-all duration-300"
+                  :style="{
+                    height: Math.max(4, (bar.skor / 100) * 140) + 'px',
+                    background: bar.color,
+                    opacity: 0.85,
+                  }"
+                />
+                <span class="text-[8px] text-gray-400 font-medium">{{ bar.label }}h</span>
+              </div>
             </div>
-            <div class="absolute px-3 py-1 rounded-full text-[10px] font-bold text-white shadow-sm"
-              :style="{ background: (mapStore.selectedRegion?.predictions?.[0]?.level || 'rendah') === 'tinggi' ? '#EF4444' : (mapStore.selectedRegion?.predictions?.[0]?.level || 'rendah') === 'sedang' ? '#F59E0B' : '#22C55E', top: '80%', left: '20%', transform: 'translateX(-50%)' }">
-              Minggu ini
+            <!-- Legend -->
+            <div class="flex justify-center gap-3 mt-3 text-[8px] font-bold">
+              <span style="color: #22C55E;">■ Rendah</span>
+              <span style="color: #F59E0B;">■ Sedang</span>
+              <span style="color: #EF4444;">■ Tinggi</span>
             </div>
+          </div>
+          <div v-else class="text-center text-xs text-gray-400">
+            <div class="text-3xl mb-2">📊</div>
+            Data prediksi belum tersedia.<br>Jalankan <code class="text-[10px] bg-gray-100 px-1 rounded">skor-risiko:refresh-cuaca</code>
           </div>
         </div>
 
@@ -475,6 +531,25 @@ const rekomendasiText = computed(() => {
             <p class="text-[11px] font-medium leading-relaxed" style="color: var(--lj-navy); opacity: 0.85;">
               {{ prediksiText }}
             </p>
+          </div>
+
+          <!-- Weather factor breakdown -->
+          <div v-if="mapStore.selectedRegion?.suhu != null" class="space-y-2">
+            <div class="text-[10px] font-bold text-gray-400">FAKTOR CUACA (7 hari terakhir)</div>
+            <div class="grid grid-cols-3 gap-2">
+              <div class="text-center p-2 rounded-lg" style="background: #EEF2FF;">
+                <div class="text-[11px] font-black" style="color: #4E63DA;">{{ suhuDisplay }}</div>
+                <div class="text-[8px] text-gray-400">Suhu Rata²</div>
+              </div>
+              <div class="text-center p-2 rounded-lg" style="background: #ECFDF5;">
+                <div class="text-[11px] font-black" style="color: #059669;">{{ hujan7Display }}</div>
+                <div class="text-[8px] text-gray-400">Curah Hujan 7H</div>
+              </div>
+              <div class="text-center p-2 rounded-lg" style="background: #FFFBEB;">
+                <div class="text-[11px] font-black" style="color: #D97706;">{{ kelembapanDisplay }}</div>
+                <div class="text-[8px] text-gray-400">Kelembapan</div>
+              </div>
+            </div>
           </div>
 
           <div
