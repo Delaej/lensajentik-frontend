@@ -20,7 +20,7 @@ export const useMapStore = defineStore('map', {
         const matchesSearch =
           !state.searchQuery ||
           item.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
-          item.district.toLowerCase().includes(state.searchQuery.toLowerCase())
+          (item.district && item.district.toLowerCase().includes(state.searchQuery.toLowerCase()))
         return matchesDisease && matchesRisk && matchesSearch
       })
     },
@@ -43,39 +43,55 @@ export const useMapStore = defineStore('map', {
         const records = response.data || response
         
         this.diseaseRiskData = records.map((rec) => {
-          const lat = Number(rec.wilayah.latitude) || -6.9175
-          const lng = Number(rec.wilayah.longitude) || 107.6191
-          const offset = 0.007 // Offset for dynamic map square bounds
+          const lat = Number(rec.wilayah.latitude) || null
+          const lng = Number(rec.wilayah.longitude) || null
+          // Fallback: jika tidak ada koordinat, tidak bisa render polygon — pakai koordinat default pusat Indonesia
+          const hasCoords = lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)
+          const finalLat = hasCoords ? lat : -2.5489
+          const finalLng = hasCoords ? lng : 118.0149
+          const offset = 0.007
           const latLngs = [
-            [lat + offset, lng - offset],
-            [lat + offset, lng + offset],
-            [lat - offset, lng + offset],
-            [lat - offset, lng - offset],
+            [finalLat + offset, finalLng - offset],
+            [finalLat + offset, finalLng + offset],
+            [finalLat - offset, finalLng + offset],
+            [finalLat - offset, finalLng - offset],
           ]
+
+          // Tentukan tingkat wilayah dari response backend (jika ada) atau dari query params
+          const tingkat = rec.wilayah.tingkat || rec.tingkat || 'kabupaten'
+          const tingkatLabel =
+            tingkat === 'desa' ? 'Desa' :
+            tingkat === 'kecamatan' ? 'Kecamatan' :
+            tingkat === 'kabupaten' ? 'Kabupaten/Kota' :
+            tingkat === 'provinsi' ? 'Provinsi' : 'Wilayah'
 
           return {
             id: rec.wilayah_kode,
             name: rec.wilayah.nama,
-            district: rec.wilayah.tingkat === 'desa' ? 'Kelurahan' : rec.wilayah.tingkat === 'kecamatan' ? 'Kecamatan' : rec.wilayah.tingkat === 'kabupaten' ? 'Kabupaten/Kota' : 'Provinsi',
-            city: rec.wilayah.kota || rec.wilayah.provinsi || 'Indonesia',
-            disease: rec.jenis_penyakit,
+            district: tingkatLabel,
+            disease: rec.jenis_penyakit || 'dbd',
             riskLevel: rec.level_risiko === 'tinggi' ? 'Tinggi' : rec.level_risiko === 'sedang' ? 'Sedang' : rec.level_risiko === 'rendah' ? 'Rendah' : 'Belum Ada Data',
             riskCode: rec.level_risiko === 'tinggi' ? 'high' : rec.level_risiko === 'sedang' ? 'medium' : rec.level_risiko === 'rendah' ? 'low' : 'no_data',
-            abj: rec.faktor_perhitungan ? rec.faktor_perhitungan.abj_persen || 92.5 : 92.5,
-            casesCurrent: rec.faktor_perhitungan ? Math.round(rec.faktor_perhitungan.skor_laporan || 0) : 0,
-            casesPrevious: 0,
-            trend: 'stable',
-            confidenceLevel: rec.confidence_level === 'kuat' ? 94 : 45,
-            coordinates: [lat, lng],
+            // Hanya tampilkan ABJ jika benar-benar ada dari backend (data lapangan)
+            abj: rec.faktor_perhitungan?.abj_persen != null ? Number(rec.faktor_perhitungan.abj_persen) : null,
+            // Data dari backend — tidak ada, set null
+            casesCurrent: null,
+            casesPrevious: null,
+            trend: null,
+            // Confidence: simpan string asli dari backend, bukan angka arbitrary
+            confidenceLevel: rec.confidence_level || 'belum_ada_data',
+            coordinates: [finalLat, finalLng],
             latLngs: latLngs,
-            forecast7Days: rec.prediksi?.[6]
-              ? `Prediksi skor: ${rec.prediksi[6].skor}`
-              : rec.level_risiko === 'tinggi' ? 'Diprediksi tetap tinggi' : rec.level_risiko === 'sedang' ? 'Diprediksi stabil' : 'Diprediksi tetap rendah',
-            forecast14Days: rec.prediksi?.[13]
-              ? `Prediksi skor: ${rec.prediksi[13].skor}`
-              : rec.level_risiko === 'tinggi' ? 'Perlu kewaspadaan 2 minggu' : 'Kondisi diprediksi aman',
-            lastInspection: rec.tanggal,
-            positiveContainers: 0,
+            // Overview tidak punya prediksi — kosongkan, akan diisi saat klik detail
+            forecast7Days: null,
+            forecast14Days: null,
+            // Overview tidak punya data inspeksi
+            lastInspection: null,
+            positiveContainers: null,
+            // Data tambahan dari backend
+            skor: rec.skor != null ? Number(rec.skor) : null,
+            jumlahKecamatan: rec.faktor_perhitungan?.jumlah_kecamatan || null,
+            kecamatanDenganData: rec.faktor_perhitungan?.kecamatan_dengan_data || null,
           }
         })
       } catch (error) {
@@ -178,7 +194,7 @@ export const useMapStore = defineStore('map', {
           skorCuaca: faktor.skor_cuaca != null ? Number(faktor.skor_cuaca) : null,
           // Prediksi array dari backend (14 hari forecast)
           predictions: predictions.map(p => ({
-            tanggal: p.tanggal,
+            tanggal: p.tanggal || p.tanggal_prediksi,
             skor: Number(p.skor),
             level: p.level_risiko,
           })),

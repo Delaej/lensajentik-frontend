@@ -80,7 +80,7 @@ const drawLayers = (L) => {
 
     polygon.on('click', () => {
       mapStore.fetchRegionDetail(region.id)
-      mapInstance.flyTo(region.coordinates, 14, { duration: 1.2 })
+      mapInstance.flyTo(region.coordinates, zoomForTingkat(region.district), { duration: 1.2 })
     })
     
     // Initial highlight if already selected
@@ -107,7 +107,7 @@ watch(() => mapStore.selectedRegion, (newRegion, oldRegion) => {
   }
 
   if (newRegion && newRegion.coordinates && mapInstance) {
-    mapInstance.flyTo(newRegion.coordinates, 14, { duration: 1.2 })
+    mapInstance.flyTo(newRegion.coordinates, zoomForTingkat(newRegion.district), { duration: 1.2 })
   }
 })
 
@@ -166,7 +166,7 @@ const selectRegionFromSearch = async (region) => {
   
   // Also fly to coords if available
   if (mapStore.selectedRegion && mapStore.selectedRegion.coordinates && mapInstance) {
-    mapInstance.flyTo(mapStore.selectedRegion.coordinates, 14, { duration: 1.2 })
+    mapInstance.flyTo(mapStore.selectedRegion.coordinates, zoomForTingkat(mapStore.selectedRegion.district), { duration: 1.2 })
   }
 }
 
@@ -201,6 +201,16 @@ const riskLabel = (code) => {
   if (code === 'medium') return 'Sedang'
   if (code === 'low') return 'Rendah'
   return 'Belum Ada Data'
+}
+
+// Zoom berdasarkan tingkat wilayah: provinsi=8, kabupaten=10, kecamatan=14, desa=16
+const zoomForTingkat = (district) => {
+  if (!district) return 14
+  const d = district.toLowerCase()
+  if (d.includes('provinsi')) return 8
+  if (d.includes('kabupaten') || d.includes('kota')) return 10
+  if (d.includes('desa') || d.includes('kelurahan')) return 16
+  return 14 // default kecamatan
 }
 
 /* ─── Computed dari selectedRegion ──────────────────────────────────────── */
@@ -396,7 +406,7 @@ const predictionChartData = computed(() => {
             <h3 class="font-bold text-lg text-left" style="color: var(--lj-navy);">Keadaan Wilayah</h3>
             <p class="text-[11px] leading-relaxed text-left" style="color: var(--lj-navy); opacity: 0.85;">
               <template v-if="mapStore.selectedRegion?.riskCode === 'high'">
-                Skor risiko <strong>{{ gaugePercent }}/100</strong> — kondisi lingkungan saat ini sangat mendukung perkembangbiakan nyamuk. Curah hujan 7 hari terakhir ({{ hujan7Display }}) menciptakan banyak genangan air. Dari 10 wadah air terbuka, mayoritas berpotensi menjadi tempat bertelur nyamuk jika tidak segera ditangani.
+                Skor risiko <strong>{{ gaugePercent }}/100</strong> — kondisi lingkungan saat ini sangat mendukung perkembangbiakan nyamuk. Curah hujan 7 hari terakhir ({{ hujan7Display }}) menciptakan banyak genangan air. Segera lakukan pemeriksaan dan pengurasan wadah air di sekitar lingkungan.
               </template>
               <template v-else-if="mapStore.selectedRegion?.riskCode === 'medium'">
                 Skor risiko <strong>{{ gaugePercent }}/100</strong> — kondisi lingkungan cukup terkendali namun masih ada potensi genangan. Dengan curah hujan {{ hujan7Display }} dalam seminggu terakhir, beberapa wadah air mungkin masih menjadi sarang jentik jika tidak rutin dikuras.
@@ -405,7 +415,7 @@ const predictionChartData = computed(() => {
                 Skor risiko <strong>{{ gaugePercent }}/100</strong> — kondisi lingkungan relatif aman. Suhu {{ suhuDisplay }} dan curah hujan rendah ({{ hujan7Display }}) membuat potensi perkembangbiakan nyamuk terbatas. Pertahankan kebiasaan 3M Plus.
               </template>
               <template v-else>
-                Data skor risiko untuk wilayah ini <strong>belum tersedia</strong>. Sistem sedang memproses data cuaca dari Open-Meteo. Silakan coba beberapa saat lagi atau laporkan kondisi lingkungan melalui fitur Laporan.
+                Data skor risiko untuk wilayah ini <strong>belum tersedia</strong>. Sistem sedang memproses data cuaca dari Open-Meteo. Klik untuk menghitung skor risiko secara real-time, atau laporkan kondisi lingkungan melalui fitur Laporan.
               </template>
             </p>
           </div>
@@ -423,7 +433,10 @@ const predictionChartData = computed(() => {
                   Hujan {{ mapStore.selectedRegion.curahHujan.toFixed(1) }} mm hari ini. Suhu {{ suhuDisplay }} sangat ideal bagi nyamuk <em>Aedes aegypti</em> untuk berkembang biak. Genangan air hujan perlu segera dikuras.
                 </template>
                 <template v-else>
-                  Suhu {{ suhuDisplay }} dengan kelembapan {{ kelembapanDisplay }}. Kondisi ini {{ (mapStore.selectedRegion?.suhu || 0) > 25 && (mapStore.selectedRegion?.suhu || 0) < 30 ? 'cukup ideal' : 'kurang ideal' }} untuk perkembangbiakan nyamuk.
+                  Suhu {{ suhuDisplay }} dengan kelembapan {{ kelembapanDisplay }}.
+                  <template v-if="mapStore.selectedRegion?.suhu != null">
+                    Kondisi ini {{ mapStore.selectedRegion.suhu > 25 && mapStore.selectedRegion.suhu < 30 ? 'cukup ideal' : 'kurang ideal' }} untuk perkembangbiakan nyamuk.
+                  </template>
                 </template>
               </p>
             </div>
@@ -481,10 +494,10 @@ const predictionChartData = computed(() => {
           </div>
           <div class="text-center z-10 space-y-1">
             <div class="text-sm font-bold" style="color: var(--lj-navy);">
-              Skor Risiko <span class="highlight-green px-2 py-0.5 rounded-lg font-bold" :style="{ background: gaugeColor + '22', color: gaugeColor }">DBD</span>
+              Skor Risiko <span class="highlight-green px-2 py-0.5 rounded-lg font-bold" :style="{ background: gaugeColor + '22', color: gaugeColor }">{{ mapStore.selectedDisease === 'malaria' ? 'Malaria' : 'DBD' }}</span>
             </div>
             <p class="text-[10px]" style="color: var(--lj-muted);">
-              {{ gaugePercent < 40 ? 'Risiko rendah — lingkungan relatif aman' : gaugePercent <= 70 ? 'Risiko sedang — perlu kewaspadaan' : 'Risiko tinggi — segera lakukan tindakan!' }}
+              {{ mapStore.selectedRegion?.riskCode === 'no_data' ? 'Data belum tersedia — klik untuk menghitung' : gaugePercent < 40 ? 'Risiko rendah — lingkungan relatif aman' : gaugePercent <= 70 ? 'Risiko sedang — perlu kewaspadaan' : 'Risiko tinggi — segera lakukan tindakan!' }}
             </p>
             <button
               @click="handleSubscribe"
