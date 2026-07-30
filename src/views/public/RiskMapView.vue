@@ -22,13 +22,14 @@ const riskLegend = [
   { color: '#EF4444', label: 'Merah — Risiko Tinggi', desc: 'ABJ < 90%. Wilayah ini memiliki banyak titik genangan aktif. Kader perlu segera turun lapangan.' },
   { color: '#F59E0B', label: 'Kuning — Risiko Sedang', desc: 'ABJ 90–94%. Perlu kewaspadaan. Warga diminta melakukan 3M Plus secara mandiri.' },
   { color: '#22C55E', label: 'Hijau — Risiko Rendah', desc: 'ABJ ≥ 95%. Wilayah relatif aman, namun tetap jaga kebersihan lingkungan.' },
+  { color: '#9CA3AF', label: 'Abu-abu — Belum Ada Data', desc: 'Wilayah ini belum memiliki data skor risiko. Jalankan skor-risiko:refresh-cuaca untuk generate data.' },
 ]
 
 const drawLayers = (L) => {
   activeLayers.forEach((l) => mapInstance.removeLayer(l))
   activeLayers = []
   mapStore.diseaseRiskData.forEach((region) => {
-    const color = region.riskCode === 'high' ? '#EF4444' : region.riskCode === 'medium' ? '#F59E0B' : '#22C55E'
+    const color = region.riskCode === 'high' ? '#EF4444' : region.riskCode === 'medium' ? '#F59E0B' : region.riskCode === 'low' ? '#22C55E' : '#9CA3AF'
     
     let polygon;
     if (region.geojson) {
@@ -49,7 +50,7 @@ const drawLayers = (L) => {
 
     polygon.on('mouseover', (e) => {
       hoverPopupVisible.value = true
-      hoverPopupIndex.value = region.riskCode === 'high' ? 0 : region.riskCode === 'medium' ? 1 : 2
+      hoverPopupIndex.value = region.riskCode === 'high' ? 0 : region.riskCode === 'medium' ? 1 : region.riskCode === 'low' ? 2 : 3
       // e.latlng is the mouse position
       const point = mapInstance.latLngToContainerPoint(e.latlng)
       hoverPopupX.value = point.x + 20
@@ -182,18 +183,24 @@ const tooltipLegend = [
     color: 'bg-emerald-500', shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.8)]', glow: 'bg-emerald-400',
     label: 'Rendah', desc: 'Warna hijau menunjukkan bahwa wilayah yang ditunjukkan memiliki lingkungan bersih dan bebas jentik. Pertahankan terus pola hidup sehat Anda!'
   },
+  {
+    color: 'bg-gray-400', shadow: 'shadow-[0_0_15px_rgba(156,163,175,0.8)]', glow: 'bg-gray-400',
+    label: 'Belum Ada Data', desc: 'Warna abu-abu menunjukkan bahwa wilayah ini belum memiliki data skor risiko. Klik untuk melihat estimasi cuaca real-time.'
+  },
 ]
 
 /* ─── Helper functions ──────────────────────────────────────────────────── */
 const riskColor = (code) => {
   if (code === 'high') return '#EF4444'
   if (code === 'medium') return '#F59E0B'
-  return '#22C55E'
+  if (code === 'low') return '#22C55E'
+  return '#9CA3AF'
 }
 const riskLabel = (code) => {
   if (code === 'high') return 'Tinggi'
   if (code === 'medium') return 'Sedang'
-  return 'Rendah'
+  if (code === 'low') return 'Rendah'
+  return 'Belum Ada Data'
 }
 
 /* ─── Computed dari selectedRegion ──────────────────────────────────────── */
