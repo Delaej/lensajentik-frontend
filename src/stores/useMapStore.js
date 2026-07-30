@@ -30,10 +30,13 @@ export const useMapStore = defineStore('map', {
     async fetchRiskMap(params = {}) {
       try {
         const queryParams = {
-          tingkat: params.tingkat || 'kecamatan',
-          parent_kode: params.parent_kode || '3273', // Default: Kota Bandung
+          tingkat: params.tingkat || 'kabupaten', // Default: nasional (semua kabupaten/kota)
           jenis: this.selectedDisease === 'all' ? 'dbd' : this.selectedDisease,
           ...params,
+        }
+        // Hanya sertakan parent_kode jika diberikan (mode per-daerah)
+        if (params.parent_kode) {
+          queryParams.parent_kode = params.parent_kode
         }
         
         const response = await mapService.getRiskMap(queryParams)
@@ -53,8 +56,8 @@ export const useMapStore = defineStore('map', {
           return {
             id: rec.wilayah_kode,
             name: rec.wilayah.nama,
-            district: rec.wilayah.tingkat === 'desa' ? 'Kelurahan Tugas' : 'Kecamatan',
-            city: 'Bandung',
+            district: rec.wilayah.tingkat === 'desa' ? 'Kelurahan' : rec.wilayah.tingkat === 'kecamatan' ? 'Kecamatan' : rec.wilayah.tingkat === 'kabupaten' ? 'Kabupaten/Kota' : 'Provinsi',
+            city: rec.wilayah.kota || rec.wilayah.provinsi || 'Indonesia',
             disease: rec.jenis_penyakit,
             riskLevel: rec.level_risiko === 'tinggi' ? 'Tinggi' : rec.level_risiko === 'sedang' ? 'Sedang' : 'Rendah',
             riskCode: rec.level_risiko === 'tinggi' ? 'high' : rec.level_risiko === 'sedang' ? 'medium' : 'low',
@@ -148,8 +151,8 @@ export const useMapStore = defineStore('map', {
         this.selectedRegion = {
           id: details.wilayah.kode,
           name: details.wilayah.nama,
-          district: details.wilayah.tingkat === 'desa' ? 'Desa' : 'Kecamatan',
-          city: 'Indonesia',
+          district: details.wilayah.tingkat === 'desa' ? 'Desa' : details.wilayah.tingkat === 'kecamatan' ? 'Kecamatan' : details.wilayah.tingkat === 'kabupaten' ? 'Kabupaten/Kota' : 'Provinsi',
+          city: details.wilayah.kota || details.wilayah.provinsi || 'Indonesia',
           disease: details.jenis_penyakit,
           riskLevel: mainScore.level_risiko === 'tinggi' ? 'Tinggi' : mainScore.level_risiko === 'sedang' ? 'Sedang' : 'Rendah',
           riskCode: mainScore.level_risiko === 'tinggi' ? 'high' : mainScore.level_risiko === 'sedang' ? 'medium' : 'low',

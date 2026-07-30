@@ -114,8 +114,8 @@ onMounted(async () => {
   if (typeof window !== 'undefined') {
     const L = (await import('leaflet')).default
     mapInstance = L.map(mapContainer.value, {
-      center: [-6.9175, 107.6191],
-      zoom: 13,
+      center: [-2.5489, 118.0149], // Pusat Indonesia (skala nasional)
+      zoom: 5,
       zoomControl: true,
     })
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -299,7 +299,7 @@ const predictionChartData = computed(() => {
           v-model="mapStore.searchQuery"
           @input="handleSearch"
           type="text"
-          placeholder="Cari kecamatan anda...."
+          placeholder="Cari wilayah anda..."
           class="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-[--lj-bg] text-sm font-medium outline-none transition-all focus:ring-2"
           style="focus:ring-color: var(--lj-blue);"
         />
@@ -377,7 +377,7 @@ const predictionChartData = computed(() => {
       <div class="text-center">
         <div class="px-4 py-1 rounded-full text-[10px] font-bold mb-3 mx-auto" style="width: fit-content; border: 1.5px solid #4E63DA; color: var(--lj-navy); background: white;">HASIL PEMERIKSAAN</div>
         <h2 class="text-3xl sm:text-4xl font-bold" style="color: var(--lj-navy);">
-          Kecamatan {{ mapStore.selectedRegion.name }}
+          {{ mapStore.selectedRegion.district }} {{ mapStore.selectedRegion.name }}
         </h2>
       </div>
 
