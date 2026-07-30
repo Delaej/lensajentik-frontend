@@ -171,6 +171,7 @@ const emit = defineEmits(['trigger-onboarding'])
             <li><RouterLink to="/edukasi" class="hover:text-white transition-colors">Blog</RouterLink></li>
             <li><span class="cursor-pointer hover:text-white transition-colors">Help Center</span></li>
             <li><span class="cursor-pointer hover:text-white transition-colors">About</span></li>
+            <li><RouterLink to="/kebijakan-privasi" class="hover:text-white transition-colors">Kebijakan Privasi</RouterLink></li>
           </ul>
           <div class="flex items-center gap-3 opacity-90">
             <a href="#" class="hover:text-white transition-colors"><Youtube class="w-4 h-4" /></a>

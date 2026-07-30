@@ -12,6 +12,7 @@ import NotificationView from '@/views/public/NotificationView.vue'
 import EducationView from '@/views/public/EducationView.vue'
 import QuizView from '@/views/public/QuizView.vue'
 import ArticleDetailView from '@/views/public/ArticleDetailView.vue'
+import PrivacyPolicyView from '@/views/public/PrivacyPolicyView.vue'
 
 // Kader views
 import KaderLoginView from '@/views/kader/KaderLoginView.vue'
@@ -77,6 +78,12 @@ const routes = [
         name: 'edukasi-artikel',
         component: ArticleDetailView,
         meta: { title: 'Detail Artikel Kesehatan - LensaJentik' },
+      },
+      {
+        path: 'kebijakan-privasi',
+        name: 'kebijakan-privasi',
+        component: PrivacyPolicyView,
+        meta: { title: 'Kebijakan Privasi & Keamanan - LensaJentik' },
       },
     ],
   },
