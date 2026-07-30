@@ -154,8 +154,8 @@ export const useMapStore = defineStore('map', {
           district: details.wilayah.tingkat === 'desa' ? 'Desa' : details.wilayah.tingkat === 'kecamatan' ? 'Kecamatan' : details.wilayah.tingkat === 'kabupaten' ? 'Kabupaten/Kota' : 'Provinsi',
           city: details.wilayah.kota || details.wilayah.provinsi || 'Indonesia',
           disease: details.jenis_penyakit,
-          riskLevel: mainScore.level_risiko === 'tinggi' ? 'Tinggi' : mainScore.level_risiko === 'sedang' ? 'Sedang' : 'Rendah',
-          riskCode: mainScore.level_risiko === 'tinggi' ? 'high' : mainScore.level_risiko === 'sedang' ? 'medium' : 'low',
+          riskLevel: mainScore.level_risiko === 'tinggi' ? 'Tinggi' : mainScore.level_risiko === 'sedang' ? 'Sedang' : mainScore.level_risiko === 'rendah' ? 'Rendah' : 'Belum Ada Data',
+          riskCode: mainScore.level_risiko === 'tinggi' ? 'high' : mainScore.level_risiko === 'sedang' ? 'medium' : mainScore.level_risiko === 'rendah' ? 'low' : 'no_data',
           // Skor risiko dari backend (0-100,越高越危险)
           riskScore: mainScore.skor != null ? Number(mainScore.skor) : null,
           // ABJ hanya ditampilkan jika data lapangan tersedia

@@ -214,10 +214,11 @@ const gaugePercent = computed(() => {
 // Warna gauge berdasarkan level risiko
 const gaugeColor = computed(() => {
   const r = mapStore.selectedRegion
-  if (!r) return '#22C55E'
+  if (!r) return '#9CA3AF'
   if (r.riskCode === 'high') return '#EF4444'
   if (r.riskCode === 'medium') return '#F59E0B'
-  return '#22C55E'
+  if (r.riskCode === 'low') return '#22C55E'
+  return '#9CA3AF' // no_data
 })
 
 const suhuDisplay = computed(() => {
@@ -259,7 +260,8 @@ const rekomendasiText = computed(() => {
   const r = mapStore.selectedRegion?.riskCode
   if (r === 'high') return 'Segera lakukan kerja bakti 3M Plus: Menguras, Menutup, Mendaur Ulang. Laporkan genangan air melalui fitur Laporan. Koordinasi dengan kader setempat untuk fogging.'
   if (r === 'medium') return 'Tingkatkan kewaspadaan. Kuras bak mandi minggu ini, tutup rapat tempat air, dan bersihkan talang yang tersumbat. Pantau terus notifikasi LensaJentik.'
-  return 'Lanjutkan kebiasaan baik! Kuras bak mandi rutin, jaga kebersihan selokan, dan pastikan tidak ada genangan di sekitar rumah.'
+  if (r === 'low') return 'Lanjutkan kebiasaan baik! Kuras bak mandi rutin, jaga kebersihan selokan, dan pastikan tidak ada genangan di sekitar rumah.'
+  return 'Data risiko untuk wilayah ini belum tersedia. Tunggu sistem menghitung skor risiko berdasarkan data cuaca terbaru.'
 })
 
 // Data untuk prediction chart
@@ -400,8 +402,11 @@ const predictionChartData = computed(() => {
               <template v-else-if="mapStore.selectedRegion?.riskCode === 'medium'">
                 Skor risiko <strong>{{ gaugePercent }}/100</strong> — kondisi lingkungan cukup terkendali namun masih ada potensi genangan. Dengan curah hujan {{ hujan7Display }} dalam seminggu terakhir, beberapa wadah air mungkin masih menjadi sarang jentik jika tidak rutin dikuras.
               </template>
-              <template v-else>
+              <template v-else-if="mapStore.selectedRegion?.riskCode === 'low'">
                 Skor risiko <strong>{{ gaugePercent }}/100</strong> — kondisi lingkungan relatif aman. Suhu {{ suhuDisplay }} dan curah hujan rendah ({{ hujan7Display }}) membuat potensi perkembangbiakan nyamuk terbatas. Pertahankan kebiasaan 3M Plus.
+              </template>
+              <template v-else>
+                Data skor risiko untuk wilayah ini <strong>belum tersedia</strong>. Sistem sedang memproses data cuaca dari Open-Meteo. Silakan coba beberapa saat lagi atau laporkan kondisi lingkungan melalui fitur Laporan.
               </template>
             </p>
           </div>
@@ -562,12 +567,12 @@ const predictionChartData = computed(() => {
           <div
             class="p-4 rounded-xl"
             :style="{
-              background: mapStore.selectedRegion?.riskCode === 'high' ? '#FEE2E2' : mapStore.selectedRegion?.riskCode === 'medium' ? '#FEF3C7' : '#BBF7D0',
-              border: '1px solid ' + (mapStore.selectedRegion?.riskCode === 'high' ? '#FECACA' : mapStore.selectedRegion?.riskCode === 'medium' ? '#FDE68A' : '#86EFAC')
+              background: mapStore.selectedRegion?.riskCode === 'high' ? '#FEE2E2' : mapStore.selectedRegion?.riskCode === 'medium' ? '#FEF3C7' : mapStore.selectedRegion?.riskCode === 'low' ? '#BBF7D0' : '#F3F4F6',
+              border: '1px solid ' + (mapStore.selectedRegion?.riskCode === 'high' ? '#FECACA' : mapStore.selectedRegion?.riskCode === 'medium' ? '#FDE68A' : mapStore.selectedRegion?.riskCode === 'low' ? '#86EFAC' : '#E5E7EB')
             }"
           >
-            <div class="text-[11px] font-bold mb-1 text-center" style="color: #065F46;">Tindakan Cepat Pelindung Keluarga</div>
-            <p class="text-[10px] leading-relaxed text-center" style="color: #064E3B; opacity: 0.85;">
+            <div class="text-[11px] font-bold mb-1 text-center" :style="{ color: mapStore.selectedRegion?.riskCode === 'no_data' ? '#6B7280' : '#065F46' }">{{ mapStore.selectedRegion?.riskCode === 'no_data' ? 'Data Belum Tersedia' : 'Tindakan Cepat Pelindung Keluarga' }}</div>
+            <p class="text-[10px] leading-relaxed text-center" :style="{ color: mapStore.selectedRegion?.riskCode === 'no_data' ? '#6B7280' : '#064E3B', opacity: 0.85 }">
               {{ rekomendasiText }}
             </p>
           </div>
