@@ -30,10 +30,10 @@ const drawLayers = (L) => {
   activeLayers.forEach((l) => mapInstance.removeLayer(l))
   activeLayers = []
 
-  // Outline kabupaten (jika ada GeoJSON parent)
+  // Outline kabupaten (jika ada GeoJSON parent) — batas hitam tebal
   if (mapStore.parentRegion?.geojson) {
     const parentLayer = L.geoJSON(mapStore.parentRegion.geojson, {
-      style: { color: '#1E2B5B', fillColor: 'transparent', fillOpacity: 0, weight: 3, dashArray: '8 4', opacity: 0.8 },
+      style: { color: '#000000', fillColor: 'transparent', fillOpacity: 0, weight: 3, dashArray: '8 4', opacity: 0.9 },
     }).addTo(mapInstance)
     activeLayers.push(parentLayer)
   }
@@ -42,12 +42,21 @@ const drawLayers = (L) => {
     const color = region.riskCode === 'high' ? '#EF4444' : region.riskCode === 'medium' ? '#F59E0B' : region.riskCode === 'low' ? '#22C55E' : '#9CA3AF'
     
     let polygon;
-    const baseStyle = mapStore.parentRegion
-      ? { color: '#1E2B5B', fillColor: color, fillOpacity: 0.35, weight: 2.5, opacity: 0.7 }
-      : { color, fillColor: color, fillOpacity: 0.32, weight: 2 }
+    // Warna batas: jika mode kabupaten gunakan warna gelap (#374151), nasional gunakan warna risiko
+    const borderColor = mapStore.parentRegion ? '#374151' : color
+    const baseStyle = {
+      color: borderColor,
+      fillColor: color,
+      fillOpacity: 0.35,
+      weight: mapStore.parentRegion ? 1.5 : 2,
+      opacity: 0.8
+    }
+
     if (region.geojson) {
+      // Gunakan GeoJSON asli — bentuk kecamatan/kabupaten nyata
       polygon = L.geoJSON(region.geojson, { style: baseStyle }).addTo(mapInstance)
     } else {
+      // Fallback sementara (kotak) hanya jika GeoJSON belum datang
       polygon = L.polygon(region.latLngs, baseStyle).addTo(mapInstance)
     }
     
@@ -89,10 +98,10 @@ const drawLayers = (L) => {
       if (mapStore.selectedRegion?.id !== region.id) {
         if (polygon.setStyle) {
           polygon.setStyle({
-            fillColor: color, fillOpacity: 0.32,
-            color: mapStore.parentRegion ? '#1E2B5B' : color,
-            weight: mapStore.parentRegion ? 2.5 : 2,
-            opacity: mapStore.parentRegion ? 0.6 : 1,
+            fillColor: color, fillOpacity: 0.35,
+            color: borderColor,
+            weight: mapStore.parentRegion ? 1.5 : 2,
+            opacity: 0.8,
           })
         }
       }
@@ -105,9 +114,9 @@ const drawLayers = (L) => {
         const newColor = riskColor(mapStore.selectedRegion.riskCode)
         polygon.setStyle({
           fillColor: newColor, fillOpacity: 0.35,
-          color: mapStore.parentRegion ? '#1E2B5B' : newColor,
-          weight: mapStore.parentRegion ? 2.5 : 2,
-          opacity: mapStore.parentRegion ? 0.7 : 1,
+          color: borderColor,
+          weight: mapStore.parentRegion ? 1.5 : 2,
+          opacity: 0.8,
         })
         polygon.defaultColor = newColor
         // Update data di store juga
@@ -149,6 +158,7 @@ watch(() => mapStore.selectedRegion, (newRegion, oldRegion) => {
 onMounted(async () => {
   if (typeof window !== 'undefined') {
     const L = (await import('leaflet')).default
+    leafletInstance = L  // Simpan referensi L untuk dipakai di executeSearch
     mapInstance = L.map(mapContainer.value, {
       center: [-2.5489, 118.0149], // Pusat Indonesia (skala nasional)
       zoom: 5,
@@ -163,7 +173,9 @@ onMounted(async () => {
     await mapStore.fetchSubscribedRegions()
     drawLayers(L)
 
+    // Watch deep pada diseaseRiskData — menangkap kedatangan GeoJSON kecamatan secara async
     watch(() => mapStore.diseaseRiskData, () => drawLayers(L), { deep: true })
+    // Watch parentRegion geojson — kabupaten boundary
     watch(() => mapStore.parentRegion?.geojson, () => { if (mapStore.parentRegion?.geojson) drawLayers(L) })
   }
 })
@@ -229,15 +241,28 @@ const handleSearchSubmit = async () => {
   }
 }
 
+// Simpan referensi L secara global agar bisa dipanggil dari luar onMounted
+let leafletInstance = null
+
 const executeSearch = async (region) => {
   if (region.tingkat === 'kabupaten') {
     await mapStore.loadKecamatanUntukKabupaten(region)
     if (mapStore.diseaseRiskData.length > 0) {
       mapInstance.flyTo(mapStore.diseaseRiskData[0].coordinates, 11, { duration: 1.2 })
     }
-    // Async: GeoJSON tidak blocking — polygon update otomatis begitu data datang
-    mapStore.fetchKabupatenBoundary(region.nama)
-    mapStore.fetchKecamatanBoundaries(region.nama)
+    // Fetch GeoJSON boundaries secara paralel lalu redraw peta setelah keduanya selesai
+    if (leafletInstance) {
+      await Promise.all([
+        mapStore.fetchKabupatenBoundary(region.nama),
+        mapStore.fetchKecamatanBoundaries(region.nama),
+      ])
+      // Redraw eksplisit setelah semua GeoJSON datang
+      drawLayers(leafletInstance)
+    } else {
+      // Fallback jika leaflet belum siap
+      mapStore.fetchKabupatenBoundary(region.nama)
+      mapStore.fetchKecamatanBoundaries(region.nama)
+    }
   } else {
     await mapStore.fetchRegionDetail(region.kode)
     if (mapStore.selectedRegion?.coordinates && mapInstance) {

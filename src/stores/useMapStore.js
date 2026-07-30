@@ -322,19 +322,28 @@ export const useMapStore = defineStore('map', {
       if (!regions.length) return
       try {
         const { default: apiClient } = await import('@/services/apiClient')
+        // Gunakan format "Nama Kecamatan, Nama Kabupaten, Indonesia" agar Nominatim
+        // menemukan batas administratif kecamatan, bukan titik POI
         const names = regions.map(r => r.name + ', ' + kabupatenNama + ', Indonesia')
         const res = await apiClient.post('/geocode/boundary-batch', { queries: names })
         const results = res.data?.results || {}
-        for (const region of regions) {
+
+        let foundCount = 0
+        // Trigger Vue reactivity dengan mengganti seluruh array
+        const updated = this.diseaseRiskData.map(region => {
+          // Coba exact match dulu, lalu lowercase trim sebagai fallback
           const geo = results[region.name]
+            ?? results[region.name.trim()]
+            ?? results[region.name.toLowerCase()]
+            ?? results[region.name.toLowerCase().trim()]
           if (geo) {
-            region.geojson = geo
-            const idx = this.diseaseRiskData.findIndex(r => r.id === region.id)
-            if (idx >= 0) {
-              this.diseaseRiskData[idx] = { ...this.diseaseRiskData[idx], geojson: geo }
-            }
+            foundCount++
+            return { ...region, geojson: geo }
           }
-        }
+          return region
+        })
+        console.log(`[Boundary] ${foundCount}/${regions.length} kecamatan mendapat GeoJSON`)
+        this.diseaseRiskData = updated
       } catch (e) {
         console.warn('Kecamatan boundaries fetch failed:', e.message || e)
       }
