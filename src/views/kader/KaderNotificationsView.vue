@@ -18,14 +18,21 @@ const filteredNotifications = computed(() => {
 
 const getIcon = (type) => {
   switch (type) {
+    case 'cuaca_ekstrem':
     case 'weather':
       return CloudRain
-    case 'citizen_report':
+    case 'kenaikan_risiko':
       return AlertTriangle
+    case 'reminder_kader':
     case 'reminder':
       return Bell
-    default:
+    case 'laporan_baru':
+      return AlertTriangle
+    case 'system':
+    case 'info':
       return ShieldCheck
+    default:
+      return Bell
   }
 }
 </script>

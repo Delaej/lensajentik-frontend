@@ -11,6 +11,7 @@ export const reportService = {
         'Content-Type': 'multipart/form-data',
       },
     })
+    // Return seluruh response body (message, data, poin_didapat)
     return response.data
   },
 

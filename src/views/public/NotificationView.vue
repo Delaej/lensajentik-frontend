@@ -6,75 +6,39 @@ import apiClient from '@/services/apiClient'
 
 const notifications = ref([])
 const isLoading = ref(true)
+const isError = ref(false)
 const activeFilter = ref('semua')
 
-// Fallback static notifications (public health alerts)
-const fallbackNotifications = [
-  {
-    id: 1, judul: 'Waspada Musim Hujan!',
-    pesan: 'Curah hujan tinggi diprediksi minggu ini. Segera periksa dan kuras tempat penampungan air di rumah Anda untuk mencegah perkembangbiakan nyamuk DBD.',
-    created_at: '2026-07-28', is_read: false, tipe: 'cuaca_ekstrem',
-  },
-  {
-    id: 2, judul: 'Gerakan 3M Plus Serentak',
-    pesan: 'Dinas Kesehatan mengajak seluruh warga melakukan 3M Plus: Menguras, Menutup, Mendaur Ulang barang bekas, plus menabur bubuk abate dan memelihara ikan pemakan jentik.',
-    created_at: '2026-07-25', is_read: false, tipe: 'info',
-  },
-  {
-    id: 3, judul: 'Kasus DBD Menurun di Wilayah Anda',
-    pesan: 'Berdasarkan data ABJ bulan ini, angka bebas jentik di wilayah Anda mencapai 92%. Pertahankan kebersihan lingkungan!',
-    created_at: '2026-07-20', is_read: false, tipe: 'info',
-  },
-  {
-    id: 4, judul: 'Edukasi: Kenali Gejala DBD',
-    pesan: 'Demam tinggi mendadak, nyeri sendi dan otot, ruam kulit, dan trombosit rendah adalah gejala DBD. Segera ke puskesmas jika mengalami gejala tersebut.',
-    created_at: '2026-07-15', is_read: false, tipe: 'info',
-  },
-  {
-    id: 5, judul: 'Jadwal Fogging Minggu Ini',
-    pesan: 'Fogging akan dilakukan di RT 01-05 pada hari Jumat pukul 07:00. Buka jendela dan tutup makanan sebelum fogging dimulai.',
-    created_at: '2026-07-10', is_read: false, tipe: 'info',
-  },
-]
-
 onMounted(async () => {
-  // Hanya coba API jika user sudah login (ada token)
   const token = localStorage.getItem('kader_token')
-  if (token) {
-    try {
-      const res = await apiClient.get('/notifikasi')
-      // Backend returns: { data: paginator, belum_dibaca: N }
-      // paginator = { current_page, data: [...records], ... }
-      const paginator = res.data?.data
-      if (paginator && Array.isArray(paginator.data)) {
-        notifications.value = paginator.data.map(n => ({
-          id: n.id,
-          judul: n.judul || 'Notifikasi',
-          pesan: n.pesan || '',
-          created_at: n.created_at,
-          is_read: n.is_read || false,
-          tipe: n.tipe || 'info',
-        }))
-      } else if (Array.isArray(paginator)) {
-        // Fallback jika response berbentuk array langsung
-        notifications.value = paginator.map(n => ({
-          id: n.id,
-          judul: n.judul || 'Notifikasi',
-          pesan: n.pesan || '',
-          created_at: n.created_at,
-          is_read: n.is_read || false,
-          tipe: n.tipe || 'info',
-        }))
-      } else {
-        notifications.value = fallbackNotifications
-      }
-    } catch (e) {
-      // API failed (401 or network error) — use fallback
-      notifications.value = fallbackNotifications
+  if (!token) {
+    isLoading.value = false
+    return // public user — tidak perlu notifikasi, tampilkan empty state
+  }
+  try {
+    const res = await apiClient.get('/notifikasi')
+    const paginator = res.data?.data
+    if (paginator && Array.isArray(paginator.data)) {
+      notifications.value = paginator.data.map(n => ({
+        id: n.id,
+        judul: n.judul || 'Notifikasi',
+        pesan: n.pesan || '',
+        created_at: n.created_at,
+        is_read: n.is_read || false,
+        tipe: n.tipe || 'info',
+      }))
+    } else if (Array.isArray(paginator)) {
+      notifications.value = paginator.map(n => ({
+        id: n.id,
+        judul: n.judul || 'Notifikasi',
+        pesan: n.pesan || '',
+        created_at: n.created_at,
+        is_read: n.is_read || false,
+        tipe: n.tipe || 'info',
+      }))
     }
-  } else {
-    // Not authenticated — show public health alerts
-    notifications.value = fallbackNotifications
+  } catch (e) {
+    isError.value = true
   }
   isLoading.value = false
 })

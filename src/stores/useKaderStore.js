@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import apiClient from '@/services/apiClient'
 import { authService } from '@/services/authService'
 import { abjService } from '@/services/abjService'
 import { notificationService } from '@/services/notificationService'
@@ -11,27 +12,21 @@ export const useKaderStore = defineStore('kader', {
       email: '',
       phone: '',
       role: '',
-      district: '',
-      subDistrict: '',
-      rt: '',
-      rw: '',
-      totalHouseTarget: 45,
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop',
+      wilayah_kode: null,
+      wilayah_binaan: '',
     },
+    // Dari /kader/dashboard
     quickMetrics: {
-      totalRumah: 45,
-      diperiksa: 0,
-      positifJentik: 0,
-      abjScore: 0,
-      status: 'Aman', // Aman, Waspada, Bahaya
+      skorRisiko: null,
+      levelRisiko: null,
+      rataAbj: 0,
+      totalRumahDiperiksa: 0,
+      totalRumahPositif: 0,
+      jumlahLaporanAbj: 0,
     },
+    tugasPending: [],
     abjRecords: [],
     notifications: [],
-    settings: {
-      alertAbjHigh: true,
-      weeklyReportReminders: true,
-      emailNotifications: false,
-    },
   }),
 
   getters: {
@@ -42,52 +37,117 @@ export const useKaderStore = defineStore('kader', {
       const total = state.abjRecords.reduce((acc, curr) => acc + curr.abjScore, 0)
       return (total / state.abjRecords.length).toFixed(1)
     },
+    // Alias untuk kompatibilitas template
+    quickMetricsDisplay: (state) => ({
+      ...state.quickMetrics,
+      diperiksa: state.quickMetrics.totalRumahDiperiksa,
+      abjScore: Math.round(state.quickMetrics.rataAbj),
+      status: state.quickMetrics.rataAbj >= 95 ? 'Aman' : state.quickMetrics.rataAbj >= 90 ? 'Waspada' : state.quickMetrics.rataAbj > 0 ? 'Bahaya' : 'Belum Data',
+      totalHouseTarget: state.quickMetrics.totalRumahDiperiksa > 0 ? state.quickMetrics.totalRumahDiperiksa : null,
+    }),
   },
 
   actions: {
+    // ── Auth ────────────────────────────────────────────────────────────
+    async login(email, password) {
+      try {
+        await authService.login({ email, password })
+        this.isAuthenticated = true
+        await Promise.all([
+          this.fetchProfile(),
+          this.fetchDashboard(),
+          this.fetchMyAbjRecords(),
+          this.fetchNotifications(),
+        ])
+        return true
+      } catch (error) {
+        console.error('Login failed:', error)
+        return false
+      }
+    },
+
+    async logout() {
+      try { await authService.logout() } catch { /* abaikan */ }
+      this.isAuthenticated = false
+      this.userProfile = { name: '', email: '', phone: '', role: '', wilayah_kode: null, wilayah_binaan: '' }
+      this.quickMetrics = { skorRisiko: null, levelRisiko: null, rataAbj: 0, totalRumahDiperiksa: 0, totalRumahPositif: 0, jumlahLaporanAbj: 0 }
+      this.tugasPending = []
+      this.abjRecords = []
+      this.notifications = []
+    },
+
+    // ── Profile ─────────────────────────────────────────────────────────
     async fetchProfile() {
       try {
         const profile = await authService.getProfile()
         this.userProfile = {
-          name: profile.name,
-          email: profile.email,
-          phone: profile.phone || '',
-          role: profile.role === 'kader' ? 'Kader Kesehatan' : profile.role,
-          district: profile.wilayah_tugas ? profile.wilayah_tugas.nama : '',
-          wilayah_kode: profile.wilayah_kode,
-          avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop',
+          name: profile.name || profile.nama || '',
+          email: profile.email || '',
+          phone: profile.phone || profile.telepon || '',
+          role: profile.role === 'kader' ? 'Kader Kesehatan' : (profile.role || ''),
+          wilayah_kode: profile.wilayah_kode || null,
+          wilayah_binaan: profile.wilayah?.nama || profile.wilayah_binaan || '',
         }
       } catch (error) {
         console.error('Fetch profile failed:', error)
       }
     },
 
+    async updateProfile(updatedData) {
+      try {
+        const response = await authService.updateProfile(updatedData)
+        if (response.data) {
+          const p = response.data
+          this.userProfile = {
+            ...this.userProfile,
+            name: p.name || p.nama || this.userProfile.name,
+            email: p.email || this.userProfile.email,
+            phone: p.phone || p.telepon || this.userProfile.phone,
+          }
+        }
+        return { success: true }
+      } catch (error) {
+        const msg = error.response?.data?.message || 'Gagal memperbarui profil.'
+        return { success: false, message: msg }
+      }
+    },
+
+    // ── Dashboard ───────────────────────────────────────────────────────
+    async fetchDashboard() {
+      try {
+        const res = await apiClient.get('/kader/dashboard')
+        const d = res.data?.data || res.data
+        if (!d) return
+        this.quickMetrics = {
+          skorRisiko: d.skor_risiko_terkini?.skor ?? null,
+          levelRisiko: d.skor_risiko_terkini?.level ?? null,
+          rataAbj: d.ringkasan_abj?.rata_rata_persen ?? 0,
+          totalRumahDiperiksa: d.ringkasan_abj?.total_rumah_diperiksa ?? 0,
+          totalRumahPositif: d.ringkasan_abj?.total_rumah_positif ?? 0,
+          jumlahLaporanAbj: d.ringkasan_abj?.jumlah_laporan ?? 0,
+        }
+        this.tugasPending = d.tugas_pending || []
+      } catch (error) {
+        console.error('Fetch dashboard failed:', error)
+      }
+    },
+
+    // ── ABJ ─────────────────────────────────────────────────────────────
     async fetchMyAbjRecords() {
       try {
         const response = await abjService.fetchAbjRecords()
         const records = response.data || response
-        this.abjRecords = records.map((rec) => {
-          return {
-            id: rec.id,
-            date: rec.tanggal_pemeriksaan,
-            weekLabel: rec.tanggal_pemeriksaan,
-            location: rec.wilayah ? rec.wilayah.nama : 'Desa Binaan',
-            diperiksa: rec.jumlah_rumah_diperiksa,
-            positifJentik: rec.jumlah_rumah_positif_jentik,
-            abjScore: rec.abj_persen,
-            status: rec.abj_persen >= 95 ? 'Aman' : rec.abj_persen >= 90 ? 'Waspada' : 'Bahaya',
-            notes: rec.catatan || '',
-            kaderName: rec.kader ? rec.kader.name : '',
-          }
-        })
-
-        if (this.abjRecords.length > 0) {
-          const latest = this.abjRecords[0]
-          this.quickMetrics.diperiksa = latest.diperiksa
-          this.quickMetrics.positifJentik = latest.positifJentik
-          this.quickMetrics.abjScore = latest.abjScore
-          this.quickMetrics.status = latest.status
-        }
+        this.abjRecords = records.map((rec) => ({
+          id: rec.id,
+          date: rec.tanggal_pemeriksaan,
+          weekLabel: rec.tanggal_pemeriksaan,
+          location: rec.wilayah ? rec.wilayah.nama : 'Wilayah Binaan',
+          diperiksa: rec.jumlah_rumah_diperiksa,
+          positifJentik: rec.jumlah_rumah_positif_jentik,
+          abjScore: rec.abj_persen,
+          status: rec.abj_persen >= 95 ? 'Aman' : rec.abj_persen >= 90 ? 'Waspada' : 'Bahaya',
+          notes: rec.catatan || '',
+        }))
       } catch (error) {
         console.error('Fetch ABJ records failed:', error)
       }
@@ -102,36 +162,31 @@ export const useKaderStore = defineStore('kader', {
           jumlah_rumah_positif_jentik: recordData.positifJentik,
           catatan: recordData.notes,
         }
-        const newRecord = await abjService.storeAbjRecord(payload)
-        await this.fetchMyAbjRecords()
-        return newRecord
+        await abjService.storeAbjRecord(payload)
+        await Promise.all([this.fetchMyAbjRecords(), this.fetchDashboard()])
       } catch (error) {
         console.error('Add ABJ record failed:', error)
         throw error
       }
     },
 
+    // ── Notifications ───────────────────────────────────────────────────
     async fetchNotifications() {
       try {
         const response = await notificationService.fetchNotifications()
-        // Backend returns: { data: paginator, belum_dibaca: N }
-        // paginator = { current_page, data: [...records], ... }
         const paginator = response.data || response
         let records = []
         if (paginator && Array.isArray(paginator.data)) {
-          // Paginator object with .data array
           records = paginator.data
         } else if (Array.isArray(paginator)) {
-          // Direct array
           records = paginator
         }
-
         this.notifications = records.map((n) => ({
           id: n.id,
           title: n.judul || 'Notifikasi',
           description: n.pesan || '',
           date: n.created_at || new Date().toISOString(),
-          read: n.is_read || false,
+          read: n.is_read || n.is_dibaca || false,
           priority: n.tipe === 'kenaikan_risiko' || n.tipe === 'cuaca_ekstrem' ? 'high' : 'low',
           type: n.tipe || 'system',
         }))
@@ -155,69 +210,7 @@ export const useKaderStore = defineStore('kader', {
         await notificationService.markAllAsRead()
         this.notifications.forEach((n) => (n.read = true))
       } catch (error) {
-        console.error('Mark all notifications read failed:', error)
-      }
-    },
-
-    async updateProfile(updatedData) {
-      try {
-        const response = await authService.updateProfile(updatedData)
-        // Jika sukses, perbarui state lokal dengan data dari response backend
-        if (response.data) {
-          const profile = response.data
-          this.userProfile = {
-            ...this.userProfile,
-            name: profile.name,
-            email: profile.email,
-            phone: profile.phone || '',
-          }
-        } else {
-          // Fallback kalau struktur response beda
-          this.userProfile = { ...this.userProfile, ...updatedData }
-        }
-        return { success: true }
-      } catch (error) {
-        console.error('Update profile failed:', error)
-        // Ambil pesan error dari backend
-        const errorMessage = error.response?.data?.message || 'Gagal memperbarui profil.'
-        return { success: false, message: errorMessage }
-      }
-    },
-
-    async login(email, password) {
-      try {
-        await authService.login({ email, password })
-        this.isAuthenticated = true
-        await this.fetchProfile()
-        await this.fetchMyAbjRecords()
-        await this.fetchNotifications()
-        return true
-      } catch (error) {
-        console.error('Login failed:', error)
-        return false
-      }
-    },
-
-    async logout() {
-      try {
-        await authService.logout()
-      } catch (error) {
-        console.error('Logout failed:', error)
-      } finally {
-        this.isAuthenticated = false
-        this.userProfile = {
-          name: '',
-          email: '',
-          phone: '',
-          role: '',
-          district: '',
-          subDistrict: '',
-          rt: '',
-          rw: '',
-          totalHouseTarget: 45,
-          avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop',
-        }
-        this.abjRecords = []
+        console.error('Mark all read failed:', error)
       }
     },
   },

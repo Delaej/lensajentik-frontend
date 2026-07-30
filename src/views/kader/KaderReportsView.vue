@@ -44,11 +44,17 @@ const handleApplyFilter = () => {
 }
 
 const handleExportPdf = () => {
-  alert('Menyiapkan file PDF Rekapitulasi ABJ Kader... Dokumen siap diunduh!')
+  const kode = kaderStore.userProfile.wilayah_kode
+  if (!kode) { alert('Wilayah binaan belum ditentukan.'); return }
+  const url = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/export/abj/pdf?wilayah_kode=${kode}`
+  window.open(url, '_blank')
 }
 
 const handleExportExcel = () => {
-  alert('Mengunduh spreadsheet Excel Data_ABJ_Juli.xlsx...')
+  const kode = kaderStore.userProfile.wilayah_kode
+  if (!kode) { alert('Wilayah binaan belum ditentukan.'); return }
+  const url = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/export/abj/excel?wilayah_kode=${kode}`
+  window.open(url, '_blank')
 }
 
 const handlePrint = () => {
@@ -180,7 +186,7 @@ const handlePrint = () => {
     <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-xs space-y-6">
       <div class="border-b border-slate-200 pb-4 text-center space-y-1">
         <h3 class="text-lg font-bold text-slate-900 uppercase tracking-wide">REKAPITULASI DATA ANGKA BEBAS JENTIK (ABJ)</h3>
-        <p class="text-xs text-slate-500 font-medium">WILAYAH BINAAN KECAMATAN SUKAJADI — PERIODE JULI 2026</p>
+        <p class="text-xs text-slate-500 font-medium">WILAYAH BINAAN {{ kaderStore.userProfile.wilayah_binaan || '—' }} — PERIODE {{ new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase() }}</p>
       </div>
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
@@ -205,7 +211,7 @@ const handlePrint = () => {
       <div class="p-4 bg-slate-900 text-white rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="text-xs space-y-1">
           <div class="font-bold text-emerald-400">Siap Dikirimkan ke Puskesmas Terkait</div>
-          <p class="text-slate-300">Format laporan memenuhi standar pelaporan Dinas Kesehatan Kota Bandung 2026.</p>
+          <p class="text-slate-300">Format laporan memenuhi standar pelaporan Dinas Kesehatan.</p>
         </div>
         <button
           @click="handleExportPdf"

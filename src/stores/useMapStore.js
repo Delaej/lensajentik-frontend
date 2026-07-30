@@ -3,13 +3,14 @@ import { mapService } from '@/services/mapService'
 
 export const useMapStore = defineStore('map', {
   state: () => ({
-    selectedDisease: 'dbd', // 'dbd' | 'malaria' | 'all'
-    selectedRiskLevel: 'all', // 'all' | 'high' | 'medium' | 'low'
+    selectedDisease: 'dbd',
+    selectedRiskLevel: 'all',
     searchQuery: '',
-    selectedRegion: null,
+    selectedRegion: null,       // region yang sedang dilihat detailnya
+    parentRegion: null,         // kabupaten induk (jika sedang lihat per-kecamatan)
     subscribedRegions: [],
     searchResults: [],
-    diseaseRiskData: [],
+    diseaseRiskData: [],        // polygon di peta (bisa kecamatan dalam kabupaten)
   }),
 
   getters: {
@@ -38,7 +39,6 @@ export const useMapStore = defineStore('map', {
         if (params.parent_kode) {
           queryParams.parent_kode = params.parent_kode
         }
-        
         const response = await mapService.getRiskMap(queryParams)
         const records = response.data || response
         
@@ -237,6 +237,107 @@ export const useMapStore = defineStore('map', {
 
     setSelectedRegion(region) {
       this.selectedRegion = region
+    },
+
+    /**
+     * Load semua kecamatan dalam satu kabupaten — untuk view per-kecamatan
+     * dengan warna risiko masing-masing.
+     */
+    async loadKecamatanUntukKabupaten(kabupaten) {
+      this.parentRegion = {
+        kode: kabupaten.kode,
+        nama: kabupaten.nama,
+        tingkat: 'kabupaten',
+      }
+      this.selectedRegion = null
+      this.diseaseRiskData = [] // reset dulu
+      try {
+        // Ambil data semua kecamatan
+        await this.fetchRiskMap({ tingkat: 'kecamatan', parent_kode: kabupaten.kode })
+        // Hitung ringkasan kabupaten dari data kecamatan
+        const items = this.diseaseRiskData
+        const itemsDenganData = items.filter(i => i.skor != null)
+        const skorTotal = itemsDenganData.reduce((s, i) => s + (i.skor || 0), 0)
+        const skorRata = itemsDenganData.length > 0 ? Math.round(skorTotal / itemsDenganData.length) : null
+        const level = skorRata != null
+          ? (skorRata >= 70 ? 'tinggi' : skorRata >= 40 ? 'sedang' : 'rendah')
+          : null
+        this.selectedRegion = {
+          id: kabupaten.kode,
+          name: kabupaten.nama,
+          district: 'Kabupaten/Kota',
+          riskLevel: level === 'tinggi' ? 'Tinggi' : level === 'sedang' ? 'Sedang' : level === 'rendah' ? 'Rendah' : 'Belum Ada Data',
+          riskCode: level || 'no_data',
+          riskScore: skorRata,
+          abj: null,
+          confidenceLevel: 'lemah',
+          coordinates: items.length > 0 ? items[0].coordinates : [-2.54, 118.01],
+          geojson: null,
+          forecast7Days: null,
+          forecast14Days: null,
+          predictions: [],
+          suhu: null,
+          kelembapan: null,
+          curahHujan: null,
+          hujan7Hari: null,
+          // Extra: ringkasan untuk kabupaten
+          jumlahKecamatan: items.length,
+          kecamatanDenganData: items.filter(i => i.skor != null).length,
+          kecamatanList: items.map(i => ({ kode: i.id, nama: i.name, skor: i.skor, level: i.riskCode })),
+        }
+      } catch (e) {
+        console.error('Load kecamatan for kabupaten failed:', e)
+      }
+    },
+
+    /** Kembali ke tampilan nasional */
+    clearView() {
+      this.parentRegion = null
+      this.selectedRegion = null
+      this.fetchRiskMap()
+    },
+
+    /**
+     * Fetch GeoJSON boundary untuk KABUPATEN saja (1 request, cepat).
+     */
+    async fetchKabupatenBoundary(kabupatenNama) {
+      try {
+        const { default: apiClient } = await import('@/services/apiClient')
+        const res = await apiClient.get('/geocode/boundary', { params: { q: kabupatenNama + ', Indonesia' } })
+        const geojson = res.data?.geojson
+        if (geojson && this.parentRegion) {
+          this.parentRegion = { ...this.parentRegion, geojson }
+        }
+      } catch (e) {
+        console.warn('Boundary fetch failed:', e.message || e)
+      }
+    },
+
+    /**
+     * Fetch GeoJSON per kecamatan via backend batch (satu request).
+     * Polygon akan update otomatis begitu data datang.
+     */
+    async fetchKecamatanBoundaries(kabupatenNama) {
+      const regions = this.diseaseRiskData
+      if (!regions.length) return
+      try {
+        const { default: apiClient } = await import('@/services/apiClient')
+        const names = regions.map(r => r.name + ', ' + kabupatenNama + ', Indonesia')
+        const res = await apiClient.post('/geocode/boundary-batch', { queries: names })
+        const results = res.data?.results || {}
+        for (const region of regions) {
+          const geo = results[region.name]
+          if (geo) {
+            region.geojson = geo
+            const idx = this.diseaseRiskData.findIndex(r => r.id === region.id)
+            if (idx >= 0) {
+              this.diseaseRiskData[idx] = { ...this.diseaseRiskData[idx], geojson: geo }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Kecamatan boundaries fetch failed:', e.message || e)
+      }
     },
   },
 })

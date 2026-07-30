@@ -19,39 +19,9 @@ onMounted(async () => {
     questions.value = res.pertanyaan || res
     questions.value.forEach((q) => { answers.value[q.id] = q.opsi[0]?.value ?? '' })
   } catch (e) {
-    questions.value = [
-      {
-        id: 'barang_bekas',
-        teks: 'Apakah ada barang bekas (ban, kaleng, botol) di sekitar rumah yang bisa menampung air hujan?',
-        opsi: [
-          { value: 'tidak', label: 'Tidak ada sama sekali' },
-          { value: 'ditutup', label: 'Ada, tapi sudah ditutup/dibalik' },
-          { value: 'terbuka', label: 'Ada dan masih terbuka' },
-        ],
-      },
-      {
-        id: 'genangan_air',
-        teks: 'Seberapa sering ada genangan air di sekitar rumahmu?',
-        opsi: [
-          { value: 'jarang', label: 'Jarang sekali (< 1 kali/bulan)' },
-          { value: 'kadang', label: 'Kadang-kadang (1–2 kali/bulan)' },
-          { value: 'sering', label: 'Sering (> 2 kali/bulan)' },
-        ],
-      },
-      {
-        id: 'kuras_bak',
-        teks: 'Seberapa sering kamu menguras bak mandi atau penampungan air?',
-        opsi: [
-          { value: 'rutin', label: 'Rutin seminggu sekali' },
-          { value: 'kadang', label: '2–4 minggu sekali' },
-          { value: 'jarang', label: 'Jarang / tidak pernah dikuras' },
-        ],
-      }
-    ]
-    questions.value.forEach((q) => { answers.value[q.id] = q.opsi[0]?.value ?? '' })
+    questions.value = []
   } finally {
     isLoading.value = false
-    // set default to first choice
     if (questions.value.length) answers.value[questions.value[0].id] = questions.value[0].opsi[0].value
   }
 })
@@ -82,12 +52,7 @@ const handleCalculate = async () => {
     const res = await educationService.submitQuizAnswers({ jawaban: answers.value })
     result.value = res
   } catch (e) {
-    const score = Math.round(Math.random() * 100)
-    result.value = {
-      skor: score,
-      level_risiko: score >= 60 ? 'tinggi' : score >= 30 ? 'sedang' : 'rendah',
-      rekomendasi: 'Ini adalah rekomendasi sistem berdasarkan nilai risiko dari kuis anda.',
-    }
+    result.value = { error: true, message: 'Gagal menghitung skor. Silakan coba lagi.' }
   } finally {
     isCalculating.value = false
     isCalculated.value = true

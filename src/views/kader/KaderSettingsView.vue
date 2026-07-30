@@ -70,8 +70,14 @@ const handleSavePassword = async () => {
   }
 }
 
+// Settings lokal (TODO: sync ke backend via PATCH /auth/update-profile)
+const localSettings = ref({
+  alertAbjHigh: true,
+  weeklyReportReminders: true,
+})
+
 const handleAvatarChange = () => {
-  alert('Fitur unggah foto profil avatar aktif! (Mock mode)')
+  // TODO: implement foto profil upload ke Cloudinary
 }
 </script>
 
@@ -229,7 +235,7 @@ const handleAvatarChange = () => {
             <p class="text-[11px] text-slate-500">Kirim notifikasi otomatis jika status wilayah binaan berubah menjadi Bahaya</p>
           </div>
           <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" v-model="kaderStore.settings.alertAbjHigh" class="sr-only peer" />
+            <input type="checkbox" v-model="localSettings.alertAbjHigh" class="sr-only peer" />
             <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
           </label>
         </div>
@@ -241,7 +247,7 @@ const handleAvatarChange = () => {
             <p class="text-[11px] text-slate-500">Pengingat berkala setiap hari Kamis sore untuk penyelesaian survey jentik</p>
           </div>
           <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" v-model="kaderStore.settings.weeklyReportReminders" class="sr-only peer" />
+            <input type="checkbox" v-model="localSettings.weeklyReportReminders" class="sr-only peer" />
             <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
           </label>
         </div>

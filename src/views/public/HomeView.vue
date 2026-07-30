@@ -58,6 +58,7 @@ onMounted(() => {
       localStorage.setItem('lj_onboarded_v2', 'true')
     }, 800)
   }
+  fetchStats()
 })
 
 /* ─── Feature Slider ─────────────────────────────────────────────────────── */
@@ -170,12 +171,24 @@ const toggleFaq = (idx) => {
   activeFaq.value = activeFaq.value === idx ? null : idx
 }
 
-/* ─── Stat cards ─────────────────────────────────────────────────────────── */
-const statCards = [
-  { value: 'Risiko\nTertinggi\nSepanjang\nSejarah', sub: 'DBD 2019–2024 di Indonesia', color: '#FEF2F2', textColor: '#EF4444', icon: BarChart2 },
-  { value: 'Indonesia\nSumbang\n7,3%\nSeban Dunia', sub: 'Kasus DBD global terbanyak', color: '#FFF7ED', textColor: '#F59E0B', icon: Globe },
-  { value: 'Satu\nProvinsi,\n1M Kasus\nPer Tahun', sub: 'Jawa Barat penyumbang kasus terbesar', color: '#EFF6FF', textColor: '#4E63DA', icon: Building2 },
-]
+/* ─── Stat cards — data dari backend API ──────────────────────────────────── */
+const statCards = ref([])
+
+const fetchStats = async () => {
+  try {
+    const { default: apiClient } = await import('@/services/apiClient')
+    const res = await apiClient.get('/statistik/ringkasan')
+    const d = res.data?.data || res.data
+    if (!d) return
+    statCards.value = [
+      { value: d.total_laporan ?? '—', sub: 'Laporan warga diterima', color: '#EFF6FF', textColor: '#4E63DA', icon: BarChart2 },
+      { value: d.rata_rata_abj_30hari != null ? `${Number(d.rata_rata_abj_30hari).toFixed(1)}%` : '—', sub: 'Rata-rata ABJ nasional', color: '#F0FDF4', textColor: '#22C55E', icon: Globe },
+      { value: d.total_wilayah_terpantau ?? '—', sub: 'Wilayah terpantau', color: '#FFF7ED', textColor: '#F59E0B', icon: Building2 },
+    ].filter(c => c.value !== '—')
+  } catch { /* biarkan kosong */ }
+}
+
+
 </script>
 
 <template>

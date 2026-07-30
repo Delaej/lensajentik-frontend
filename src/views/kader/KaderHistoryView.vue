@@ -27,15 +27,25 @@ const chartRecords = computed(() => {
   return kaderStore.abjRecords.slice(0, 6).reverse()
 })
 
-// Comparison widget state
-const regionA = ref('RT 03 / RW 05 (Pasteur)')
-const regionB = ref('RT 02 / RW 05 (Pasteur)')
+// Comparison widget — diisi dari data ABJ real
+const regionA = ref('')
+const regionB = ref('')
+const regionScores = ref({})
 
-const regionScores = {
-  'RT 03 / RW 05 (Pasteur)': 93.3,
-  'RT 02 / RW 05 (Pasteur)': 88.1,
-  'RT 01 / RW 05 (Pasteur)': 95.0,
-  'RT 04 / RW 05 (Pasteur)': 89.4,
+// Isi regionScores dari abjRecords yang ada
+const updateRegionScores = () => {
+  const scores = {}
+  kaderStore.abjRecords.forEach(rec => {
+    scores[rec.location] = rec.abjScore
+  })
+  regionScores.value = scores
+  const keys = Object.keys(scores)
+  if (keys.length >= 2) {
+    regionA.value = keys[0]
+    regionB.value = keys[1]
+  } else if (keys.length === 1) {
+    regionA.value = keys[0]
+  }
 }
 
 const filteredRecords = computed(() => {

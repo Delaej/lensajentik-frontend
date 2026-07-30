@@ -17,6 +17,7 @@ const hoverPopupVisible = ref(false)
 const hoverPopupIndex = ref(0)
 const hoverPopupX = ref(0)
 const hoverPopupY = ref(0)
+const hoverPopupData = ref(null)
 
 const riskLegend = [
   { color: '#EF4444', label: 'Merah — Risiko Tinggi', desc: 'ABJ < 90%. Wilayah ini memiliki banyak titik genangan aktif. Kader perlu segera turun lapangan.' },
@@ -28,21 +29,26 @@ const riskLegend = [
 const drawLayers = (L) => {
   activeLayers.forEach((l) => mapInstance.removeLayer(l))
   activeLayers = []
+
+  // Outline kabupaten (jika ada GeoJSON parent)
+  if (mapStore.parentRegion?.geojson) {
+    const parentLayer = L.geoJSON(mapStore.parentRegion.geojson, {
+      style: { color: '#1E2B5B', fillColor: 'transparent', fillOpacity: 0, weight: 3, dashArray: '8 4', opacity: 0.8 },
+    }).addTo(mapInstance)
+    activeLayers.push(parentLayer)
+  }
+
   mapStore.diseaseRiskData.forEach((region) => {
     const color = region.riskCode === 'high' ? '#EF4444' : region.riskCode === 'medium' ? '#F59E0B' : region.riskCode === 'low' ? '#22C55E' : '#9CA3AF'
     
     let polygon;
+    const baseStyle = mapStore.parentRegion
+      ? { color: '#1E2B5B', fillColor: color, fillOpacity: 0.35, weight: 2.5, opacity: 0.7 }
+      : { color, fillColor: color, fillOpacity: 0.32, weight: 2 }
     if (region.geojson) {
-      polygon = L.geoJSON(region.geojson, {
-        style: { color, fillColor: color, fillOpacity: 0.32, weight: 2 }
-      }).addTo(mapInstance)
+      polygon = L.geoJSON(region.geojson, { style: baseStyle }).addTo(mapInstance)
     } else {
-      polygon = L.polygon(region.latLngs, {
-        color,
-        fillColor: color,
-        fillOpacity: 0.32,
-        weight: 2,
-      }).addTo(mapInstance)
+      polygon = L.polygon(region.latLngs, baseStyle).addTo(mapInstance)
     }
     
     polygon.regionId = region.id
@@ -51,7 +57,16 @@ const drawLayers = (L) => {
     polygon.on('mouseover', (e) => {
       hoverPopupVisible.value = true
       hoverPopupIndex.value = region.riskCode === 'high' ? 0 : region.riskCode === 'medium' ? 1 : region.riskCode === 'low' ? 2 : 3
-      // e.latlng is the mouse position
+      // Simpan info kecamatan untuk popup
+      hoverPopupData.value = {
+        name: region.name,
+        skor: region.skor,
+        riskLevel: region.riskLevel,
+        abj: region.abj,
+        confidenceLevel: region.confidenceLevel,
+        jumlahKecamatan: region.jumlahKecamatan,
+        kecamatanDenganData: region.kecamatanDenganData,
+      }
       const point = mapInstance.latLngToContainerPoint(e.latlng)
       hoverPopupX.value = point.x + 20
       hoverPopupY.value = point.y - 40
@@ -70,17 +85,37 @@ const drawLayers = (L) => {
     
     polygon.on('mouseout', (e) => {
       hoverPopupVisible.value = false
-      // Revert style if not selected
+      hoverPopupData.value = null
       if (mapStore.selectedRegion?.id !== region.id) {
         if (polygon.setStyle) {
-          polygon.setStyle({ fillColor: color, fillOpacity: 0.32, color: color, weight: 2 })
+          polygon.setStyle({
+            fillColor: color, fillOpacity: 0.32,
+            color: mapStore.parentRegion ? '#1E2B5B' : color,
+            weight: mapStore.parentRegion ? 2.5 : 2,
+            opacity: mapStore.parentRegion ? 0.6 : 1,
+          })
         }
       }
     })
 
-    polygon.on('click', () => {
-      mapStore.fetchRegionDetail(region.id)
-      mapInstance.flyTo(region.coordinates, zoomForTingkat(region.district), { duration: 1.2 })
+    polygon.on('click', async () => {
+      await mapStore.fetchRegionDetail(region.id)
+      // Update warna polygon sesuai data terbaru dari detail
+      if (mapStore.selectedRegion?.id === region.id) {
+        const newColor = riskColor(mapStore.selectedRegion.riskCode)
+        polygon.setStyle({
+          fillColor: newColor, fillOpacity: 0.35,
+          color: mapStore.parentRegion ? '#1E2B5B' : newColor,
+          weight: mapStore.parentRegion ? 2.5 : 2,
+          opacity: mapStore.parentRegion ? 0.7 : 1,
+        })
+        polygon.defaultColor = newColor
+        // Update data di store juga
+        region.riskCode = mapStore.selectedRegion.riskCode
+        region.riskLevel = mapStore.selectedRegion.riskLevel
+        region.skor = mapStore.selectedRegion.riskScore
+      }
+      mapInstance.flyTo(region.coordinates, zoomForTingkat(region.district), { duration: 0.8 })
     })
     
     // Initial highlight if already selected
@@ -129,6 +164,7 @@ onMounted(async () => {
     drawLayers(L)
 
     watch(() => mapStore.diseaseRiskData, () => drawLayers(L), { deep: true })
+    watch(() => mapStore.parentRegion?.geojson, () => { if (mapStore.parentRegion?.geojson) drawLayers(L) })
   }
 })
 
@@ -157,16 +193,56 @@ const handleSearch = async () => {
   }
 }
 
-const selectRegionFromSearch = async (region) => {
-  mapStore.searchQuery = region.nama
+// Region yang dipilih dari dropdown (belum dieksekusi)
+const selectedRegion = ref(null)
+
+// Pilih dari dropdown → isi chip, jangan eksekusi dulu
+const pickRegion = (region) => {
+  selectedRegion.value = region
+  mapStore.searchQuery = ''
   mapStore.searchResults = []
-  
-  // Call backend detail API to get data & coords
-  await mapStore.fetchRegionDetail(region.kode)
-  
-  // Also fly to coords if available
-  if (mapStore.selectedRegion && mapStore.selectedRegion.coordinates && mapInstance) {
-    mapInstance.flyTo(mapStore.selectedRegion.coordinates, zoomForTingkat(mapStore.selectedRegion.district), { duration: 1.2 })
+}
+
+// Clear chip
+const clearSelection = () => {
+  selectedRegion.value = null
+  mapStore.parentRegion = null
+  mapStore.selectedRegion = null
+  mapStore.diseaseRiskData = []
+  mapStore.fetchRiskMap() // balik ke nasional
+}
+
+// Eksekusi pencarian (klik Cari atau Enter)
+const handleSearchSubmit = async () => {
+  // Jika ada chip terpilih → eksekusi
+  if (selectedRegion.value) {
+    await executeSearch(selectedRegion.value)
+    return
+  }
+  // Jika tidak ada chip → cari dari teks
+  const q = mapStore.searchQuery.trim()
+  if (q.length < 3) return
+  await mapStore.searchRegions(q)
+  if (mapStore.searchResults.length > 0) {
+    pickRegion(mapStore.searchResults[0])
+    await executeSearch(mapStore.searchResults[0])
+  }
+}
+
+const executeSearch = async (region) => {
+  if (region.tingkat === 'kabupaten') {
+    await mapStore.loadKecamatanUntukKabupaten(region)
+    if (mapStore.diseaseRiskData.length > 0) {
+      mapInstance.flyTo(mapStore.diseaseRiskData[0].coordinates, 11, { duration: 1.2 })
+    }
+    // Async: GeoJSON tidak blocking — polygon update otomatis begitu data datang
+    mapStore.fetchKabupatenBoundary(region.nama)
+    mapStore.fetchKecamatanBoundaries(region.nama)
+  } else {
+    await mapStore.fetchRegionDetail(region.kode)
+    if (mapStore.selectedRegion?.coordinates && mapInstance) {
+      mapInstance.flyTo(mapStore.selectedRegion.coordinates, zoomForTingkat(mapStore.selectedRegion.district), { duration: 1.2 })
+    }
   }
 }
 
@@ -310,28 +386,43 @@ const predictionChartData = computed(() => {
         <p class="text-sm mt-3 mx-auto" style="color: var(--lj-muted); max-width: 520px;">Lihat tingkat risiko wilayahmu berdasarkan data cuaca real-time, laporan warga, dan pemantauan jentik kader kesehatan.</p>
       </div>
 
-    <!-- ─── Search + Filter Bar ─── -->
-    <div class="animate-on-scroll flex flex-col sm:flex-row gap-3 bg-white p-3 rounded-3xl shadow-sm border mx-auto max-w-4xl relative z-40 -mt-16" style="border-color: var(--lj-border);">
-      <div class="relative flex-1">
-        <Search class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2" style="color: var(--lj-blue);" />
+    <!-- ─── Search Bar ─── -->
+    <div class="animate-on-scroll flex gap-3 bg-white p-3 rounded-3xl shadow-sm border mx-auto max-w-2xl relative z-40 -mt-16" style="border-color: var(--lj-border);">
+      <div class="relative flex-1 flex items-center">
+        <Search class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 z-10" style="color: var(--lj-blue);" />
+
+        <!-- Chip: wilayah terpilih -->
+        <div v-if="selectedRegion" class="flex items-center gap-2 pl-12 pr-3 py-2 w-full">
+          <span class="px-3 py-1.5 rounded-xl text-sm font-bold" style="background: #EEF2FF; color: #4E63DA;">
+            📍 {{ selectedRegion.nama }}
+            <span class="text-xs font-normal opacity-70 ml-1">({{ selectedRegion.tingkat }})</span>
+          </span>
+          <button @click="clearSelection" class="w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" title="Hapus pilihan">
+            <X class="w-3.5 h-3.5" style="color: #4B5563;" />
+          </button>
+        </div>
+
+        <!-- Input: ketik nama wilayah -->
         <input
+          v-else
           v-model="mapStore.searchQuery"
           @input="handleSearch"
+          @keyup.enter="handleSearchSubmit"
           type="text"
           placeholder="Cari wilayah anda..."
           class="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-[--lj-bg] text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-[--lj-blue]"
         />
-        
+
         <!-- Search Dropdown -->
         <div
-          v-if="mapStore.searchResults && mapStore.searchResults.length > 0"
+          v-if="!selectedRegion && mapStore.searchResults && mapStore.searchResults.length > 0"
           class="absolute left-0 right-0 top-full mt-2 bg-white border rounded-2xl shadow-xl max-h-60 overflow-y-auto z-50 text-sm"
           style="border-color: var(--lj-border);"
         >
           <div
             v-for="res in mapStore.searchResults"
             :key="res.kode"
-            @click="selectRegionFromSearch(res)"
+            @click="pickRegion(res)"
             class="p-4 hover:bg-[--lj-blue-pale] cursor-pointer flex flex-col border-b last:border-b-0"
             style="border-color: var(--lj-border);"
           >
@@ -340,19 +431,14 @@ const predictionChartData = computed(() => {
           </div>
         </div>
       </div>
-      <div class="relative min-w-[200px]">
-        <select
-          v-model="mapStore.selectedRiskLevel"
-          class="w-full appearance-none pl-4 pr-10 py-3.5 rounded-2xl bg-white border text-sm font-bold cursor-pointer outline-none transition-all"
-          style="border-color: var(--lj-green-dk); color: var(--lj-navy);"
-        >
-          <option value="all">Semua level resiko</option>
-          <option value="high">Risiko Tinggi (Merah)</option>
-          <option value="medium">Risiko Sedang (Kuning)</option>
-          <option value="low">Risiko Rendah (Hijau)</option>
-        </select>
-        <div class="w-2.5 h-2.5 rounded-full absolute right-4 top-1/2 -translate-y-1/2 bg-[--lj-green-dk] pointer-events-none"></div>
-      </div>
+      <button
+        @click="handleSearchSubmit"
+        :disabled="!selectedRegion && !mapStore.searchQuery.trim()"
+        class="px-6 py-3.5 rounded-2xl text-sm font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+        style="background: #4E63DA; color: white;"
+      >
+        {{ selectedRegion ? 'Tampilkan' : 'Cari' }}
+      </button>
     </div>
 
     <!-- ─── Map Container ─── -->
@@ -374,29 +460,57 @@ const predictionChartData = computed(() => {
         <Minimize2 v-else class="w-4 h-4" style="color: var(--lj-blue);" />
       </button>
 
-      <!-- Hover Custom Tooltip (Figma Style) -->
+      <!-- Hover Popup: Ringkasan Kecamatan -->
       <div
-        v-if="hoverPopupVisible"
-        class="absolute z-30 pointer-events-none transition-opacity duration-200 w-48 rounded-3xl p-5 text-center text-white overflow-hidden shadow-2xl"
+        v-if="hoverPopupVisible && hoverPopupData"
+        class="absolute z-30 pointer-events-none transition-opacity duration-150 w-56 rounded-2xl p-4 text-white shadow-2xl"
         :style="{ background: '#4E63DA', left: hoverPopupX + 'px', top: hoverPopupY + 'px', transform: 'translate(0, -50%)' }"
       >
-        <div class="absolute -top-8 -left-8 w-32 h-32 rounded-full blur-2xl opacity-40" :class="tooltipLegend[hoverPopupIndex].glow"></div>
-        <div class="w-12 h-12 mx-auto rounded-xl flex items-center justify-center mb-3 bg-white/10 backdrop-blur border border-white/20 relative z-10">
-           <div class="w-6 h-6 rounded-full" :class="[tooltipLegend[hoverPopupIndex].color, tooltipLegend[hoverPopupIndex].shadow]"></div>
+        <div class="space-y-2">
+          <p class="text-[11px] font-bold leading-tight">{{ hoverPopupData.name }}</p>
+          <div class="flex items-center gap-2 text-[10px]">
+            <span class="px-2 py-0.5 rounded-full font-bold text-[10px]"
+              :style="{ background: hoverPopupData.riskLevel === 'Tinggi' ? '#EF4444' : hoverPopupData.riskLevel === 'Sedang' ? '#F59E0B' : hoverPopupData.riskLevel === 'Rendah' ? '#22C55E' : '#9CA3AF' }">
+              {{ hoverPopupData.riskLevel }}
+            </span>
+            <span v-if="hoverPopupData.skor != null" class="font-bold">{{ hoverPopupData.skor }}/100</span>
+          </div>
+          <div v-if="hoverPopupData.abj != null" class="text-[10px] opacity-80">
+            ABJ: {{ Number(hoverPopupData.abj).toFixed(1) }}%
+          </div>
+          <div v-if="hoverPopupData.confidenceLevel === 'kuat'" class="text-[10px] opacity-80">✓ Data Lapangan</div>
+          <div v-else-if="hoverPopupData.confidenceLevel === 'lemah'" class="text-[10px] opacity-80">📡 Estimasi Cuaca</div>
+          <div v-if="hoverPopupData.kecamatanDenganData != null" class="text-[10px] opacity-80">
+            {{ hoverPopupData.kecamatanDenganData }}/{{ hoverPopupData.jumlahKecamatan }} kec dengan data
+          </div>
         </div>
-        <p class="text-[10px] font-medium leading-relaxed relative z-10 opacity-90">
-          {{ tooltipLegend[hoverPopupIndex].desc }}
-        </p>
       </div>
     </div>
 
     <!-- ─── Hasil Pemeriksaan ─── -->
     <div v-if="mapStore.selectedRegion" class="space-y-8 mt-12">
+      <!-- Kabupaten summary bar -->
+      <div v-if="mapStore.parentRegion" class="flex items-center justify-center gap-3 flex-wrap">
+        <button @click="mapStore.clearView()" class="text-xs font-bold px-3 py-1.5 rounded-full border hover:bg-gray-50 transition-colors" style="border-color: var(--lj-border); color: var(--lj-muted);">
+          ← Kembali ke Nasional
+        </button>
+        <span class="text-xs px-3 py-1 rounded-full font-bold" style="background: #EEF2FF; color: #4E63DA;">
+          📌 {{ mapStore.parentRegion.nama }}
+        </span>
+        <span class="text-xs px-3 py-1 rounded-full font-bold" :style="{ background: '#D1FAE5', color: '#065F46' }">
+          {{ mapStore.diseaseRiskData.length }} kecamatan
+        </span>
+      </div>
+
       <div class="text-center">
         <div class="px-4 py-1 rounded-full text-[10px] font-bold mb-3 mx-auto" style="width: fit-content; border: 1.5px solid #4E63DA; color: var(--lj-navy); background: white;">HASIL PEMERIKSAAN</div>
         <h2 class="text-3xl sm:text-4xl font-bold" style="color: var(--lj-navy);">
-          {{ mapStore.selectedRegion.district }} {{ mapStore.selectedRegion.name }}
+          {{ mapStore.parentRegion ? 'Kabupaten' : mapStore.selectedRegion.district }} {{ mapStore.selectedRegion.name }}
         </h2>
+        <!-- Kabupaten ringkasan -->
+        <p v-if="mapStore.parentRegion" class="text-sm mt-2" style="color: var(--lj-muted);">
+          Rata-rata skor risiko dari {{ mapStore.selectedRegion.kecamatanDenganData || 0 }}/{{ mapStore.selectedRegion.jumlahKecamatan || mapStore.diseaseRiskData.length }} kecamatan dengan data
+        </p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
@@ -405,7 +519,29 @@ const predictionChartData = computed(() => {
           <div class="space-y-3">
             <h3 class="font-bold text-lg text-left" style="color: var(--lj-navy);">Keadaan Wilayah</h3>
             <p class="text-[11px] leading-relaxed text-left" style="color: var(--lj-navy); opacity: 0.85;">
-              <template v-if="mapStore.selectedRegion?.riskCode === 'high'">
+              <!-- Kabupaten summary -->
+              <template v-if="mapStore.parentRegion">
+                <template v-if="mapStore.selectedRegion?.kecamatanDenganData > 0">
+                  Skor risiko rata-rata <strong>{{ gaugePercent }}/100</strong> dari
+                  <strong>{{ mapStore.selectedRegion?.kecamatanDenganData }}</strong> kecamatan dengan data
+                  (total {{ mapStore.selectedRegion?.jumlahKecamatan || mapStore.diseaseRiskData.length }} kecamatan).
+                  <template v-if="mapStore.selectedRegion?.riskCode === 'high'">
+                    ⚠ Mayoritas kecamatan menunjukkan risiko tinggi.
+                  </template>
+                  <template v-else-if="mapStore.selectedRegion?.riskCode === 'medium'">
+                    Beberapa kecamatan perlu kewaspadaan. Pantau kecamatan merah.
+                  </template>
+                  <template v-else>
+                    Kondisi relatif terkendali. Pertahankan pencegahan rutin.
+                  </template>
+                </template>
+                <template v-else>
+                  <strong>{{ mapStore.diseaseRiskData.length }}</strong> kecamatan terdeteksi.
+                  🔍 Klik kecamatan untuk melihat detail & menghitung skor.
+                </template>
+              </template>
+              <!-- Single region (kecamatan) -->
+              <template v-else-if="mapStore.selectedRegion?.riskCode === 'high'">
                 Skor risiko <strong>{{ gaugePercent }}/100</strong> — kondisi lingkungan saat ini sangat mendukung perkembangbiakan nyamuk. Curah hujan 7 hari terakhir ({{ hujan7Display }}) menciptakan banyak genangan air. Segera lakukan pemeriksaan dan pengurasan wadah air di sekitar lingkungan.
               </template>
               <template v-else-if="mapStore.selectedRegion?.riskCode === 'medium'">
@@ -415,7 +551,7 @@ const predictionChartData = computed(() => {
                 Skor risiko <strong>{{ gaugePercent }}/100</strong> — kondisi lingkungan relatif aman. Suhu {{ suhuDisplay }} dan curah hujan rendah ({{ hujan7Display }}) membuat potensi perkembangbiakan nyamuk terbatas. Pertahankan kebiasaan 3M Plus.
               </template>
               <template v-else>
-                Data skor risiko untuk wilayah ini <strong>belum tersedia</strong>. Sistem sedang memproses data cuaca dari Open-Meteo. Klik untuk menghitung skor risiko secara real-time, atau laporkan kondisi lingkungan melalui fitur Laporan.
+                Data skor risiko untuk wilayah ini <strong>belum tersedia</strong>. Sistem sedang memproses data cuaca dari Open-Meteo. Klik untuk menghitung skor risiko secara real-time.
               </template>
             </p>
           </div>
@@ -592,8 +728,8 @@ const predictionChartData = computed(() => {
       </div>
     </div>
 
-    <!-- Region List when no selection -->
-    <div v-else-if="mapStore.filteredRegions.length > 0" class="space-y-4">
+    <!-- Region List: mode nasional -->
+    <div v-else-if="!mapStore.parentRegion && mapStore.filteredRegions.length > 0" class="space-y-4">
       <div class="lj-section-label mb-4" style="width: fit-content;">DAFTAR WILAYAH ({{ mapStore.filteredRegions.length }})</div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div
@@ -605,6 +741,33 @@ const predictionChartData = computed(() => {
           <div>
             <div class="font-bold text-sm" style="color: var(--lj-navy);">{{ region.name }}</div>
             <div class="text-xs" style="color: var(--lj-muted);">{{ region.district }}</div>
+          </div>
+          <div
+            class="px-3 py-1 rounded-full text-xs font-bold text-white shrink-0"
+            :style="{ background: riskColor(region.riskCode) }"
+          >
+            {{ riskLabel(region.riskCode) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kecamatan list: mode kabupaten -->
+    <div v-else-if="mapStore.parentRegion && mapStore.diseaseRiskData.length > 0" class="space-y-4">
+      <div class="lj-section-label mb-4" style="width: fit-content;">KECAMATAN DI {{ mapStore.parentRegion.nama.toUpperCase() }} ({{ mapStore.diseaseRiskData.length }})</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          v-for="region in mapStore.diseaseRiskData"
+          :key="region.id"
+          @click="mapStore.fetchRegionDetail(region.id); mapInstance?.flyTo(region.coordinates, 14, { duration: 0.8 })"
+          class="lj-card p-4 cursor-pointer flex items-center justify-between gap-3 hover:shadow-md transition-shadow"
+        >
+          <div>
+            <div class="font-bold text-sm" style="color: var(--lj-navy);">{{ region.name }}</div>
+            <div class="text-xs" style="color: var(--lj-muted);">
+              Skor: {{ region.skor != null ? `${region.skor}/100` : '—' }}
+              <span v-if="region.abj != null">· ABJ: {{ Number(region.abj).toFixed(1) }}%</span>
+            </div>
           </div>
           <div
             class="px-3 py-1 rounded-full text-xs font-bold text-white shrink-0"

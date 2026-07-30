@@ -20,10 +20,10 @@ const description = ref('')
 const isLocating = ref(false)
 const isSubmitting = ref(false)
 
-// Location
+// Location — diisi oleh GPS browser saat halaman dimuat
 const address = ref('')
-const latitude = ref(-6.892)
-const longitude = ref(107.595)
+const latitude = ref(null)
+const longitude = ref(null)
 const searchQuery = ref('')
 const searchResults = ref([])
 const selectedWilayahKode = ref('')
@@ -47,11 +47,15 @@ let mapInstance = null
 let marker = null
 
 onMounted(async () => {
+  // Minta GPS dulu, baru init map
+  await getCurrentPositionAsync()
   if (typeof window !== 'undefined') {
     const L = (await import('leaflet')).default
+    const lat = latitude.value || -2.5489
+    const lng = longitude.value || 118.0149
     mapInstance = L.map(mapContainer.value, {
-      center: [latitude.value, longitude.value],
-      zoom: 15,
+      center: [lat, lng],
+      zoom: latitude.value ? 15 : 5,
       zoomControl: true,
     })
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -59,20 +63,91 @@ onMounted(async () => {
       maxZoom: 18,
     }).addTo(mapInstance)
 
-    marker = L.marker([latitude.value, longitude.value], {
+    marker = L.marker([lat, lng], {
       draggable: true,
     }).addTo(mapInstance)
 
-    marker.on('dragend', (e) => {
+    marker.on('dragend', async (e) => {
       const latlng = e.target.getLatLng()
       latitude.value = latlng.lat
       longitude.value = latlng.lng
-      address.value = `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`
+      await reverseGeocode(latlng.lat, latlng.lng)
     })
   }
 })
 
 /* ─── Methods ─────────────────────────────────────────────────────────────── */
+
+// Promise wrapper untuk GPS
+const getCurrentPositionAsync = () => new Promise((resolve) => {
+  if (!navigator.geolocation) { resolve(); return }
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      latitude.value = pos.coords.latitude
+      longitude.value = pos.coords.longitude
+      reverseGeocode(pos.coords.latitude, pos.coords.longitude)
+      resolve()
+    },
+    () => resolve() // gagal GPS — lanjut saja
+  )
+})
+
+// Reverse geocode + auto-resolve wilayah terdekat
+const reverseGeocode = async (lat, lng) => {
+  let addressData = null
+
+  // 1. Cari alamat + admin boundary dari Nominatim (lebih lengkap)
+  try {
+    const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`)
+    addressData = await geo.json()
+  } catch { /* lanjut */ }
+
+  if (addressData?.display_name) {
+    address.value = addressData.display_name
+  } else {
+    // Fallback ke backend
+    try {
+      const { default: apiClient } = await import('@/services/apiClient')
+      const res = await apiClient.get('/geocode/reverse', { params: { lat, lng } })
+      if (res.data?.success && res.data.address) {
+        address.value = res.data.address
+      }
+    } catch { /* biarkan kosong */ }
+  }
+
+  // 2. Auto-resolve wilayah: coba backend dulu, fallback ke Nominatim address
+  try {
+    const { default: apiClient } = await import('@/services/apiClient')
+    const res = await apiClient.get('/wilayah/terdekat', { params: { lat, lng } })
+    const wilayah = res.data?.data
+    if (wilayah?.kecamatan?.kode) {
+      selectedWilayahKode.value = wilayah.kecamatan.kode
+      selectedRegionName.value = `${wilayah.kecamatan.nama}, ${wilayah.kabupaten?.nama || ''}`
+      return // berhasil
+    }
+  } catch { /* fallback ke Nominatim */ }
+
+  // 3. Fallback: ambil kecamatan/kabupaten dari Nominatim address
+  if (addressData?.address) {
+    const a = addressData.address
+    // Nominatim memetakan: county/city → kabupaten, state → provinsi
+    const namaKec = a.suburb || a.village || a.town || a.city_district || a.county || ''
+    const namaKab = a.city || a.county || a.state_district || ''
+    if (namaKec) {
+      selectedRegionName.value = [namaKec, namaKab].filter(Boolean).join(', ')
+      // Coba cari kode via search API
+      try {
+        const { default: apiClient } = await import('@/services/apiClient')
+        const searchRes = await apiClient.get('/wilayah/search', { params: { q: namaKec } })
+        const results = searchRes.data?.data || []
+        if (results.length > 0) {
+          selectedWilayahKode.value = results[0].kode
+        }
+      } catch { /* gak apa-apa, yg penting nama kecamatan tampil */ }
+    }
+  }
+}
+
 const updateMapMarker = async (lat, lng) => {
   if (!mapInstance || !marker) return
   const { default: L } = await import('leaflet')
@@ -87,19 +162,12 @@ const handleGetGps = () => {
       isLocating.value = false
       latitude.value = pos.coords.latitude
       longitude.value = pos.coords.longitude
-      address.value = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`
-      if (!selectedWilayahKode.value) {
-        selectedWilayahKode.value = '3201010'
-        selectedRegionName.value = 'Lokasi GPS terdeteksi'
-      }
+      await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
       await updateMapMarker(latitude.value, longitude.value)
     },
-    async () => {
+    () => {
       isLocating.value = false
-      address.value = 'Jl. Kamper, Babakan, Kec. Dramaga, Kabupaten Bogor'
-      selectedWilayahKode.value = '3201010'
-      selectedRegionName.value = 'Kec. Dramaga (Simulasi)'
-      await updateMapMarker(-6.5571, 106.7248)
+      // GPS gagal — tidak ada fallback hardcode, user harus pilih manual
     }
   )
 }
@@ -181,16 +249,19 @@ const handleSubmit = async () => {
 
   isSubmitting.value = true
   try {
-    await reportStore.addReport({
+    const result = await reportStore.addReport({
       userName: reportMode.value === 'anonim' ? 'Anonim' : (userName.value || 'Warga'),
       address: address.value,
       description: description.value,
-      wilayah_kode: selectedWilayahKode.value,
+      wilayah_kode: selectedWilayahKode.value || undefined,
       latitude: latitude.value,
       longitude: longitude.value,
       foto: selectedFile.value,
     })
-    gamificationStore.addPoints(50)
+    // Ambil poin dari response backend (hanya untuk user login)
+    if (result?.poin_didapat) {
+      gamificationStore.addPoints(result.poin_didapat)
+    }
     step.value = 'success'
   } catch (err) {
     alert('Gagal mengirim laporan: ' + (err.response?.data?.message || err.message))

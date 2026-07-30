@@ -7,6 +7,7 @@ import { educationService } from '@/services/educationService'
 const route = useRoute()
 const article = ref(null)
 const isLoading = ref(true)
+const isError = ref(false)
 
 onMounted(async () => {
   try {
@@ -14,32 +15,9 @@ onMounted(async () => {
     article.value = data
   } catch (e) {
     console.error('Fetch article detail failed:', e)
+    isError.value = true
   } finally {
     isLoading.value = false
-    if (!article.value) {
-      article.value = {
-        judul: 'Kasus DBD 2025 Menurun, Tapi Kemenkes Minta Warga Tetap Waspada',
-        isi: `Kabar baik datang dari data terbaru Kementerian Kesehatan RI: tren kasus demam berdarah dengue (DBD) sepanjang 2025 menunjukkan penurunan dibanding tahun sebelumnya. Namun, angka yang masih di kisaran ratusan ribu kasus membuat pemerintah tetap mengimbau masyarakat untuk tidak lengah.
-Penurunan yang Belum Berarti Aman
-
-Berdasarkan data Sistem Kewaspadaan Dini dan Respon (SKDR), Kementerian Kesehatan mencatat sekitar 131 ribu kasus DBD sepanjang Januari hingga Oktober 2025, dengan ratusan kematian menyertainya. Meski jumlah ini menurun cukup signifikan dibanding tahun 2024 — yang tercatat sebagai tahun dengan kasus DBD tertinggi sepanjang sejarah pencatatan di Indonesia — angka tersebut tetap menempatkan Indonesia sebagai penyumbang kasus dengue yang besar secara global. Pola tahunan yang berulang juga masih terlihat: kasus cenderung melonjak di awal tahun dan kembali naik menjelang pertengahan tahun, mengikuti perubahan musim hujan dan aktivitas nyamuk Aedes aegypti sebagai vektor utama penularan.
-Kenapa DBD Bukan Penyakit Musiman
-
-Salah satu kesalahpahaman umum di masyarakat adalah menganggap DBD hanya muncul saat musim hujan. Padahal, virus dengue sebenarnya bisa menyerang sepanjang tahun, tanpa memandang usia maupun gaya hidup seseorang. Perubahan iklim turut memperparah situasi ini — semakin tinggi suhu lingkungan, semakin sering pula nyamuk menggigit, sehingga potensi penularan pun meningkat. Wilayah dengan kepadatan penduduk tinggi seperti Jawa Barat, Jawa Timur, dan Jawa Tengah secara konsisten menjadi penyumbang kasus dan kematian tertinggi di Indonesia. Sementara itu, kelompok usia produktif tercatat paling sering terinfeksi, namun risiko kematian justru lebih tinggi pada anak-anak dan remaja karena sistem kekebalan tubuh mereka yang belum sekuat orang dewasa.
-Deteksi Dini Jadi Kunci
-
-Salah satu tantangan terbesar dalam penanganan DBD adalah keterlambatan penanganan akibat gejala yang sering disalahartikan sebagai flu biasa. Padahal, justru saat demam mulai turun di hari keempat atau kelima, itulah masa kritis yang paling perlu diwaspadai. Jika diabaikan, kondisi ini bisa berkembang menjadi sindrom syok dengue yang jauh lebih berbahaya.
-
-Karena hingga kini belum ditemukan obat khusus untuk DBD, pencegahan tetap menjadi langkah paling efektif. Gerakan 3M Plus — menguras, menutup, dan mendaur ulang tempat-tempat yang berpotensi menjadi sarang nyamuk — masih menjadi strategi utama yang didorong pemerintah, dilengkapi dengan inovasi tambahan seperti pemantauan berbasis teknologi dan vaksinasi dengue bagi yang membutuhkan.
-
-Apa yang Bisa Kamu Lakukan?
-Selain rutin menerapkan 3M Plus di rumah masing-masing, partisipasi aktif warga dalam melaporkan titik-titik genangan air di lingkungan sekitar menjadi salah satu cara paling nyata untuk membantu memutus rantai penyebaran nyamuk sejak dini — sebelum genangan kecil itu sempat berkembang jadi sumber wabah baru.`,
-        thumbnail: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-        tipe: 'artikel',
-        sumber: 'Kemenkes RI',
-        created_at: '2025-11-20'
-      }
-    }
   }
 })
 </script>

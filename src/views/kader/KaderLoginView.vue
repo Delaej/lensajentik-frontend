@@ -7,7 +7,7 @@ import { useKaderStore } from '@/stores/useKaderStore'
 const router = useRouter()
 const kaderStore = useKaderStore()
 
-const email = ref('nayla@gmail.com')
+const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const isLoading = ref(false)
@@ -96,7 +96,7 @@ const handleLogin = async () => {
               v-model="email"
               type="email"
               required
-              placeholder="nayla@gmail.com"
+              placeholder="Email akun kader"
               class="w-full pl-12 pr-4 py-3.5 rounded-2xl text-sm font-medium text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-2 focus:ring-[#4E63DA]"
               style="background:#EEF0F7; border:none;"
             />

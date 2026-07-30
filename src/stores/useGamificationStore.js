@@ -1,26 +1,42 @@
 import { defineStore } from 'pinia'
+import apiClient from '@/services/apiClient'
 
 export const useGamificationStore = defineStore('gamification', {
   state: () => ({
-    userPoints: 250,
-    levelName: 'Duta bebas Jentik', // Level 1: Warga Peduli, Level 2: Pejuang PSN, Level 3: Duta bebas Jentik
-    level: 3,
-    nextLevelPoints: 500,
-    badges: [
-      { id: 1, name: 'Pelapor Pertama', icon: 'Award', unlocked: true, desc: 'Melaporkan 1 genangan jentik' },
-      { id: 2, name: 'Pahlawan PSN', icon: 'ShieldCheck', unlocked: true, desc: 'Berpartisipasi dalam 5 kali pelaporan' },
-      { id: 3, name: 'Detektif Jentik', icon: 'Search', unlocked: true, desc: 'Skor akurasi laporan di atas 90%' },
-      { id: 4, name: 'Master Twibbon', icon: 'Share2', unlocked: false, desc: 'Bagikan gerakan 3M Plus ke media sosial' },
-    ],
+    poin: 0,
+    loaded: false,
   }),
 
+  getters: {
+    levelName: (state) => {
+      if (state.poin >= 500) return 'Pahlawan Lingkungan'
+      if (state.poin >= 200) return 'Pejuang PSN'
+      if (state.poin >= 50) return 'Pelapor Aktif'
+      return 'Warga Peduli'
+    },
+    level: (state) => {
+      if (state.poin >= 500) return 4
+      if (state.poin >= 200) return 3
+      if (state.poin >= 50) return 2
+      return 1
+    },
+  },
+
   actions: {
-    addPoints(amount = 50) {
-      this.userPoints += amount
-      if (this.userPoints >= 500) {
-        this.level = 4
-        this.levelName = 'Pahlawan Lingkungan'
+    async fetchPoin() {
+      try {
+        const token = localStorage.getItem('kader_token')
+        if (!token) return
+        const res = await apiClient.get('/auth/me')
+        this.poin = res.data?.data?.poin || res.data?.poin || 0
+        this.loaded = true
+      } catch {
+        // Tidak login — tidak perlu gamification
       }
+    },
+
+    addPoints(amount) {
+      this.poin += amount
     },
   },
 })

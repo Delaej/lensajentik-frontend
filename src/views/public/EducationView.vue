@@ -25,24 +25,6 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
-
-  // Fallback demo facts
-  if (facts.value.length === 0) {
-    facts.value = [
-      { id: 1, judul: 'Tahukah Kamu... apa itu DBD?', isi: 'DBD (Demam Berdarah Dengue) adalah penyakit infeksi yang disebabkan oleh virus Dengue, ditularkan oleh gigitan nyamuk Aedes aegypti betina yang telah terinfeksi.', stat: '244.409', statLabel: 'Jumlah kasus DBD di Indonesia sepanjang 2024, nilai tertinggi dalam pencatatan.' },
-      { id: 2, judul: 'Tahukah Kamu... siklus nyamuk?', isi: 'Nyamuk Aedes aegypti bisa bertelur hingga 300 butir sekaligus di air bersih yang tidak mengalir. Telur bisa bertahan hingga 1 tahun dalam kondisi kering.', stat: '300 Telur', statLabel: 'Jumlah telur yang bisa dihasilkan nyamuk betina setiap kali bertelur.' },
-      { id: 3, judul: 'Tahukah Kamu... waktu aktif nyamuk?', isi: 'Berbeda dengan nyamuk malaria yang aktif malam hari, nyamuk Aedes aegypti paling aktif pada pagi (08.00–10.00) dan sore hari (16.00–18.00).', stat: '2 kali/hari', statLabel: 'Puncak aktivitas menggigit nyamuk Aedes aegypti per hari.' },
-    ]
-  }
-
-  // Fallback demo articles
-  if (articles.value.length === 0) {
-    articles.value = [
-      { id: 1, slug: 'dbd-2025-menurun', tipe: 'artikel', judul: 'Kasus DBD 2025 Menurun, Tapi Kemenkes Minta Warga Tetap Waspada', sumber: 'Kompas.id', created_at: '2025-06-15', thumbnail: null },
-      { id: 2, slug: 'kenapa-nyamuk-menggigit', tipe: 'artikel', judul: 'Kenapa Nyamuk Selalu Menggigit Orang Tertentu? Ini Penjelasannya', sumber: 'Alodokter', created_at: '2025-05-22', thumbnail: null },
-      { id: 3, slug: '3m-plus-cara-benar', tipe: 'panduan', judul: 'Gerakan 3M Plus: Cara yang Benar Mencegah Sarang Nyamuk di Rumah', sumber: 'Dinkes RI', created_at: '2025-04-10', thumbnail: null },
-    ]
-  }
 })
 
 /* ─── Facts slider ───────────────────────────────────────────────────────── */

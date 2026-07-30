@@ -7,8 +7,17 @@ import { useKaderStore } from '@/stores/useKaderStore'
 
 const kaderStore = useKaderStore()
 
+const greeting = computed(() => {
+  const hour = new Date().getHours()
+  if (hour < 11) return 'Selamat Pagi'
+  if (hour < 15) return 'Selamat Siang'
+  if (hour < 18) return 'Selamat Sore'
+  return 'Selamat Malam'
+})
+
 onMounted(async () => {
   await kaderStore.fetchProfile()
+  await kaderStore.fetchDashboard()
   await kaderStore.fetchMyAbjRecords()
   await kaderStore.fetchNotifications()
 })
@@ -20,12 +29,7 @@ const notifications = computed(() => {
 
 // Weekly Trend bars – mapped from real store ABJ records
 const chartBars = computed(() => {
-  if (kaderStore.abjRecords.length === 0) {
-    return [
-      { label: 'Mg 1', h: 0, color: '#4E63DA' },
-      { label: 'Mg 2', h: 0, color: '#4E63DA' },
-    ]
-  }
+  if (kaderStore.abjRecords.length === 0) return []
   return kaderStore.abjRecords.slice(0, 6).reverse().map((rec, index) => {
     return {
       label: `Mg ${index + 1}`,
@@ -44,7 +48,7 @@ const chartBars = computed(() => {
     <div class="flex items-start justify-between">
       <div>
         <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center flex-wrap gap-2">
-          Selamat Pagi,
+          {{ greeting }},
           <span class="px-3 py-0.5 rounded-full text-slate-900 font-black" style="background:#5AF61F;">
             {{ kaderStore.userProfile.name || 'Kader' }}!
           </span>
@@ -82,9 +86,9 @@ const chartBars = computed(() => {
           </div>
           <!-- Status Aman badge -->
           <div class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-900 shadow-2xs"
-            :style="{ background: kaderStore.quickMetrics.status === 'Aman' ? '#5AF61F' : kaderStore.quickMetrics.status === 'Waspada' ? '#F59E0B' : '#EF4444' }">
+            :style="{ background: kaderStore.quickMetricsDisplay.status === 'Aman' ? '#5AF61F' : kaderStore.quickMetricsDisplay.status === 'Waspada' ? '#F59E0B' : '#EF4444' }">
             <CheckCircle2 class="w-3.5 h-3.5 stroke-[2.8]" />
-            Status {{ kaderStore.quickMetrics.status }}
+            Status {{ kaderStore.quickMetricsDisplay.status }}
           </div>
         </div>
 
@@ -92,15 +96,15 @@ const chartBars = computed(() => {
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="p-5 rounded-2xl text-center border-2 bg-white" style="border-color:#5AF61F;">
             <div class="text-xs font-semibold text-slate-600 mb-1">Total Rumah</div>
-            <div class="text-4xl font-black text-slate-900">{{ kaderStore.userProfile.totalHouseTarget || 45 }}</div>
+            <div class="text-4xl font-black text-slate-900">{{ kaderStore.quickMetricsDisplay.totalHouseTarget || '—' }}</div>
           </div>
           <div class="p-5 rounded-2xl text-center border-2 bg-white" style="border-color:#5AF61F;">
             <div class="text-xs font-semibold text-slate-600 mb-1">Diperiksa</div>
-            <div class="text-4xl font-black text-slate-900">{{ kaderStore.quickMetrics.diperiksa }}</div>
+            <div class="text-4xl font-black text-slate-900">{{ kaderStore.quickMetricsDisplay.diperiksa }}</div>
           </div>
           <div class="p-5 rounded-2xl text-center border-2 bg-white" style="border-color:#7B93F0;">
             <div class="text-[11px] font-semibold text-slate-600 mb-1 leading-tight">Angka Bebas<br/>Jentik (ABJ)</div>
-            <div class="text-4xl font-black text-slate-900">{{ kaderStore.quickMetrics.abjScore }}%</div>
+            <div class="text-4xl font-black text-slate-900">{{ kaderStore.quickMetricsDisplay.abjScore }}%</div>
           </div>
         </div>
 

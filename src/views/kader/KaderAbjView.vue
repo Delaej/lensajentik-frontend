@@ -26,8 +26,8 @@ const kaderStore = useKaderStore()
 const currentStep = ref(1) // Step 1: Area Kerja, Step 2: Detail Pemeriksaan
 
 // Step 1 Form Data
-const selectedRt = ref('03')
-const selectedRw = ref('05')
+const selectedRt = ref('')
+const selectedRw = ref('')
 const inspectionDate = ref(new Date().toISOString().split('T')[0])
 const villages = ref([])
 const selectedVillageKode = ref('')
@@ -38,9 +38,6 @@ onMounted(async () => {
     try {
       const response = await abjService.fetchDesaByKecamatan(kaderStore.userProfile.wilayah_kode)
       villages.value = response.data || response
-      if (villages.value.length > 0) {
-        selectedVillageKode.value = villages.value[0].kode
-      }
     } catch (error) {
       console.error('Fetch villages failed:', error)
     }
@@ -48,8 +45,8 @@ onMounted(async () => {
 })
 
 // Step 2 Form Data
-const totalDiperiksa = ref(45)
-const rumahPositif = ref(3)
+const totalDiperiksa = ref(0)
+const rumahPositif = ref(0)
 const notes = ref('')
 
 const isSubmitting = ref(false)

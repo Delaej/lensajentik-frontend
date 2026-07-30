@@ -1,19 +1,15 @@
 import apiClient from './apiClient'
 
-const USE_MOCK = false
-
 export const mapService = {
-  /**
-   * Fetch Web-GIS Risk Data (/skor-risiko/peta)
-   */
   async getRiskMap(params = {}) {
-    if (USE_MOCK) {
-      return Promise.resolve({
-        status: 'success',
-        data: [],
-      })
-    }
     const response = await apiClient.get('/skor-risiko/peta', { params })
+    return response.data
+  },
+
+  async refreshKabupaten(parentKode) {
+    const response = await apiClient.post('/skor-risiko/refresh-kabupaten', null, {
+      params: { parent_kode: parentKode }
+    })
     return response.data
   },
 
