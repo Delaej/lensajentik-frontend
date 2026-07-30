@@ -142,6 +142,8 @@ export const useMapStore = defineStore('map', {
         const day7 = predictions[6] ? `Skor Prediksi: ${predictions[6].skor} (${predictions[6].level_risiko})` : 'Data prediksi belum tersedia'
         const day14 = predictions[13] ? `Skor Prediksi: ${predictions[13].skor} (${predictions[13].level_risiko})` : 'Data prediksi belum tersedia'
 
+        const faktor = mainScore.faktor_perhitungan || {}
+
         this.selectedRegion = {
           id: details.wilayah.kode,
           name: details.wilayah.nama,
@@ -150,13 +152,24 @@ export const useMapStore = defineStore('map', {
           disease: details.jenis_penyakit,
           riskLevel: mainScore.level_risiko === 'tinggi' ? 'Tinggi' : mainScore.level_risiko === 'sedang' ? 'Sedang' : 'Rendah',
           riskCode: mainScore.level_risiko === 'tinggi' ? 'high' : mainScore.level_risiko === 'sedang' ? 'medium' : 'low',
-          abj: mainScore.faktor_perhitungan ? mainScore.faktor_perhitungan.abj_persen || 92.5 : 92.5,
+          riskScore: mainScore.skor || 0,
+          abj: faktor.abj_persen || 92.5,
           confidenceLevel: mainScore.confidence_level === 'kuat' ? 94 : 45,
           coordinates: [lat, lng],
           latLngs: latLngs,
           geojson: geojson,
           forecast7Days: day7,
           forecast14Days: day14,
+          // Weather data dari faktor_perhitungan
+          suhu: faktor.suhu || null,
+          kelembapan: faktor.kelembapan || null,
+          curahHujan: faktor.curah_hujan || null,
+          // Prediksi array dari backend
+          predictions: predictions.map(p => ({
+            tanggal: p.tanggal,
+            skor: p.skor,
+            level: p.level_risiko,
+          })),
         }
 
         // Add to map if not present so it can be highlighted

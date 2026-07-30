@@ -170,19 +170,73 @@ const selectRegionFromSearch = async (region) => {
 }
 
 const tooltipLegend = [
-  { 
-    color: 'bg-rose-500', shadow: 'shadow-[0_0_15px_rgba(239,68,68,0.8)]', glow: 'bg-rose-500', 
-    label: 'Tinggi', desc: 'Warna merah menunjukkan bahwa wilayah yang ditunjukkan memiliki banyak genangan air & sarang nyamuk aktif. Segera lakukan kerja bakti 3M Plus!' 
+  {
+    color: 'bg-rose-500', shadow: 'shadow-[0_0_15px_rgba(239,68,68,0.8)]', glow: 'bg-rose-500',
+    label: 'Tinggi', desc: 'Warna merah menunjukkan bahwa wilayah yang ditunjukkan memiliki banyak genangan air & sarang nyamuk aktif. Segera lakukan kerja bakti 3M Plus!'
   },
-  { 
+  {
     color: 'bg-amber-500', shadow: 'shadow-[0_0_15px_rgba(245,158,11,0.8)]', glow: 'bg-amber-400',
-    label: 'Sedang', desc: 'Warna kuning menunjukkan bahwa wilayah yang ditunjukkan memiliki potensi sarang jentik tersembunyi. Perlu dikuras dan dibersihkan minggu ini.' 
+    label: 'Sedang', desc: 'Warna kuning menunjukkan bahwa wilayah yang ditunjukkan memiliki potensi sarang jentik tersembunyi. Perlu dikuras dan dibersihkan minggu ini.'
   },
-  { 
+  {
     color: 'bg-emerald-500', shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.8)]', glow: 'bg-emerald-400',
-    label: 'Rendah', desc: 'Warna hijau menunjukkan bahwa wilayah yang ditunjukkan memiliki lingkungan bersih dan bebas jentik. Pertahankan terus pola hidup sehat Anda!' 
+    label: 'Rendah', desc: 'Warna hijau menunjukkan bahwa wilayah yang ditunjukkan memiliki lingkungan bersih dan bebas jentik. Pertahankan terus pola hidup sehat Anda!'
   },
 ]
+
+/* ─── Helper functions ──────────────────────────────────────────────────── */
+const riskColor = (code) => {
+  if (code === 'high') return '#EF4444'
+  if (code === 'medium') return '#F59E0B'
+  return '#22C55E'
+}
+const riskLabel = (code) => {
+  if (code === 'high') return 'Tinggi'
+  if (code === 'medium') return 'Sedang'
+  return 'Rendah'
+}
+
+/* ─── Computed dari selectedRegion ──────────────────────────────────────── */
+const gaugePercent = computed(() => {
+  const r = mapStore.selectedRegion
+  if (!r) return 0
+  // Gunakan ABJ (semakin tinggi ABJ semakin bagus = persentase gauge naik)
+  return Math.round(r.abj || 0)
+})
+
+const suhuDisplay = computed(() => {
+  const s = mapStore.selectedRegion?.suhu
+  return s != null ? `${s}°C` : '—°C'
+})
+
+const kondisiCuaca = computed(() => {
+  const h = mapStore.selectedRegion?.curahHujan
+  if (h == null) return 'Data belum tersedia'
+  if (h > 15) return 'Hujan Lebat'
+  if (h > 5) return 'Gerimis'
+  if (h > 0) return 'Cerah Berawan'
+  return 'Cerah'
+})
+
+const prediksiText = computed(() => {
+  const p = mapStore.selectedRegion?.predictions
+  if (!p || p.length === 0) return 'Data prediksi belum tersedia untuk wilayah ini.'
+  const nextWeek = p.find(x => {
+    const d = new Date(x.tanggal)
+    const now = new Date()
+    const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24))
+    return diff >= 5 && diff <= 9
+  }) || p[Math.min(6, p.length - 1)]
+  const level = nextWeek.level === 'tinggi' ? 'meningkat tajam' : nextWeek.level === 'sedang' ? 'stabil' : 'menurun'
+  return `Populasi nyamuk pembawa virus DBD diprediksi akan ${level} dalam 7 hari ke depan (skor: ${nextWeek.skor}). ${nextWeek.level === 'tinggi' ? 'Segera lakukan 3M Plus dan laporkan genangan air.' : nextWeek.level === 'sedang' ? 'Tetap waspada dan jaga kebersihan lingkungan.' : 'Pertahankan kondisi lingkungan yang sudah bersih.'}`
+})
+
+const rekomendasiText = computed(() => {
+  const r = mapStore.selectedRegion?.riskCode
+  if (r === 'high') return 'Segera lakukan kerja bakti 3M Plus: Menguras, Menutup, Mendaur Ulang. Laporkan genangan air melalui fitur Laporan. Koordinasi dengan kader setempat untuk fogging.'
+  if (r === 'medium') return 'Tingkatkan kewaspadaan. Kuras bak mandi minggu ini, tutup rapat tempat air, dan bersihkan talang yang tersumbat. Pantau terus notifikasi LensaJentik.'
+  return 'Lanjutkan kebiasaan baik! Kuras bak mandi rutin, jaga kebersihan selokan, dan pastikan tidak ada genangan di sekitar rumah.'
+})
 </script>
 
 <template>
@@ -304,8 +358,15 @@ const tooltipLegend = [
           <div class="space-y-3">
             <h3 class="font-bold text-lg text-left" style="color: var(--lj-navy);">Keadaan Wilayah</h3>
             <p class="text-[11px] leading-relaxed text-left" style="color: var(--lj-navy); opacity: 0.85;">
-              Kondisi lingkungan di sekitar kita saat ini cukup mendukung bagi nyamuk untuk berkembang biak.
-              Sederhananya, jika ada 10 wadah air terbuka di halaman rumah, 6 di antaranya berpotensi besar menjadi tempat bertelur nyamuk jika dibiarkan.
+              <template v-if="mapStore.selectedRegion?.riskCode === 'high'">
+                Kondisi lingkungan saat ini sangat mendukung perkembangbiakan nyamuk. Tingkat ABJ rendah ({{ gaugePercent }}%) menunjukkan banyak rumah memiliki jentik. Dari 10 wadah air terbuka, mayoritas berpotensi menjadi tempat bertelur nyamuk.
+              </template>
+              <template v-else-if="mapStore.selectedRegion?.riskCode === 'medium'">
+                Kondisi lingkungan cukup terkendali namun masih ada potensi genangan. Tingkat ABJ {{ gaugePercent }}% — masih di bawah target nasional 95%. Beberapa wadah air mungkin masih menjadi sarang jentik jika tidak rutin dikuras.
+              </template>
+              <template v-else>
+                Kondisi lingkungan di wilayah ini relatif bersih dan aman. Tingkat ABJ {{ gaugePercent }}% menunjukkan sebagian besar rumah sudah bebas jentik. Pertahankan kebiasaan 3M Plus agar tetap aman.
+              </template>
             </p>
           </div>
 
@@ -314,8 +375,8 @@ const tooltipLegend = [
             <div class="text-[11px] font-bold mb-2 text-left" style="color: var(--lj-navy);">Kondisi Udara</div>
             <div class="flex items-center gap-4">
               <div class="border-2 rounded-2xl p-4 text-center min-w-[120px]" style="border-color: #4E63DA; background: white;">
-                <div class="text-2xl font-black" style="color: var(--lj-navy);">28.5 c</div>
-                <div class="text-[10px] font-bold" style="color: #4E63DA;">Sering Gerimis</div>
+                <div class="text-2xl font-black" style="color: var(--lj-navy);">{{ suhuDisplay }}</div>
+                <div class="text-[10px] font-bold" style="color: #4E63DA;">{{ kondisiCuaca }}</div>
               </div>
               <p class="text-[11px] leading-relaxed flex-1" style="color: var(--lj-navy); opacity: 0.85;">
                 Suhu hangat + air hujan membuat wadah liar menampung genangan air ideal.
@@ -341,13 +402,12 @@ const tooltipLegend = [
           <div class="relative w-52 h-52 z-10 mb-6">
             <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90 drop-shadow-sm overflow-visible">
               <circle cx="60" cy="60" r="45" fill="none" stroke="#F3F4F6" stroke-width="12" />
-              <!-- Using 60% for the specific gauge requested in figma -->
               <circle
                 cx="60" cy="60" r="45" fill="none"
                 stroke="url(#gradient-green-blue)"
                 stroke-width="12"
                 stroke-linecap="round"
-                stroke-dasharray="169.6 999"
+                :stroke-dasharray="`${(gaugePercent / 100) * 282.7} 999`"
               />
               <circle cx="60" cy="15" r="5" fill="white" />
               <defs>
@@ -359,7 +419,7 @@ const tooltipLegend = [
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
               <span class="text-[54px] font-black" style="color: var(--lj-navy); letter-spacing: -2px;">
-                60%
+                {{ gaugePercent }}%
               </span>
             </div>
           </div>
@@ -378,47 +438,55 @@ const tooltipLegend = [
         </div>
       </div>
 
-      <!-- Prediction Card (Figma style) -->
+      <!-- Prediction Card -->
       <div class="lj-card p-0 overflow-hidden grid grid-cols-1 md:grid-cols-2 gap-0 border-2" style="border-color: #E5E7EB; border-radius: 28px;">
-        <!-- Prediction map/chart (Figma graphic) -->
+        <!-- Prediction chart -->
         <div class="relative bg-gradient-to-b from-[#8ab4f8]/30 to-[#8ab4f8]/10 flex items-center justify-center p-8 overflow-hidden min-h-[220px]">
-          <!-- Raindrops decorative -->
           <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at center, white 2px, transparent 2px); background-size: 20px 40px; transform: rotate(15deg);"></div>
-          
-          <!-- Decorative SVG wave line (Figma match) -->
+
           <svg class="absolute inset-0 w-full h-full z-10 drop-shadow-md" preserveAspectRatio="none">
-            <!-- Smooth green wave -->
             <path d="M-10,180 C80,120 120,200 200,100 C280,150 350,220 500,130" fill="none" stroke="#22C55E" stroke-width="6" stroke-linecap="round"/>
-            
-            <!-- Minggu ke-2 (Orange blob) -->
-            <circle cx="45%" cy="45%" r="28" fill="#F59E0B" opacity="0.3" class="blur-md"/>
-            <circle cx="45%" cy="45%" r="12" fill="#F59E0B" />
-            
-            <!-- Minggu ke-3 (Green blob) -->
-            <circle cx="20%" cy="75%" r="28" fill="#22C55E" opacity="0.3" class="blur-md"/>
-            <circle cx="20%" cy="75%" r="12" fill="#22C55E" />
+
+            <!-- Week 1 blob -->
+            <circle cx="20%" cy="75%" r="28" :fill="(mapStore.selectedRegion?.predictions?.[0]?.level || 'rendah') === 'tinggi' ? '#EF4444' : (mapStore.selectedRegion?.predictions?.[0]?.level || 'rendah') === 'sedang' ? '#F59E0B' : '#22C55E'" opacity="0.3" class="blur-md"/>
+            <circle cx="20%" cy="75%" r="12" :fill="(mapStore.selectedRegion?.predictions?.[0]?.level || 'rendah') === 'tinggi' ? '#EF4444' : (mapStore.selectedRegion?.predictions?.[0]?.level || 'rendah') === 'sedang' ? '#F59E0B' : '#22C55E'" />
+
+            <!-- Week 2 blob -->
+            <circle cx="45%" cy="45%" r="28" :fill="(mapStore.selectedRegion?.predictions?.[6]?.level || 'sedang') === 'tinggi' ? '#EF4444' : (mapStore.selectedRegion?.predictions?.[6]?.level || 'sedang') === 'sedang' ? '#F59E0B' : '#22C55E'" opacity="0.3" class="blur-md"/>
+            <circle cx="45%" cy="45%" r="12" :fill="(mapStore.selectedRegion?.predictions?.[6]?.level || 'sedang') === 'tinggi' ? '#EF4444' : (mapStore.selectedRegion?.predictions?.[6]?.level || 'sedang') === 'sedang' ? '#F59E0B' : '#22C55E'" />
           </svg>
 
-          <!-- Labels -->
           <div class="absolute inset-0 z-20 pointer-events-none">
-            <div class="absolute px-3 py-1 rounded-full text-[10px] font-bold text-white shadow-sm" style="background: #F59E0B; top: 32%; left: 45%; transform: translateX(-50%);">Minggu ke-2</div>
-            <div class="absolute px-3 py-1 rounded-full text-[10px] font-bold text-white shadow-sm" style="background: #22C55E; top: 82%; left: 20%; transform: translateX(-50%);">Minggu ke-3</div>
+            <div class="absolute px-3 py-1 rounded-full text-[10px] font-bold text-white shadow-sm"
+              :style="{ background: (mapStore.selectedRegion?.predictions?.[6]?.level || 'sedang') === 'tinggi' ? '#EF4444' : (mapStore.selectedRegion?.predictions?.[6]?.level || 'sedang') === 'sedang' ? '#F59E0B' : '#22C55E', top: '35%', left: '45%', transform: 'translateX(-50%)' }">
+              Minggu ke-2
+            </div>
+            <div class="absolute px-3 py-1 rounded-full text-[10px] font-bold text-white shadow-sm"
+              :style="{ background: (mapStore.selectedRegion?.predictions?.[0]?.level || 'rendah') === 'tinggi' ? '#EF4444' : (mapStore.selectedRegion?.predictions?.[0]?.level || 'rendah') === 'sedang' ? '#F59E0B' : '#22C55E', top: '80%', left: '20%', transform: 'translateX(-50%)' }">
+              Minggu ini
+            </div>
           </div>
         </div>
 
-        <!-- Prediction text (Figma style) -->
+        <!-- Prediction text -->
         <div class="p-8 space-y-5 flex flex-col justify-center bg-white">
           <div>
             <div class="font-bold text-lg mb-3" style="color: var(--lj-navy);">Prediksi Keadaan Wilayah</div>
             <p class="text-[11px] font-medium leading-relaxed" style="color: var(--lj-navy); opacity: 0.85;">
-              Harap Siaga! Populasi nyamuk pembawa virus DBD diramal akan meningkat tajam minggu depan akibat genangan sisa hujan. Lorem ipsum dolor sit amet, aliquip irure sed labore. In nostrud fugiat qui adipiscing ut culpa elit deserunt proident est ut. Ut ex aliqua nisi proident veniam consequat magna id. Pariatur culpa quis minim pariatur esse ea sed.
+              {{ prediksiText }}
             </p>
           </div>
 
-          <div class="p-4 rounded-xl" style="background: #BBF7D0; border: 1px solid #86EFAC;">
+          <div
+            class="p-4 rounded-xl"
+            :style="{
+              background: mapStore.selectedRegion?.riskCode === 'high' ? '#FEE2E2' : mapStore.selectedRegion?.riskCode === 'medium' ? '#FEF3C7' : '#BBF7D0',
+              border: '1px solid ' + (mapStore.selectedRegion?.riskCode === 'high' ? '#FECACA' : mapStore.selectedRegion?.riskCode === 'medium' ? '#FDE68A' : '#86EFAC')
+            }"
+          >
             <div class="text-[11px] font-bold mb-1 text-center" style="color: #065F46;">Tindakan Cepat Pelindung Keluarga</div>
             <p class="text-[10px] leading-relaxed text-center" style="color: #064E3B; opacity: 0.85;">
-              Lorem ipsum dolor sit amet, aliquip irure sed labore. In nostrud fugiat qui adipiscing ut culpa elit deserunt proident est ut. Ut ex aliqua nisi proident veniam consequat magna id. Pariatur culpa quis minim pariatur.
+              {{ rekomendasiText }}
             </p>
           </div>
         </div>
@@ -432,7 +500,7 @@ const tooltipLegend = [
         <div
           v-for="region in mapStore.filteredRegions.slice(0, 6)"
           :key="region.id"
-          @click="mapStore.setSelectedRegion(region)"
+          @click="mapStore.fetchRegionDetail(region.id)"
           class="lj-card p-4 cursor-pointer flex items-center justify-between gap-3"
         >
           <div>
