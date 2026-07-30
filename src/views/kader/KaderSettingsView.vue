@@ -21,10 +21,53 @@ const profileForm = ref({ ...kaderStore.userProfile })
 const isSaved = ref(false)
 const showPasswordModal = ref(false)
 
-const handleSaveProfile = () => {
-  kaderStore.updateProfile(profileForm.value)
-  isSaved.value = true
-  setTimeout(() => (isSaved.value = false), 2500)
+const isSaving = ref(false)
+
+const handleSaveProfile = async () => {
+  isSaving.value = true
+  const result = await kaderStore.updateProfile({
+    name: profileForm.value.name,
+    phone: profileForm.value.phone
+  })
+  isSaving.value = false
+  
+  if (result.success) {
+    isSaved.value = true
+    setTimeout(() => (isSaved.value = false), 2500)
+  } else {
+    alert(result.message) // Fallback simple error alert
+  }
+}
+
+const passwordForm = ref({
+  current_password: '',
+  password: '',
+  password_confirmation: ''
+})
+const isSavingPassword = ref(false)
+
+const handleSavePassword = async () => {
+  if (passwordForm.value.password !== passwordForm.value.password_confirmation) {
+    alert('Kata sandi baru dan konfirmasi tidak cocok!')
+    return
+  }
+  
+  isSavingPassword.value = true
+  const result = await kaderStore.updateProfile({
+    current_password: passwordForm.value.current_password,
+    password: passwordForm.value.password,
+    password_confirmation: passwordForm.value.password_confirmation
+  })
+  isSavingPassword.value = false
+  
+  if (result.success) {
+    showPasswordModal.value = false
+    alert('Kata sandi berhasil diperbarui!')
+    // Reset form
+    passwordForm.value = { current_password: '', password: '', password_confirmation: '' }
+  } else {
+    alert(result.message)
+  }
 }
 
 const handleAvatarChange = () => {
@@ -117,9 +160,11 @@ const handleAvatarChange = () => {
             <input
               v-model="profileForm.email"
               type="email"
-              class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
+              disabled
+              class="w-full pl-10 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-2xl text-xs font-bold text-slate-500 cursor-not-allowed outline-none"
             />
           </div>
+          <p class="text-[10px] text-slate-400 mt-1">Email tidak dapat diubah (digunakan untuk login).</p>
         </div>
 
         <div>
@@ -138,10 +183,11 @@ const handleAvatarChange = () => {
       <div class="flex justify-end">
         <button
           @click="handleSaveProfile"
-          class="py-3 px-6 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl text-xs shadow-md flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+          :disabled="isSaving"
+          class="py-3 px-6 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl text-xs shadow-md flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Save class="w-4 h-4" />
-          <span>Simpan Perubahan</span>
+          <Save class="w-4 h-4" v-if="!isSaving" />
+          <span>{{ isSaving ? 'Menyimpan...' : 'Simpan Perubahan' }}</span>
         </button>
       </div>
     </div>
@@ -209,16 +255,22 @@ const handleAvatarChange = () => {
         <div class="space-y-3 text-xs">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Kata Sandi Lama</label>
-            <input type="password" class="w-full p-3 bg-slate-50 border rounded-xl outline-none" placeholder="••••••••" />
+            <input v-model="passwordForm.current_password" type="password" class="w-full p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••" />
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Kata Sandi Baru</label>
-            <input type="password" class="w-full p-3 bg-slate-50 border rounded-xl outline-none" placeholder="••••••••" />
+            <input v-model="passwordForm.password" type="password" class="w-full p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="Minimal 8 karakter" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Konfirmasi Kata Sandi Baru</label>
+            <input v-model="passwordForm.password_confirmation" type="password" class="w-full p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="Minimal 8 karakter" />
           </div>
         </div>
         <div class="flex justify-end gap-2 pt-2">
-          <button @click="showPasswordModal = false" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl">Batal</button>
-          <button @click="showPasswordModal = false; alert('Kata sandi berhasil diperbarui!')" class="px-4 py-2 text-xs font-bold text-white bg-blue-600 rounded-xl">Simpan</button>
+          <button @click="showPasswordModal = false" :disabled="isSavingPassword" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl disabled:opacity-50">Batal</button>
+          <button @click="handleSavePassword" :disabled="isSavingPassword" class="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl flex items-center gap-2 disabled:opacity-50">
+            <span>{{ isSavingPassword ? 'Menyimpan...' : 'Simpan' }}</span>
+          </button>
         </div>
       </div>
     </div>

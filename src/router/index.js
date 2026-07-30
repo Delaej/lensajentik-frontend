@@ -15,6 +15,8 @@ import ArticleDetailView from '@/views/public/ArticleDetailView.vue'
 
 // Kader views
 import KaderLoginView from '@/views/kader/KaderLoginView.vue'
+import ForgotPasswordView from '@/views/kader/ForgotPasswordView.vue'
+import ResetPasswordView from '@/views/kader/ResetPasswordView.vue'
 import KaderDashboardView from '@/views/kader/KaderDashboardView.vue'
 import KaderAbjView from '@/views/kader/KaderAbjView.vue'
 import KaderHistoryView from '@/views/kader/KaderHistoryView.vue'
@@ -89,6 +91,18 @@ const routes = [
         name: 'kader-login',
         component: KaderLoginView,
         meta: { title: 'Login Kader Kesehatan - LensaJentik' },
+      },
+      {
+        path: 'lupa-password',
+        name: 'kader-lupa-password',
+        component: ForgotPasswordView,
+        meta: { title: 'Lupa Kata Sandi - LensaJentik' },
+      },
+      {
+        path: 'reset-password',
+        name: 'kader-reset-password',
+        component: ResetPasswordView,
+        meta: { title: 'Reset Kata Sandi - LensaJentik' },
       },
     ],
   },

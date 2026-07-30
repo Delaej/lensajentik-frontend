@@ -97,8 +97,8 @@ const handleLogin = async () => {
               type="email"
               required
               placeholder="nayla@gmail.com"
-              class="w-full pl-12 pr-4 py-3.5 rounded-2xl text-sm font-medium text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-2"
-              style="background:#EEF0F7; border:none; focus-ring-color:#4E63DA;"
+              class="w-full pl-12 pr-4 py-3.5 rounded-2xl text-sm font-medium text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-2 focus:ring-[#4E63DA]"
+              style="background:#EEF0F7; border:none;"
             />
           </div>
 
@@ -125,9 +125,9 @@ const handleLogin = async () => {
 
           <!-- Lupa Password -->
           <div class="text-right">
-            <a href="#" @click.prevent class="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+            <router-link to="/kader/lupa-password" class="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
               Lupa password?
-            </a>
+            </router-link>
           </div>
 
           <!-- Submit Button -->

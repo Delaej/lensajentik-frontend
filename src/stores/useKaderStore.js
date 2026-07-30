@@ -148,13 +148,34 @@ export const useKaderStore = defineStore('kader', {
       }
     },
 
-    updateProfile(updatedData) {
-      this.userProfile = { ...this.userProfile, ...updatedData }
+    async updateProfile(updatedData) {
+      try {
+        const response = await authService.updateProfile(updatedData)
+        // Jika sukses, perbarui state lokal dengan data dari response backend
+        if (response.data) {
+          const profile = response.data
+          this.userProfile = {
+            ...this.userProfile,
+            name: profile.name,
+            email: profile.email,
+            phone: profile.phone || '',
+          }
+        } else {
+          // Fallback kalau struktur response beda
+          this.userProfile = { ...this.userProfile, ...updatedData }
+        }
+        return { success: true }
+      } catch (error) {
+        console.error('Update profile failed:', error)
+        // Ambil pesan error dari backend
+        const errorMessage = error.response?.data?.message || 'Gagal memperbarui profil.'
+        return { success: false, message: errorMessage }
+      }
     },
 
     async login(email, password) {
       try {
-        const data = await authService.login({ email, password })
+        await authService.login({ email, password })
         this.isAuthenticated = true
         await this.fetchProfile()
         await this.fetchMyAbjRecords()
