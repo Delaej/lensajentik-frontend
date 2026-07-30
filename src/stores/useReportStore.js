@@ -3,32 +3,7 @@ import { reportService } from '@/services/reportService'
 
 export const useReportStore = defineStore('report', {
   state: () => ({
-    reports: [
-      {
-        id: 'LPR-20260726-001',
-        user: 'Rian Pratama',
-        address: 'Jl. Pasteur No. 42, Kel. Pasteur, Sukajadi',
-        coordinates: { lat: -6.8912, lng: 107.5942 },
-        description: 'Genangan air jernih di ban bekas samping selokan warga. Sudah mulai ada larva jentik bergerombol.',
-        imageUrl: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?q=80&w=600&auto=format&fit=crop',
-        status: 'Dalam Proses', // 'Terkirim', 'Dalam Proses', 'Selesai Ditindak'
-        pointsEarned: 50,
-        createdAt: '2026-07-26 10:15 WIB',
-        kaderAssigned: 'Nayla Salsabila',
-      },
-      {
-        id: 'LPR-20260724-002',
-        user: 'Siti Aminah',
-        address: 'Gg. Masjid RT 02/RW 05, Pasteur',
-        coordinates: { lat: -6.8895, lng: 107.5961 },
-        description: 'Pot tanaman hias tetangga tergenang air hujan berturut-turut 4 hari.',
-        imageUrl: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?q=80&w=600&auto=format&fit=crop',
-        status: 'Selesai Ditindak',
-        pointsEarned: 50,
-        createdAt: '2026-07-24 16:40 WIB',
-        kaderAssigned: 'Nayla Salsabila',
-      },
-    ],
+    reports: [],
   }),
 
   actions: {
@@ -83,6 +58,30 @@ export const useReportStore = defineStore('report', {
         return newReport
       } catch (error) {
         console.error('Submit report failed:', error)
+        throw error
+      }
+    },
+
+    async verifyReportAction(id) {
+      try {
+        await reportService.verifyReport(id)
+        // Refresh after verified
+        await this.fetchReports()
+      } catch (error) {
+        console.error('Verify report failed:', error)
+        throw error
+      }
+    },
+
+    async updateReportStatusAction(id, status) {
+      try {
+        const backendStatus = status === 'Terkirim' ? 'belum_ditangani' : status === 'Dalam Proses' ? 'sedang_diproses' : 'selesai'
+        await reportService.updateReportStatus(id, backendStatus)
+        // Update locally for quick UI feedback
+        const report = this.reports.find(r => r.id === id)
+        if (report) report.status = status
+      } catch (error) {
+        console.error('Update report status failed:', error)
         throw error
       }
     },

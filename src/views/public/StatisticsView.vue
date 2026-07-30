@@ -40,17 +40,6 @@ const trenDataRaw = computed(() => stats.value?.tren_abj || [])
 const laporanDataRaw = computed(() => stats.value?.laporan_per_status || {})
 const wilayahNama = computed(() => stats.value?.wilayah?.nama || 'Kota Bandung')
 
-/* ─── Demo data fallback ─────────────────────────────────────────────────── */
-const demoAbjData = [88, 90, 91, 89, 93, 95, 94, 92, 96, 95, 97, 94]
-const demoLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
-const demoWilayah = [
-  { name: 'Sukajadi', abj: 94, risk: 'low' },
-  { name: 'Sukasari', abj: 88, risk: 'high' },
-  { name: 'Coblong', abj: 91, risk: 'medium' },
-  { name: 'Cidadap', abj: 96, risk: 'low' },
-  { name: 'Cicendo', abj: 85, risk: 'high' },
-]
-
 /* ─── Chart.js ───────────────────────────────────────────────────────────── */
 const renderCharts = async () => {
   if (typeof window === 'undefined') return
@@ -61,12 +50,8 @@ const renderCharts = async () => {
     // ABJ Trend chart
     if (abjChartEl.value) {
       const ctx = abjChartEl.value.getContext('2d')
-      const abjVals = trenDataRaw.value.length
-        ? trenDataRaw.value.map(t => t.abj_persen || t.value || 90)
-        : demoAbjData
-      const labels = trenDataRaw.value.length
-        ? trenDataRaw.value.map(t => t.label || t.tanggal || '')
-        : demoLabels
+      const abjVals = trenDataRaw.value.map(t => t.abj_persen || t.value || 0)
+      const labels = trenDataRaw.value.map(t => t.label || t.tanggal || '')
 
       new Chart(ctx, {
         type: 'line',
@@ -128,12 +113,8 @@ const renderCharts = async () => {
     if (laporanChartEl.value) {
       const ctx = laporanChartEl.value.getContext('2d')
       const rawStatus = laporanDataRaw.value
-      const labels = Object.keys(rawStatus).length
-        ? Object.keys(rawStatus).map(k => k.replace(/_/g, ' '))
-        : ['Terkirim', 'Dalam Proses', 'Selesai']
-      const data = Object.values(rawStatus).length
-        ? Object.values(rawStatus)
-        : [42, 18, 67]
+      const labels = Object.keys(rawStatus).map(k => k.replace(/_/g, ' '))
+      const data = Object.values(rawStatus)
       new Chart(ctx, {
         type: 'bar',
         data: {
@@ -168,16 +149,18 @@ const renderCharts = async () => {
     // Wilayah comparison chart
     if (wilayahChartEl.value) {
       const ctx = wilayahChartEl.value.getContext('2d')
+      const wilayahData = stats.value?.perbandingan_wilayah || []
+      
       new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: demoWilayah.map(w => w.name),
+          labels: wilayahData.map(w => w.nama),
           datasets: [{
             label: 'ABJ (%)',
-            data: demoWilayah.map(w => w.abj),
-            backgroundColor: demoWilayah.map(w =>
-              w.risk === 'high' ? 'rgba(239,68,68,0.7)' :
-              w.risk === 'medium' ? 'rgba(245,158,11,0.7)' :
+            data: wilayahData.map(w => w.rata_rata_abj),
+            backgroundColor: wilayahData.map(w =>
+              w.rata_rata_abj < 90 ? 'rgba(239,68,68,0.7)' :
+              w.rata_rata_abj < 95 ? 'rgba(245,158,11,0.7)' :
               'rgba(34,197,94,0.7)'
             ),
             borderRadius: 8,

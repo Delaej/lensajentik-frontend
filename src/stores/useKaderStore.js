@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { authService } from '@/services/authService'
 import { abjService } from '@/services/abjService'
+import { notificationService } from '@/services/notificationService'
 
 export const useKaderStore = defineStore('kader', {
   state: () => ({
@@ -25,44 +26,7 @@ export const useKaderStore = defineStore('kader', {
       status: 'Aman', // Aman, Waspada, Bahaya
     },
     abjRecords: [],
-    notifications: [
-      {
-        id: 1,
-        title: 'Jadwal Monitoring ABJ Minggu Ini',
-        description: 'Target RT 03/RW 05 belum memenuhi target pemeriksaan 45 rumah. Segera lengkapi data.',
-        date: 'Hari ini, 08:30 WIB',
-        read: false,
-        priority: 'high',
-        type: 'reminder',
-      },
-      {
-        id: 2,
-        title: 'Peringatan Curah Hujan Tinggi!',
-        description: 'BMKG memprediksi hujan lebat 3 hari ke depan di Kecamatan Sukajadi. Waspadai potensi genangan baru.',
-        date: 'Kemarin, 14:15 WIB',
-        read: false,
-        priority: 'medium',
-        type: 'weather',
-      },
-      {
-        id: 3,
-        title: 'Laporan Genangan Warga Masuk',
-        description: 'Terdapat 2 laporan genangan air dari warga di sekitar RT 02/RW 05 perlu verifikasi kader.',
-        date: '25 Jul 2026',
-        read: true,
-        priority: 'high',
-        type: 'citizen_report',
-      },
-      {
-        id: 4,
-        title: 'Rekap Laporan Bulanan Terikirim',
-        description: 'Laporan ABJ bulan Juni 2026 telah diverifikasi oleh Puskesmas Sukajadi.',
-        date: '20 Jul 2026',
-        read: true,
-        priority: 'low',
-        type: 'system',
-      },
-    ],
+    notifications: [],
     settings: {
       alertAbjHigh: true,
       weeklyReportReminders: true,
@@ -147,13 +111,41 @@ export const useKaderStore = defineStore('kader', {
       }
     },
 
-    markNotificationRead(id) {
-      const notif = this.notifications.find((n) => n.id === id)
-      if (notif) notif.read = true
+    async fetchNotifications() {
+      try {
+        const response = await notificationService.fetchNotifications()
+        const records = response.data || response
+        this.notifications = records.map((n) => ({
+          id: n.id,
+          title: n.judul || 'Notifikasi',
+          description: n.pesan || '',
+          date: n.created_at || new Date().toISOString(),
+          read: n.sudah_dibaca || false,
+          priority: n.prioritas || 'low', // from backend or default
+          type: n.tipe || 'system',
+        }))
+      } catch (error) {
+        console.error('Fetch notifications failed:', error)
+      }
     },
 
-    markAllNotificationsRead() {
-      this.notifications.forEach((n) => (n.read = true))
+    async markNotificationRead(id) {
+      try {
+        await notificationService.markAsRead(id)
+        const notif = this.notifications.find((n) => n.id === id)
+        if (notif) notif.read = true
+      } catch (error) {
+        console.error('Mark notification read failed:', error)
+      }
+    },
+
+    async markAllNotificationsRead() {
+      try {
+        await notificationService.markAllAsRead()
+        this.notifications.forEach((n) => (n.read = true))
+      } catch (error) {
+        console.error('Mark all notifications read failed:', error)
+      }
     },
 
     updateProfile(updatedData) {
@@ -166,6 +158,7 @@ export const useKaderStore = defineStore('kader', {
         this.isAuthenticated = true
         await this.fetchProfile()
         await this.fetchMyAbjRecords()
+        await this.fetchNotifications()
         return true
       } catch (error) {
         console.error('Login failed:', error)

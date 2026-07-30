@@ -65,8 +65,8 @@ export const useMapStore = defineStore('map', {
             confidenceLevel: rec.confidence_level === 'kuat' ? 94 : 45,
             coordinates: [lat, lng],
             latLngs: latLngs,
-            forecast7Days: 'Tren stabil ke depan.',
-            forecast14Days: 'Tetap lakukan 3M Plus.',
+            forecast7Days: rec.prediksi?.[6] ? `Prediksi skor: ${rec.prediksi[6].skor}` : 'Data prediksi belum tersedia',
+            forecast14Days: rec.prediksi?.[13] ? `Prediksi skor: ${rec.prediksi[13].skor}` : 'Data prediksi belum tersedia',
             lastInspection: rec.tanggal,
             positiveContainers: 0,
           }
@@ -105,8 +105,8 @@ export const useMapStore = defineStore('map', {
         ]
 
         // Predict messages based on 7 days and 14 days forecasts
-        const day7 = predictions[6] ? `Skor Prediksi: ${predictions[6].skor} (${predictions[6].level_risiko})` : 'Informasi prediksi cuaca stabil.'
-        const day14 = predictions[13] ? `Skor Prediksi: ${predictions[13].skor} (${predictions[13].level_risiko})` : 'Informasi prediksi stabil.'
+        const day7 = predictions[6] ? `Skor Prediksi: ${predictions[6].skor} (${predictions[6].level_risiko})` : 'Data prediksi belum tersedia'
+        const day14 = predictions[13] ? `Skor Prediksi: ${predictions[13].skor} (${predictions[13].level_risiko})` : 'Data prediksi belum tersedia'
 
         this.selectedRegion = {
           id: details.wilayah.kode,

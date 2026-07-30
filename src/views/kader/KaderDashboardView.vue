@@ -10,6 +10,7 @@ const kaderStore = useKaderStore()
 onMounted(async () => {
   await kaderStore.fetchProfile()
   await kaderStore.fetchMyAbjRecords()
+  await kaderStore.fetchNotifications()
 })
 
 // Real notifications list mapped from store
