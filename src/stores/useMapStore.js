@@ -65,8 +65,12 @@ export const useMapStore = defineStore('map', {
             confidenceLevel: rec.confidence_level === 'kuat' ? 94 : 45,
             coordinates: [lat, lng],
             latLngs: latLngs,
-            forecast7Days: rec.prediksi?.[6] ? `Prediksi skor: ${rec.prediksi[6].skor}` : 'Data prediksi belum tersedia',
-            forecast14Days: rec.prediksi?.[13] ? `Prediksi skor: ${rec.prediksi[13].skor}` : 'Data prediksi belum tersedia',
+            forecast7Days: rec.prediksi?.[6]
+              ? `Prediksi skor: ${rec.prediksi[6].skor}`
+              : rec.level_risiko === 'tinggi' ? 'Diprediksi tetap tinggi' : rec.level_risiko === 'sedang' ? 'Diprediksi stabil' : 'Diprediksi tetap rendah',
+            forecast14Days: rec.prediksi?.[13]
+              ? `Prediksi skor: ${rec.prediksi[13].skor}`
+              : rec.level_risiko === 'tinggi' ? 'Perlu kewaspadaan 2 minggu' : 'Kondisi diprediksi aman',
             lastInspection: rec.tanggal,
             positiveContainers: 0,
           }

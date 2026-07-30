@@ -114,14 +114,25 @@ export const useKaderStore = defineStore('kader', {
     async fetchNotifications() {
       try {
         const response = await notificationService.fetchNotifications()
-        const records = response.data || response
+        // Backend returns: { data: paginator, belum_dibaca: N }
+        // paginator = { current_page, data: [...records], ... }
+        const paginator = response.data || response
+        let records = []
+        if (paginator && Array.isArray(paginator.data)) {
+          // Paginator object with .data array
+          records = paginator.data
+        } else if (Array.isArray(paginator)) {
+          // Direct array
+          records = paginator
+        }
+
         this.notifications = records.map((n) => ({
           id: n.id,
           title: n.judul || 'Notifikasi',
           description: n.pesan || '',
           date: n.created_at || new Date().toISOString(),
-          read: n.sudah_dibaca || false,
-          priority: n.prioritas || 'low', // from backend or default
+          read: n.is_read || false,
+          priority: n.tipe === 'kenaikan_risiko' || n.tipe === 'cuaca_ekstrem' ? 'high' : 'low',
           type: n.tipe || 'system',
         }))
       } catch (error) {
