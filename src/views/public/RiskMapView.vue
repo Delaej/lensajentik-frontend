@@ -309,8 +309,7 @@ const predictionChartData = computed(() => {
           @input="handleSearch"
           type="text"
           placeholder="Cari wilayah anda..."
-          class="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-[--lj-bg] text-sm font-medium outline-none transition-all focus:ring-2"
-          style="focus:ring-color: var(--lj-blue);"
+          class="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-[--lj-bg] text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-[--lj-blue]"
         />
         
         <!-- Search Dropdown -->
