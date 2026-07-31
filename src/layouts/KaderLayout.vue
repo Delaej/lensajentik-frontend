@@ -41,7 +41,7 @@ const handleLogout = () => {
   <div class="min-h-screen flex bg-[#F8FAFC]" style="font-family:'Satoshi',sans-serif;">
 
     <!-- ── Desktop Sidebar ─────────────────────────────────────────────────── -->
-    <aside class="hidden lg:flex flex-col w-60 bg-white border-r border-slate-100 sticky top-0 h-screen shrink-0 z-30 select-none px-4 pt-6 pb-4 justify-between">
+    <aside class="hidden lg:flex flex-col w-60 bg-white border-r border-slate-100 sticky top-0 h-screen shrink-0 z-30 select-none px-4 pt-6 pb-4 justify-between print:hidden">
 
       <!-- Brand Logo -->
       <div class="space-y-6">
@@ -151,7 +151,7 @@ const handleLogout = () => {
     <div class="flex-1 flex flex-col min-w-0">
       <main class="flex-1 p-4 sm:p-6 lg:p-8">
         <!-- Mobile Toggle -->
-        <div class="lg:hidden flex items-center gap-3 pb-4 mb-4 border-b border-slate-200">
+        <div class="lg:hidden flex items-center gap-3 pb-4 mb-4 border-b border-slate-200 print:hidden">
           <button @click="isMobileSidebarOpen = true"
             class="p-2 rounded-xl bg-white border border-slate-200 text-slate-600">
             <Menu class="w-5 h-5" />
