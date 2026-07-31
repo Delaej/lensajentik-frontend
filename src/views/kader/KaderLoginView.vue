@@ -21,12 +21,15 @@ const handleLogin = async () => {
   isLoading.value = true
   errorMessage.value = ''
   
-  const success = await kaderStore.login(email.value, password.value)
-  isLoading.value = false
-  if (success) {
-    router.push('/kader/dashboard')
-  } else {
-    errorMessage.value = 'Email atau kata sandi tidak cocok.'
+  try {
+    const response = await kaderStore.login(email.value, password.value)
+    if (response) {
+      router.push('/kader/dashboard')
+    }
+  } catch (error) {
+    errorMessage.value = error.response?.data?.message || 'Email atau kata sandi tidak cocok.'
+  } finally {
+    isLoading.value = false
   }
 }
 </script>

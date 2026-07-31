@@ -15,6 +15,7 @@ import {
 } from 'lucide-vue-next'
 import { useKaderStore } from '@/stores/useKaderStore'
 import { useReportStore } from '@/stores/useReportStore'
+import { abjService } from '@/services/abjService'
 
 const kaderStore = useKaderStore()
 const reportStore = useReportStore()
@@ -43,18 +44,50 @@ const handleApplyFilter = () => {
   setTimeout(() => (isApplied.value = false), 2000)
 }
 
-const handleExportPdf = () => {
+const isExportingPdf = ref(false)
+const handleExportPdf = async () => {
   const kode = kaderStore.userProfile.wilayah_kode
   if (!kode) { alert('Wilayah binaan belum ditentukan.'); return }
-  const url = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/export/abj/pdf?wilayah_kode=${kode}`
-  window.open(url, '_blank')
+  
+  isExportingPdf.value = true
+  try {
+    const blob = await abjService.exportPdf(kode)
+    const url = window.URL.createObjectURL(new Blob([blob]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `Laporan_ABJ_${kode}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  } catch (error) {
+    console.error('Export PDF failed:', error)
+    alert('Gagal mengunduh laporan PDF. Pastikan data tersedia.')
+  } finally {
+    isExportingPdf.value = false
+  }
 }
 
-const handleExportExcel = () => {
+const isExportingExcel = ref(false)
+const handleExportExcel = async () => {
   const kode = kaderStore.userProfile.wilayah_kode
   if (!kode) { alert('Wilayah binaan belum ditentukan.'); return }
-  const url = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/export/abj/excel?wilayah_kode=${kode}`
-  window.open(url, '_blank')
+  
+  isExportingExcel.value = true
+  try {
+    const blob = await abjService.exportExcel(kode)
+    const url = window.URL.createObjectURL(new Blob([blob]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `Laporan_ABJ_${kode}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  } catch (error) {
+    console.error('Export Excel failed:', error)
+    alert('Gagal mengunduh laporan Excel. Pastikan data tersedia.')
+  } finally {
+    isExportingExcel.value = false
+  }
 }
 
 const handlePrint = () => {
@@ -84,15 +117,17 @@ const handlePrint = () => {
         </button>
         <button
           @click="handleExportExcel"
-          class="py-2.5 px-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-colors"
+          :disabled="isExportingExcel"
+          class="py-2.5 px-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-colors disabled:opacity-50"
         >
-          <FileSpreadsheet class="w-4 h-4" /> Ekspor Excel
+          <FileSpreadsheet class="w-4 h-4" /> {{ isExportingExcel ? 'Mengunduh...' : 'Ekspor Excel' }}
         </button>
         <button
           @click="handleExportPdf"
-          class="py-2.5 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-colors"
+          :disabled="isExportingPdf"
+          class="py-2.5 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-colors disabled:opacity-50"
         >
-          <FileDown class="w-4 h-4" /> Ekspor PDF
+          <FileDown class="w-4 h-4" /> {{ isExportingPdf ? 'Mengunduh...' : 'Ekspor PDF' }}
         </button>
       </div>
     </div>
@@ -215,9 +250,10 @@ const handlePrint = () => {
         </div>
         <button
           @click="handleExportPdf"
-          class="py-2.5 px-5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shadow-md shrink-0"
+          :disabled="isExportingPdf"
+          class="py-2.5 px-5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shadow-md shrink-0 disabled:opacity-50"
         >
-          Unduh Laporan Format Resmi PDF
+          {{ isExportingPdf ? 'Sedang Mengunduh...' : 'Unduh Laporan Format Resmi PDF' }}
         </button>
       </div>
     </div>

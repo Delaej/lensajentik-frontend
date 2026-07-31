@@ -15,4 +15,20 @@ export const abjService = {
     const response = await apiClient.get(`/wilayah/${kecamatanKode}/desa`)
     return response.data
   },
+
+  async exportPdf(wilayahKode) {
+    const response = await apiClient.get('/export/abj/pdf', {
+      params: { wilayah_kode: wilayahKode },
+      responseType: 'blob'
+    })
+    return response.data
+  },
+
+  async exportExcel(wilayahKode) {
+    const response = await apiClient.get('/export/abj/excel', {
+      params: { wilayah_kode: wilayahKode },
+      responseType: 'blob'
+    })
+    return response.data
+  },
 }
