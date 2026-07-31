@@ -129,7 +129,7 @@ const handleLogin = async () => {
 
           <!-- Lupa Password -->
           <div class="text-right">
-            <router-link to="/kader/lupa-password" class="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+            <router-link to="/kader/login/lupa-password" class="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
               Lupa password?
             </router-link>
           </div>
