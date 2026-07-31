@@ -147,7 +147,7 @@ const nextQuizStep = () => {
         <div class="absolute top-10 -left-32 w-96 h-96 rounded-full blur-[100px] pointer-events-none opacity-40 z-0" style="background:#95FE6D;"></div>
         <div class="absolute bottom-10 -right-32 w-96 h-96 rounded-full blur-[100px] pointer-events-none opacity-40 z-0" style="background:#4E63DA;"></div>
 
-        <div class="lj-section-label mb-8 mx-auto text-center relative z-10" style="width: fit-content; background: white;">FAKTA TERKAIT DBD</div>
+        <div class="flex justify-center w-full"><div class="lj-section-label mb-8 text-center relative z-10" style="width: fit-content; background: white;">FAKTA TERKAIT DBD</div></div>
 
         <div v-if="isLoading" class="lottie-placeholder flex-col relative z-10" style="height: 240px;">
           <Loader2 class="w-8 h-8 animate-spin text-[--lj-blue] mb-2" />
@@ -221,9 +221,9 @@ const nextQuizStep = () => {
           />
         </div>
         
-        <!-- Sway top (hadapbawah) -->
-        <div class="absolute top-0 left-0 w-full z-10 pointer-events-none" style="transform: translateY(-2px); top: -1px;">
-          <img src="/sway-hadapbawah.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
+        <!-- Sway top -->
+        <div class="absolute top-0 left-0 w-full z-10 pointer-events-none" style="top: -2px; transform: rotate(180deg);">
+          <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
         </div>
         
         <!-- Sway bottom (hadapatas) -->
@@ -232,19 +232,13 @@ const nextQuizStep = () => {
         </div>
 
         <div class="max-w-6xl mx-auto px-4 relative z-20">
-          <div class="lj-section-label mb-4 mx-auto text-center" style="width: fit-content; background: white;">PANDUAN GERAKAN 3M</div>
+          <div class="flex justify-center w-full"><div class="lj-section-label mb-4 text-center" style="width: fit-content; background: white;">PANDUAN GERAKAN 3M</div></div>
           <div class="text-center mb-10">
             <h2 class="lj-heading">Hanya dengan <span class="font-garamond" style="color: var(--lj-blue);">Tiga Langkah,</span></h2>
             <p class="text-base mt-1" style="color: var(--lj-green-dk); font-weight: 700; background: rgba(255,255,255,0.7); display: inline-block; padding: 2px 8px; border-radius: 8px;">satu rumah lebih aman.</p>
           </div>
 
-          <!-- Slider Controls -->
-          <button @click="scrollLeft" class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white shadow-md items-center justify-center hover:scale-110 transition-transform z-20" style="border: 1px solid var(--lj-border);">
-            <ChevronLeft class="w-5 h-5 text-[--lj-blue]" />
-          </button>
-          <button @click="scrollRight" class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-10 h-10 rounded-full bg-white shadow-md items-center justify-center hover:scale-110 transition-transform z-20" style="border: 1px solid var(--lj-border);">
-            <ChevronRight class="w-5 h-5 text-[--lj-blue]" />
-          </button>
+          <!-- Slider Controls removed -->
 
           <div class="relative w-full">
             <!-- Wave SVG connector (absolute behind cards) -->
@@ -257,7 +251,7 @@ const nextQuizStep = () => {
             <!-- Horizontal Scroll Container -->
             <div
               ref="mSliderContainer"
-              class="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-6 pb-4 pt-2 px-2 relative z-10"
+              class="flex md:justify-center overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-6 pb-4 pt-2 px-2 relative z-10"
               style="scroll-behavior: smooth;"
             >
               <div
@@ -288,7 +282,7 @@ const nextQuizStep = () => {
 
       <!-- ─── Artikel DBD ─── -->
       <section class="animate-on-scroll">
-        <div class="lj-section-label mb-4 mx-auto text-center" style="width: fit-content;">ARTIKEL TERKAIT DBD</div>
+        <div class="flex justify-center w-full"><div class="lj-section-label mb-4 text-center" style="width: fit-content;">ARTIKEL TERKAIT DBD</div></div>
         <div class="text-center mb-10">
           <h2 class="lj-heading">
             Kabar <span class="font-garamond" style="color: var(--lj-blue);">terkini,</span>
@@ -355,7 +349,7 @@ const nextQuizStep = () => {
 
       <!-- ─── Kalkulator Risiko DBD ─── -->
       <section class="animate-on-scroll">
-        <div class="lj-section-label mb-4 mx-auto text-center" style="width: fit-content;">KALKULATOR RISIKO DBD</div>
+        <div class="flex justify-center w-full"><div class="lj-section-label mb-4 text-center" style="width: fit-content;">KALKULATOR RISIKO DBD</div></div>
 
         <div
           class="lj-card p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative overflow-hidden"

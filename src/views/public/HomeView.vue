@@ -95,7 +95,7 @@ const features = [
     bg: '#FFFBEB',
     accent: '#F59E0B',
     icon: BookOpen,
-    lottie: null
+    lottie: '/landing_fitur_edukasi.json'
   },
   {
     label: 'Statistik',

@@ -35,10 +35,10 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen w-full flex" style="font-family:'Satoshi',sans-serif;">
+  <div class="h-screen w-full flex overflow-hidden" style="font-family:'Satoshi',sans-serif;">
 
     <!-- ── Left Column: Lottie Illustration ──────────────────────────── -->
-    <div class="hidden md:flex md:w-[55%] relative overflow-hidden select-none z-10"
+    <div class="hidden md:flex md:w-[55%] relative overflow-hidden select-none z-10 sticky top-0 h-screen"
       style="background: var(--lj-blue-pale);">
       <!-- Lottie fills entire left column -->
       <div class="absolute inset-0 z-0">
@@ -59,7 +59,7 @@ const handleLogin = async () => {
     </div>
 
     <!-- ── Right Column: Login Form ─────────────────────────────────────── -->
-    <div class="flex-1 min-h-screen flex items-center justify-center p-6 sm:p-12 lg:p-16 relative z-20"
+    <div class="flex-1 h-screen flex items-center justify-center p-6 sm:p-12 lg:p-16 relative z-20"
       style="background:#F8FAFC;">
       <!-- Ambient glow blobs -->
       <div class="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl pointer-events-none opacity-50 z-0"
