@@ -6,8 +6,7 @@ export const useMapStore = defineStore('map', {
     selectedDisease: 'dbd',
     selectedRiskLevel: 'all',
     searchQuery: '',
-    selectedRegion: null,       // region yang sedang dilihat detailnya
-    parentRegion: null,         // kabupaten induk (jika sedang lihat per-kecamatan)
+    selectedRegion: null,       // kecamatan yang sedang ditampilkan detailnya
     subscribedRegions: [],
     searchResults: [],
     diseaseRiskData: [],        // polygon di peta (bisa kecamatan dalam kabupaten)
@@ -28,82 +27,15 @@ export const useMapStore = defineStore('map', {
   },
 
   actions: {
-    async fetchRiskMap(params = {}) {
-      try {
-        const queryParams = {
-          tingkat: params.tingkat || 'kabupaten', // Default: nasional (semua kabupaten/kota)
-          jenis: this.selectedDisease === 'all' ? 'dbd' : this.selectedDisease,
-          ...params,
-        }
-        // Hanya sertakan parent_kode jika diberikan (mode per-daerah)
-        if (params.parent_kode) {
-          queryParams.parent_kode = params.parent_kode
-        }
-        const response = await mapService.getRiskMap(queryParams)
-        const records = response.data || response
-        
-        this.diseaseRiskData = records.map((rec) => {
-          const lat = Number(rec.wilayah.latitude) || null
-          const lng = Number(rec.wilayah.longitude) || null
-          // Fallback: jika tidak ada koordinat, tidak bisa render polygon — pakai koordinat default pusat Indonesia
-          const hasCoords = lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)
-          const finalLat = hasCoords ? lat : -2.5489
-          const finalLng = hasCoords ? lng : 118.0149
-          const offset = 0.007
-          const latLngs = [
-            [finalLat + offset, finalLng - offset],
-            [finalLat + offset, finalLng + offset],
-            [finalLat - offset, finalLng + offset],
-            [finalLat - offset, finalLng - offset],
-          ]
-
-          // Tentukan tingkat wilayah dari response backend (jika ada) atau dari query params
-          const tingkat = rec.wilayah.tingkat || rec.tingkat || 'kabupaten'
-          const tingkatLabel =
-            tingkat === 'desa' ? 'Desa' :
-            tingkat === 'kecamatan' ? 'Kecamatan' :
-            tingkat === 'kabupaten' ? 'Kabupaten/Kota' :
-            tingkat === 'provinsi' ? 'Provinsi' : 'Wilayah'
-
-          return {
-            id: rec.wilayah_kode,
-            name: rec.wilayah.nama,
-            district: tingkatLabel,
-            disease: rec.jenis_penyakit || 'dbd',
-            riskLevel: rec.level_risiko === 'tinggi' ? 'Tinggi' : rec.level_risiko === 'sedang' ? 'Sedang' : rec.level_risiko === 'rendah' ? 'Rendah' : 'Belum Ada Data',
-            riskCode: rec.level_risiko === 'tinggi' ? 'high' : rec.level_risiko === 'sedang' ? 'medium' : rec.level_risiko === 'rendah' ? 'low' : 'no_data',
-            // Hanya tampilkan ABJ jika benar-benar ada dari backend (data lapangan)
-            abj: rec.faktor_perhitungan?.abj_persen != null ? Number(rec.faktor_perhitungan.abj_persen) : null,
-            // Data dari backend — tidak ada, set null
-            casesCurrent: null,
-            casesPrevious: null,
-            trend: null,
-            // Confidence: simpan string asli dari backend, bukan angka arbitrary
-            confidenceLevel: rec.confidence_level || 'belum_ada_data',
-            coordinates: [finalLat, finalLng],
-            latLngs: latLngs,
-            // Overview tidak punya prediksi — kosongkan, akan diisi saat klik detail
-            forecast7Days: null,
-            forecast14Days: null,
-            // Overview tidak punya data inspeksi
-            lastInspection: null,
-            positiveContainers: null,
-            // Data tambahan dari backend
-            skor: rec.skor != null ? Number(rec.skor) : null,
-            jumlahKecamatan: rec.faktor_perhitungan?.jumlah_kecamatan || null,
-            kecamatanDenganData: rec.faktor_perhitungan?.kecamatan_dengan_data || null,
-          }
-        })
-      } catch (error) {
-        console.error('Fetch risk map failed:', error)
-      }
-    },
-
     async searchRegions(query) {
       if (!query || query.length < 3) return
       try {
         const response = await mapService.searchWilayah(query)
-        this.searchResults = response.data || response
+        const all = response.data || response
+        // Hanya kecamatan & desa — tanpa kabupaten
+        this.searchResults = Array.isArray(all)
+          ? all.filter(r => r.tingkat === 'kecamatan' || r.tingkat === 'desa')
+          : []
       } catch (error) {
         console.error('Search wilayah failed:', error)
       }
@@ -121,31 +53,29 @@ export const useMapStore = defineStore('map', {
         let lng = Number(details.wilayah.longitude)
         let geojson = null
 
-        // Fetch geocoding & boundary from Nominatim
+        // Fetch GeoJSON boundary via backend proxy+cache (bukan langsung ke Nominatim!)
         try {
-          // Use search format to find the boundary of the region, fetching up to 5 results to filter out offices
-          // Do not append "Kecamatan" or "Kelurahan" because it causes Nominatim to return POI offices instead of administrative boundaries!
-          const geo = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(details.wilayah.nama + ', Indonesia')}&format=json&limit=5&polygon_geojson=1`)
-          const geoData = await geo.json()
-          if (geoData.length > 0) {
-            // Prefer administrative boundaries over POIs (like offices)
-            let targetGeo = geoData.find(g => g.class === 'boundary' && g.type === 'administrative')
-            // Fallback to any polygon if administrative boundary is not found
-            if (!targetGeo) {
-              targetGeo = geoData.find(g => g.geojson && g.geojson.type.includes('Polygon')) || geoData[0]
-            }
+          const { default: apiClient } = await import('@/services/apiClient')
+          const geoRes = await apiClient.get(`/wilayah/${kode}/boundary`)
+          geojson = geoRes.data?.geojson || null
 
-            lat = Number(targetGeo.lat)
-            lng = Number(targetGeo.lon)
-            if (targetGeo.geojson && targetGeo.geojson.type.includes('Polygon')) {
-              geojson = targetGeo.geojson
-            }
-          } else if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
-            lat = -6.9175; lng = 107.6191; // Bandung fallback
+          // Ekstrak centroid dari GeoJSON
+          if (geojson && geojson.coordinates) {
+            try {
+              const isMulti = geojson.type === 'MultiPolygon'
+              const ring = isMulti ? geojson.coordinates[0][0] : geojson.coordinates[0]
+              if (ring && ring.length > 0 && typeof ring[0][0] === 'number') {
+                lat = ring.reduce((s, c) => s + c[1], 0) / ring.length
+                lng = ring.reduce((s, c) => s + c[0], 0) / ring.length
+              }
+            } catch { /* pakai koordinat DB */ }
+          }
+          if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+            lat = -6.9175; lng = 107.6191
           }
         } catch (e) {
           if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
-            lat = -6.9175; lng = 107.6191; // Bandung fallback
+            lat = -6.9175; lng = 107.6191
           }
         }
 
@@ -243,110 +173,11 @@ export const useMapStore = defineStore('map', {
      * Load semua kecamatan dalam satu kabupaten — untuk view per-kecamatan
      * dengan warna risiko masing-masing.
      */
-    async loadKecamatanUntukKabupaten(kabupaten) {
-      this.parentRegion = {
-        kode: kabupaten.kode,
-        nama: kabupaten.nama,
-        tingkat: 'kabupaten',
-      }
-      this.selectedRegion = null
-      this.diseaseRiskData = [] // reset dulu
-      try {
-        // Ambil data semua kecamatan
-        await this.fetchRiskMap({ tingkat: 'kecamatan', parent_kode: kabupaten.kode })
-        // Hitung ringkasan kabupaten dari data kecamatan
-        const items = this.diseaseRiskData
-        const itemsDenganData = items.filter(i => i.skor != null)
-        const skorTotal = itemsDenganData.reduce((s, i) => s + (i.skor || 0), 0)
-        const skorRata = itemsDenganData.length > 0 ? Math.round(skorTotal / itemsDenganData.length) : null
-        const level = skorRata != null
-          ? (skorRata >= 70 ? 'tinggi' : skorRata >= 40 ? 'sedang' : 'rendah')
-          : null
-        this.selectedRegion = {
-          id: kabupaten.kode,
-          name: kabupaten.nama,
-          district: 'Kabupaten/Kota',
-          riskLevel: level === 'tinggi' ? 'Tinggi' : level === 'sedang' ? 'Sedang' : level === 'rendah' ? 'Rendah' : 'Belum Ada Data',
-          riskCode: level || 'no_data',
-          riskScore: skorRata,
-          abj: null,
-          confidenceLevel: 'lemah',
-          coordinates: items.length > 0 ? items[0].coordinates : [-2.54, 118.01],
-          geojson: null,
-          forecast7Days: null,
-          forecast14Days: null,
-          predictions: [],
-          suhu: null,
-          kelembapan: null,
-          curahHujan: null,
-          hujan7Hari: null,
-          // Extra: ringkasan untuk kabupaten
-          jumlahKecamatan: items.length,
-          kecamatanDenganData: items.filter(i => i.skor != null).length,
-          kecamatanList: items.map(i => ({ kode: i.id, nama: i.name, skor: i.skor, level: i.riskCode })),
-        }
-      } catch (e) {
-        console.error('Load kecamatan for kabupaten failed:', e)
-      }
-    },
-
-    /** Kembali ke tampilan nasional */
     clearView() {
-      this.parentRegion = null
       this.selectedRegion = null
-      this.fetchRiskMap()
-    },
-
-    /**
-     * Fetch GeoJSON boundary untuk KABUPATEN saja (1 request, cepat).
-     */
-    async fetchKabupatenBoundary(kabupatenNama) {
-      try {
-        const { default: apiClient } = await import('@/services/apiClient')
-        const res = await apiClient.get('/geocode/boundary', { params: { q: kabupatenNama + ', Indonesia' } })
-        const geojson = res.data?.geojson
-        if (geojson && this.parentRegion) {
-          this.parentRegion = { ...this.parentRegion, geojson }
-        }
-      } catch (e) {
-        console.warn('Boundary fetch failed:', e.message || e)
-      }
-    },
-
-    /**
-     * Fetch GeoJSON per kecamatan via backend batch (satu request).
-     * Polygon akan update otomatis begitu data datang.
-     */
-    async fetchKecamatanBoundaries(kabupatenNama) {
-      const regions = this.diseaseRiskData
-      if (!regions.length) return
-      try {
-        const { default: apiClient } = await import('@/services/apiClient')
-        // Gunakan format "Nama Kecamatan, Nama Kabupaten, Indonesia" agar Nominatim
-        // menemukan batas administratif kecamatan, bukan titik POI
-        const names = regions.map(r => r.name + ', ' + kabupatenNama + ', Indonesia')
-        const res = await apiClient.post('/geocode/boundary-batch', { queries: names })
-        const results = res.data?.results || {}
-
-        let foundCount = 0
-        // Trigger Vue reactivity dengan mengganti seluruh array
-        const updated = this.diseaseRiskData.map(region => {
-          // Coba exact match dulu, lalu lowercase trim sebagai fallback
-          const geo = results[region.name]
-            ?? results[region.name.trim()]
-            ?? results[region.name.toLowerCase()]
-            ?? results[region.name.toLowerCase().trim()]
-          if (geo) {
-            foundCount++
-            return { ...region, geojson: geo }
-          }
-          return region
-        })
-        console.log(`[Boundary] ${foundCount}/${regions.length} kecamatan mendapat GeoJSON`)
-        this.diseaseRiskData = updated
-      } catch (e) {
-        console.warn('Kecamatan boundaries fetch failed:', e.message || e)
-      }
+      this.diseaseRiskData = []
+      this.searchResults = []
+      this.searchQuery = ''
     },
   },
 })

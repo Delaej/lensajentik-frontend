@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted, watch, computed, toRaw } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
-  Search, Filter,
+  Search, Filter, BellRing, Maximize2, Minimize2,
   ChevronLeft, ChevronRight, AlertTriangle,
   TrendingUp, Thermometer, Droplets, MapPin, Map
 } from 'lucide-vue-next'
@@ -12,6 +12,7 @@ const mapStore = useMapStore()
 const mapContainer = ref(null)
 let mapInstance = null
 let activeLayers = []
+const isMaximized = ref(false)
 const hoverPopupVisible = ref(false)
 const hoverPopupIndex = ref(0)
 const hoverPopupX = ref(0)
@@ -29,32 +30,34 @@ const drawLayers = (L) => {
   activeLayers.forEach((l) => mapInstance.removeLayer(l))
   activeLayers = []
 
+  // Outline kabupaten (jika ada GeoJSON parent) — batas hitam tebal
+  if (mapStore.parentRegion?.geojson) {
+    const parentLayer = L.geoJSON(mapStore.parentRegion.geojson, {
+      style: { color: '#000000', fillColor: 'transparent', fillOpacity: 0, weight: 3, dashArray: '8 4', opacity: 0.9 },
+    }).addTo(mapInstance)
+    activeLayers.push(parentLayer)
+  }
+
   mapStore.diseaseRiskData.forEach((region) => {
     const color = region.riskCode === 'high' ? '#EF4444' : region.riskCode === 'medium' ? '#F59E0B' : region.riskCode === 'low' ? '#22C55E' : '#9CA3AF'
     
     let polygon;
+    // Warna batas: jika mode kabupaten gunakan warna gelap (#374151), nasional gunakan warna risiko
+    const borderColor = mapStore.parentRegion ? '#374151' : color
     const baseStyle = {
-      color: color,
+      color: borderColor,
       fillColor: color,
-      fillOpacity: 0.30,
-      weight: 2,
-      opacity: 0.85,
+      fillOpacity: 0.35,
+      weight: mapStore.parentRegion ? 1.5 : 2,
+      opacity: 0.8
     }
 
     if (region.geojson) {
-      // GeoJSON asli — unwrap Vue proxy biar Leaflet bisa baca
-      polygon = L.geoJSON(toRaw(region.geojson), { style: baseStyle }).addTo(mapInstance)
+      // Gunakan GeoJSON asli — bentuk kecamatan/kabupaten nyata
+      polygon = L.geoJSON(region.geojson, { style: baseStyle }).addTo(mapInstance)
     } else {
-      // Fallback lingkaran (lebih rapi dari kotak)
-      const [clat, clng] = region.coordinates
-      polygon = L.circleMarker([clat, clng], {
-        radius: 12,
-        fillColor: color,
-        color: color,
-        weight: 2,
-        opacity: 0.9,
-        fillOpacity: 0.35,
-      }).addTo(mapInstance)
+      // Fallback sementara (kotak) hanya jika GeoJSON belum datang
+      polygon = L.polygon(region.latLngs, baseStyle).addTo(mapInstance)
     }
     
     polygon.regionId = region.id
@@ -95,9 +98,10 @@ const drawLayers = (L) => {
       if (mapStore.selectedRegion?.id !== region.id) {
         if (polygon.setStyle) {
           polygon.setStyle({
-            fillColor: color, fillOpacity: 0.30,
-            color: color,
-            weight: 2, opacity: 0.85,
+            fillColor: color, fillOpacity: 0.35,
+            color: borderColor,
+            weight: mapStore.parentRegion ? 1.5 : 2,
+            opacity: 0.8,
           })
         }
       }
@@ -109,9 +113,10 @@ const drawLayers = (L) => {
       if (mapStore.selectedRegion?.id === region.id) {
         const newColor = riskColor(mapStore.selectedRegion.riskCode)
         polygon.setStyle({
-          fillColor: newColor, fillOpacity: 0.30,
-          color: newColor,
-          weight: 2, opacity: 0.85,
+          fillColor: newColor, fillOpacity: 0.35,
+          color: borderColor,
+          weight: mapStore.parentRegion ? 1.5 : 2,
+          opacity: 0.8,
         })
         polygon.defaultColor = newColor
         // Update data di store juga
@@ -164,14 +169,23 @@ onMounted(async () => {
       maxZoom: 18,
     }).addTo(mapInstance)
 
+    await mapStore.fetchRiskMap()
     await mapStore.fetchSubscribedRegions()
+    drawLayers(L)
 
-    // Watch deep pada diseaseRiskData — menangkap GeoJSON polygon
+    // Watch deep pada diseaseRiskData — menangkap kedatangan GeoJSON kecamatan secara async
     watch(() => mapStore.diseaseRiskData, () => drawLayers(L), { deep: true })
+    // Watch parentRegion geojson — kabupaten boundary
+    watch(() => mapStore.parentRegion?.geojson, () => { if (mapStore.parentRegion?.geojson) drawLayers(L) })
   }
 })
 
-// Disease filter — tidak ada aksi khusus, user cukup search ulang
+watch(() => mapStore.selectedDisease, async () => { await mapStore.fetchRiskMap() })
+
+const toggleMaximize = () => {
+  isMaximized.value = !isMaximized.value
+  setTimeout(() => mapInstance?.invalidateSize(), 300)
+}
 
 const handleSubscribe = () => {
   if (mapStore.selectedRegion) {
@@ -204,7 +218,10 @@ const pickRegion = (region) => {
 // Clear chip
 const clearSelection = () => {
   selectedRegion.value = null
-  mapStore.clearView()
+  mapStore.parentRegion = null
+  mapStore.selectedRegion = null
+  mapStore.diseaseRiskData = []
+  mapStore.fetchRiskMap() // balik ke nasional
 }
 
 // Eksekusi pencarian (klik Cari atau Enter)
@@ -228,11 +245,30 @@ const handleSearchSubmit = async () => {
 let leafletInstance = null
 
 const executeSearch = async (region) => {
-  await mapStore.fetchRegionDetail(region.kode)
-  if (mapStore.selectedRegion?.coordinates && mapInstance) {
-    mapInstance.flyTo(mapStore.selectedRegion.coordinates, zoomForTingkat(mapStore.selectedRegion.district), { duration: 0.8 })
+  if (region.tingkat === 'kabupaten') {
+    await mapStore.loadKecamatanUntukKabupaten(region)
+    if (mapStore.diseaseRiskData.length > 0) {
+      mapInstance.flyTo(mapStore.diseaseRiskData[0].coordinates, 11, { duration: 1.2 })
+    }
+    // Fetch GeoJSON boundaries secara paralel lalu redraw peta setelah keduanya selesai
+    if (leafletInstance) {
+      await Promise.all([
+        mapStore.fetchKabupatenBoundary(region.nama),
+        mapStore.fetchKecamatanBoundaries(region.nama),
+      ])
+      // Redraw eksplisit setelah semua GeoJSON datang
+      drawLayers(leafletInstance)
+    } else {
+      // Fallback jika leaflet belum siap
+      mapStore.fetchKabupatenBoundary(region.nama)
+      mapStore.fetchKecamatanBoundaries(region.nama)
+    }
+  } else {
+    await mapStore.fetchRegionDetail(region.kode)
+    if (mapStore.selectedRegion?.coordinates && mapInstance) {
+      mapInstance.flyTo(mapStore.selectedRegion.coordinates, zoomForTingkat(mapStore.selectedRegion.district), { duration: 1.2 })
+    }
   }
-  if (leafletInstance) drawLayers(leafletInstance)
 }
 
 const tooltipLegend = [
@@ -355,21 +391,14 @@ const predictionChartData = computed(() => {
 <template>
   <div class="space-y-8 pb-24">
 
-    <!-- ─── Hero banner (Lottie full-width) ─── -->
-    <div class="hero-full-width relative overflow-hidden" style="height: 550px; border-radius: 0; background: var(--lj-blue-pale);">
-      <!-- Lottie fills full width left to right -->
-      <div class="absolute inset-0 z-0 pointer-events-none">
-        <Vue3Lottie
-          animationLink="/illustrasi_petaresiko.json"
-          :loop="true"
-          :autoplay="true"
-          class="w-full h-full"
-          :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
-        />
-      </div>
+    <!-- ─── Hero banner (Lottie placeholder) ─── -->
+    <div class="hero-full-width lottie-placeholder animate-on-scroll flex-col relative" style="height: 320px; border-radius: 0;">
+      <Map class="w-16 h-16 mb-2 text-[--lj-blue]" />
+      <span class="font-semibold text-lg text-glow" style="color: var(--lj-blue);">Lottie: Ilustrasi Peta Risiko Nyamuk</span>
+      
       <!-- Sway wave bottom -->
-      <div class="absolute left-0 w-full z-10 pointer-events-none" style="bottom: -2px; transform: translateY(1px);">
-        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
+      <div class="absolute bottom-0 left-0 w-full z-10" style="transform: translateY(1px);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
       </div>
     </div>
 
@@ -440,10 +469,21 @@ const predictionChartData = computed(() => {
     <!-- ─── Map Container ─── -->
     <div
       class="animate-on-scroll relative lj-card overflow-hidden"
+      :class="{ 'map-maximized': isMaximized }"
       style="border: 2px solid var(--lj-green-dk); z-index: 10;"
     >
       <!-- Map -->
-      <div ref="mapContainer" :style="{ height: '480px' }" class="w-full z-0" />
+      <div ref="mapContainer" :style="{ height: isMaximized ? '100vh' : '480px' }" class="w-full z-0" />
+
+      <!-- Maximize toggle -->
+      <button
+        @click="toggleMaximize"
+        class="absolute top-3 right-3 z-20 w-9 h-9 rounded-xl bg-white shadow-md flex items-center justify-center hover:scale-110 transition-transform"
+        style="border: 1px solid var(--lj-border);"
+      >
+        <Maximize2 v-if="!isMaximized" class="w-4 h-4" style="color: var(--lj-blue);" />
+        <Minimize2 v-else class="w-4 h-4" style="color: var(--lj-blue);" />
+      </button>
 
       <!-- Hover Popup: Ringkasan Kecamatan -->
       <div
@@ -474,11 +514,28 @@ const predictionChartData = computed(() => {
 
     <!-- ─── Hasil Pemeriksaan ─── -->
     <div v-if="mapStore.selectedRegion" class="space-y-8 mt-12">
+      <!-- Kabupaten summary bar -->
+      <div v-if="mapStore.parentRegion" class="flex items-center justify-center gap-3 flex-wrap">
+        <button @click="mapStore.clearView()" class="text-xs font-bold px-3 py-1.5 rounded-full border hover:bg-gray-50 transition-colors" style="border-color: var(--lj-border); color: var(--lj-muted);">
+          ← Kembali ke Nasional
+        </button>
+        <span class="text-xs px-3 py-1 rounded-full font-bold" style="background: #EEF2FF; color: #4E63DA;">
+          📌 {{ mapStore.parentRegion.nama }}
+        </span>
+        <span class="text-xs px-3 py-1 rounded-full font-bold" :style="{ background: '#D1FAE5', color: '#065F46' }">
+          {{ mapStore.diseaseRiskData.length }} kecamatan
+        </span>
+      </div>
+
       <div class="text-center">
         <div class="px-4 py-1 rounded-full text-[10px] font-bold mb-3 mx-auto" style="width: fit-content; border: 1.5px solid #4E63DA; color: var(--lj-navy); background: white;">HASIL PEMERIKSAAN</div>
         <h2 class="text-3xl sm:text-4xl font-bold" style="color: var(--lj-navy);">
-          {{ mapStore.selectedRegion.district }} {{ mapStore.selectedRegion.name }}
+          {{ mapStore.parentRegion ? 'Kabupaten' : mapStore.selectedRegion.district }} {{ mapStore.selectedRegion.name }}
         </h2>
+        <!-- Kabupaten ringkasan -->
+        <p v-if="mapStore.parentRegion" class="text-sm mt-2" style="color: var(--lj-muted);">
+          Rata-rata skor risiko dari {{ mapStore.selectedRegion.kecamatanDenganData || 0 }}/{{ mapStore.selectedRegion.jumlahKecamatan || mapStore.diseaseRiskData.length }} kecamatan dengan data
+        </p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
@@ -487,7 +544,29 @@ const predictionChartData = computed(() => {
           <div class="space-y-3">
             <h3 class="font-bold text-lg text-left" style="color: var(--lj-navy);">Keadaan Wilayah</h3>
             <p class="text-[11px] leading-relaxed text-left" style="color: var(--lj-navy); opacity: 0.85;">
-              <template v-if="mapStore.selectedRegion?.riskCode === 'high'">
+              <!-- Kabupaten summary -->
+              <template v-if="mapStore.parentRegion">
+                <template v-if="mapStore.selectedRegion?.kecamatanDenganData > 0">
+                  Skor risiko rata-rata <strong>{{ gaugePercent }}/100</strong> dari
+                  <strong>{{ mapStore.selectedRegion?.kecamatanDenganData }}</strong> kecamatan dengan data
+                  (total {{ mapStore.selectedRegion?.jumlahKecamatan || mapStore.diseaseRiskData.length }} kecamatan).
+                  <template v-if="mapStore.selectedRegion?.riskCode === 'high'">
+                    ⚠ Mayoritas kecamatan menunjukkan risiko tinggi.
+                  </template>
+                  <template v-else-if="mapStore.selectedRegion?.riskCode === 'medium'">
+                    Beberapa kecamatan perlu kewaspadaan. Pantau kecamatan merah.
+                  </template>
+                  <template v-else>
+                    Kondisi relatif terkendali. Pertahankan pencegahan rutin.
+                  </template>
+                </template>
+                <template v-else>
+                  <strong>{{ mapStore.diseaseRiskData.length }}</strong> kecamatan terdeteksi.
+                  🔍 Klik kecamatan untuk melihat detail & menghitung skor.
+                </template>
+              </template>
+              <!-- Single region (kecamatan) -->
+              <template v-else-if="mapStore.selectedRegion?.riskCode === 'high'">
                 Skor risiko <strong>{{ gaugePercent }}/100</strong> — kondisi lingkungan saat ini sangat mendukung perkembangbiakan nyamuk. Curah hujan 7 hari terakhir ({{ hujan7Display }}) menciptakan banyak genangan air. Segera lakukan pemeriksaan dan pengurasan wadah air di sekitar lingkungan.
               </template>
               <template v-else-if="mapStore.selectedRegion?.riskCode === 'medium'">
@@ -674,10 +753,61 @@ const predictionChartData = computed(() => {
       </div>
     </div>
 
+    <!-- Region List: mode nasional -->
+    <div v-else-if="!mapStore.parentRegion && mapStore.filteredRegions.length > 0" class="space-y-4">
+      <div class="lj-section-label mb-4" style="width: fit-content;">DAFTAR WILAYAH ({{ mapStore.filteredRegions.length }})</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          v-for="region in mapStore.filteredRegions.slice(0, 6)"
+          :key="region.id"
+          @click="mapStore.fetchRegionDetail(region.id)"
+          class="lj-card p-4 cursor-pointer flex items-center justify-between gap-3"
+        >
+          <div>
+            <div class="font-bold text-sm" style="color: var(--lj-navy);">{{ region.name }}</div>
+            <div class="text-xs" style="color: var(--lj-muted);">{{ region.district }}</div>
+          </div>
+          <div
+            class="px-3 py-1 rounded-full text-xs font-bold text-white shrink-0"
+            :style="{ background: riskColor(region.riskCode) }"
+          >
+            {{ riskLabel(region.riskCode) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kecamatan list: mode kabupaten -->
+    <div v-else-if="mapStore.parentRegion && mapStore.diseaseRiskData.length > 0" class="space-y-4">
+      <div class="lj-section-label mb-4" style="width: fit-content;">KECAMATAN DI {{ mapStore.parentRegion.nama.toUpperCase() }} ({{ mapStore.diseaseRiskData.length }})</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          v-for="region in mapStore.diseaseRiskData"
+          :key="region.id"
+          @click="mapStore.fetchRegionDetail(region.id); mapInstance?.flyTo(region.coordinates, 14, { duration: 0.8 })"
+          class="lj-card p-4 cursor-pointer flex items-center justify-between gap-3 hover:shadow-md transition-shadow"
+        >
+          <div>
+            <div class="font-bold text-sm" style="color: var(--lj-navy);">{{ region.name }}</div>
+            <div class="text-xs" style="color: var(--lj-muted);">
+              Skor: {{ region.skor != null ? `${region.skor}/100` : '—' }}
+              <span v-if="region.abj != null">· ABJ: {{ Number(region.abj).toFixed(1) }}%</span>
+            </div>
+          </div>
+          <div
+            class="px-3 py-1 rounded-full text-xs font-bold text-white shrink-0"
+            :style="{ background: riskColor(region.riskCode) }"
+          >
+            {{ riskLabel(region.riskCode) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Empty state -->
-    <div v-if="!mapStore.selectedRegion" class="text-center py-12 lj-card">
+    <div v-else class="text-center py-12 lj-card">
       <MapPin class="w-10 h-10 mx-auto mb-3" style="color: var(--lj-blue-lt);" />
-      <p class="text-sm font-bold" style="color: var(--lj-muted);">Ketik nama kecamatan di kolom pencarian untuk melihat data risiko.</p>
+      <p class="text-sm font-bold" style="color: var(--lj-muted);">Ketik nama wilayah di kolom pencarian untuk melihat data risiko.</p>
     </div>
     </div>
   </div>
