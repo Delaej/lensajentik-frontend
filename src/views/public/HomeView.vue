@@ -72,7 +72,8 @@ const features = [
     ctaPath: '/peta-resiko',
     bg: '#EEF1FD',
     accent: '#4E63DA',
-    icon: MapIcon
+    icon: MapIcon,
+    lottie: '/landing_fitur_petaresiko.json'
   },
   {
     label: 'Laporan Warga',
@@ -82,7 +83,8 @@ const features = [
     ctaPath: '/laporan',
     bg: '#F0FDF4',
     accent: '#22C55E',
-    icon: Camera
+    icon: Camera,
+    lottie: '/landing_fitur_laporan.json'
   },
   {
     label: 'Edukasi',
@@ -92,7 +94,8 @@ const features = [
     ctaPath: '/edukasi',
     bg: '#FFFBEB',
     accent: '#F59E0B',
-    icon: BookOpen
+    icon: BookOpen,
+    lottie: null
   },
   {
     label: 'Statistik',
@@ -102,7 +105,8 @@ const features = [
     ctaPath: '/statistik',
     bg: '#FDF2F8',
     accent: '#A855F7',
-    icon: BarChart2
+    icon: BarChart2,
+    lottie: '/landing_fitur_statistik.json'
   },
 ]
 
@@ -140,6 +144,32 @@ const steps = [
     desc: 'Pantau statistik ABJ, tren kasus, dan dampak partisipasi warga di halaman Statistik publik tanpa perlu login.',
     detail: 'Data diperbarui setiap kali kader kesehatan melakukan input ABJ di lapangan.',
   },
+]
+
+const prevCaraKerja = () => {
+  if (activeStep.value > 0) activeStep.value--
+}
+const nextCaraKerja = () => {
+  if (activeStep.value < steps.length - 1) activeStep.value++
+}
+
+/* ─── About Section Cards (Gambar 1) ─────────────────────────────────────── */
+const aboutCards = [
+  {
+    image: '/Rectangle 36.svg',
+    title: 'Rekor Tertinggi Sepanjang Sejarah',
+    desc: '2024 mencatat 1.430 kematian akibat DBD di Indonesia — jumlah kasus tertinggi yang pernah tercatat Kemenkes RI sejak sistem pencatatan berjalan.'
+  },
+  {
+    image: '/Rectangle 37.svg',
+    title: 'Indonesia Sumbang 7,3% Beban Dunia',
+    desc: '544 kematian tercatat sepanjang periode januari hingga oktober 2025 setara dengan 17,1% angka kematian dengue secara global.'
+  },
+  {
+    image: '/Rectangle 38.svg',
+    title: 'Satu Provinsi, 1/4 Kasus Nasional',
+    desc: 'Jawa Barat sendiri menyumbang lebih dari seperempat total kasus DBD nasional, yang membuktikan risiko sangat timpang antarwilayah.'
+  }
 ]
 
 /* ─── FAQ Accordion ──────────────────────────────────────────────────────── */
@@ -250,22 +280,27 @@ const fetchStats = async () => {
         </p>
       </div>
 
-      <!-- Stat Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <!-- About Cards (Gambar 1) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
         <div
-          v-for="(card, i) in statCards"
+          v-for="(card, i) in aboutCards"
           :key="i"
-          class="lj-card p-6 animate-on-scroll flex flex-col items-center text-center"
+          class="lj-card animate-on-scroll relative rounded-[24px] overflow-hidden shadow-xl border border-white/60 group hover:-translate-y-2 transition-all duration-300 flex flex-col justify-end min-h-[460px] bg-white"
           :class="`delay-${(i + 1) * 100}`"
         >
-          <!-- Lottie placeholder -->
-          <div class="lottie-placeholder flex-col w-full mb-4" style="height: 120px;">
-            <component :is="card.icon" class="w-10 h-10 mb-2" :style="{ color: card.textColor }" />
+          <img
+            :src="card.image"
+            :alt="card.title"
+            class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div class="relative z-10 p-6 bg-gradient-to-t from-white/95 via-white/85 to-transparent pt-16 rounded-b-[24px]">
+            <h3 class="text-lg sm:text-xl font-bold mb-2 leading-snug" style="color: var(--lj-navy);">
+              {{ card.title }}
+            </h3>
+            <p class="text-xs sm:text-[13px] leading-relaxed font-medium" style="color: var(--lj-navy); opacity: 0.85;">
+              {{ card.desc }}
+            </p>
           </div>
-          <div class="text-sm font-bold leading-snug whitespace-pre-line" :style="{ color: card.textColor }">
-            {{ card.value }}
-          </div>
-          <p class="text-xs mt-2" style="color: var(--lj-muted);">{{ card.sub }}</p>
         </div>
       </div>
     </section>
@@ -317,19 +352,29 @@ const fetchStats = async () => {
                 </span>
               </h3>
               <p class="text-sm leading-relaxed" style="color: var(--lj-muted);">
-                Bukan sekadar peta biasa, warna di tiap wilayah dihitung dari suhu, kelembapan, dan curah hujan real-time, lalu diproyeksikan jadi tren 7-14 hari ke depan. Kamu tahu duluan, sebelum kasus muncul.
+                {{ features[featureSliderIndex].body }}
               </p>
               <RouterLink :to="features[featureSliderIndex].ctaPath" class="lj-btn-primary w-fit mt-2 shadow-lg" :style="{ background: features[featureSliderIndex].accent }">
                 {{ features[featureSliderIndex].cta }}
               </RouterLink>
             </div>
 
-            <!-- Visual side (Lottie placeholder) -->
-            <div class="flex items-center justify-center p-8 bg-[--lj-bg]">
-              <div class="lottie-placeholder w-full flex-col bg-white border-dashed border-2 shadow-inner" style="height: 280px; border-color: var(--lj-border);">
+            <!-- Visual side (Lottie animation) -->
+            <div class="flex items-center justify-center p-6 bg-[--lj-bg] overflow-hidden">
+              <div v-if="features[featureSliderIndex].lottie" class="w-full flex items-center justify-center h-[280px]">
+                <Vue3Lottie
+                  :key="featureSliderIndex"
+                  :animationLink="features[featureSliderIndex].lottie"
+                  :loop="true"
+                  :autoplay="true"
+                  class="w-full h-full max-h-[280px]"
+                  :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
+                />
+              </div>
+              <div v-else class="lottie-placeholder w-full flex-col bg-white border-dashed border-2 shadow-inner" style="height: 280px; border-color: var(--lj-border);">
                 <component :is="features[featureSliderIndex].icon" class="w-16 h-16 mb-3" :style="{ color: features[featureSliderIndex].accent }" />
                 <span class="text-sm font-semibold" :style="{ color: features[featureSliderIndex].accent }">
-                  Lottie: Ilustrasi {{ features[featureSliderIndex].label }}
+                  Ilustrasi {{ features[featureSliderIndex].label }}
                 </span>
               </div>
             </div>
@@ -398,23 +443,29 @@ const fetchStats = async () => {
         </div>
       </div>
 
-      <!-- Step content -->
+      <!-- Step content (Text-only card) -->
       <Transition name="step-content" mode="out-in">
         <div
           :key="activeStep"
-          class="lj-card p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center"
+          class="lj-card p-8 sm:p-10 max-w-3xl mx-auto flex flex-col space-y-4 shadow-lg border border-[--lj-border]"
         >
-          <div class="space-y-4">
-            <component :is="steps[activeStep].icon" class="w-10 h-10 text-[--lj-blue]" />
-            <h3 class="text-xl font-bold" style="color: var(--lj-navy);">{{ steps[activeStep].title }}</h3>
-            <p class="text-sm leading-relaxed" style="color: var(--lj-muted);">{{ steps[activeStep].desc }}</p>
-            <div class="p-4 rounded-xl text-xs leading-relaxed" style="background: var(--lj-blue-pale); color: var(--lj-blue);">
-              💡 {{ steps[activeStep].detail }}
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style="background: var(--lj-blue-pale); color: var(--lj-blue);">
+              <component :is="steps[activeStep].icon" class="w-6 h-6" />
+            </div>
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-[--lj-blue]">Langkah {{ activeStep + 1 }} dari {{ steps.length }}</span>
+              <h3 class="text-xl sm:text-2xl font-bold" style="color: var(--lj-navy);">{{ steps[activeStep].title }}</h3>
             </div>
           </div>
-          <div class="lottie-placeholder flex-col" style="height: 200px;">
-            <component :is="steps[activeStep].icon" class="w-12 h-12 text-[--lj-blue] mb-2" />
-            <span class="text-xs font-semibold text-[--lj-blue]">Lottie: Langkah {{ activeStep + 1 }}</span>
+          
+          <p class="text-sm sm:text-base leading-relaxed" style="color: var(--lj-muted);">
+            {{ steps[activeStep].desc }}
+          </p>
+
+          <div class="p-4 rounded-xl text-xs sm:text-sm leading-relaxed border flex items-start gap-3" style="background: var(--lj-blue-pale); color: var(--lj-navy); border-color: rgba(78, 99, 218, 0.2);">
+            <span class="text-base shrink-0">💡</span>
+            <span>{{ steps[activeStep].detail }}</span>
           </div>
         </div>
       </Transition>
@@ -422,17 +473,17 @@ const fetchStats = async () => {
       <!-- Previous / Next -->
       <div class="flex justify-center gap-4 mt-6">
         <button
-          @click="prevStep"
+          @click="prevCaraKerja"
           :disabled="activeStep === 0"
-          class="px-5 py-2 rounded-full text-sm font-bold border transition-all disabled:opacity-30 flex items-center gap-2"
+          class="px-6 py-2.5 rounded-full text-sm font-bold border transition-all disabled:opacity-30 flex items-center gap-2 hover:bg-[--lj-blue-pale]"
           style="border-color: var(--lj-blue); color: var(--lj-blue);"
         >
           <ChevronLeft class="w-4 h-4" /> Sebelumnya
         </button>
         <button
-          @click="nextStep"
+          @click="nextCaraKerja"
           :disabled="activeStep === steps.length - 1"
-          class="lj-btn-primary disabled:opacity-30 flex items-center gap-2"
+          class="lj-btn-primary disabled:opacity-30 flex items-center gap-2 px-6 py-2.5"
         >
           Selanjutnya <ChevronRight class="w-4 h-4" />
         </button>
@@ -440,31 +491,38 @@ const fetchStats = async () => {
     </section>
 
     <!-- ─── FAQ ─────────────────────────────────────────────────────────── -->
-    <section class="pt-24 hero-full-width relative pb-0 mb-0">
-      <!-- Background Lottie Placeholder -->
-      <div class="absolute inset-0 lottie-placeholder" style="border-radius: 0;"></div>
-      
-      <!-- Sway wave top -->
-      <div class="absolute top-0 left-0 w-full z-10 pointer-events-none" style="transform: translateY(-1px) rotate(180deg);">
-        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
+    <section class="faq-section hero-full-width relative" style="margin-bottom: 0; padding-bottom: 220px; min-height: 600px;">
+      <!-- Background Lottie Animation FULL width + extra 220px for footer overlap -->
+      <div class="absolute z-0 pointer-events-none" style="overflow: hidden; top: 0; left: 0; right: 0; bottom: 0;">
+        <Vue3Lottie
+          animationLink="/illustrasi_landing_bg_faq.json"
+          :loop="true"
+          :autoplay="true"
+          style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMin slice' }"
+        />
       </div>
 
-      <div class="max-w-3xl mx-auto px-4 sm:px-6 relative z-10 pb-8">
+      <!-- Sway wave top - overlaps upward to cover section boundary seamlessly -->
+      <div class="absolute left-0 w-full z-10 pointer-events-none" style="top: -78px;">
+        <img src="/sway-hadapbawah.svg" alt="" aria-hidden="true" style="width: 100%; display: block; height: auto;" />
+      </div>
+
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 relative z-20" style="padding-top: 120px; padding-bottom: 60px;">
         <div class="text-center mb-10 animate-on-scroll">
-          <div class="lj-section-label mb-4 mx-auto bg-white" style="width: fit-content;">PERTANYAAN PALING SERING DITANYAKAN</div>
+          <div class="lj-section-label mb-4 mx-auto bg-white/90 backdrop-blur shadow-sm" style="width: fit-content;">PERTANYAAN PALING SERING DITANYAKAN</div>
         </div>
 
         <div class="space-y-4 animate-on-scroll">
           <div
             v-for="(faq, i) in faqs"
             :key="i"
-            class="lj-card overflow-hidden bg-white/95 backdrop-blur shadow-sm"
-            style="border-radius: 100px;"
-            :style="activeFaq === i ? 'border-color: var(--lj-blue); border-radius: 24px;' : ''"
+            class="lj-card overflow-hidden bg-white/95 backdrop-blur-md shadow-md transition-all duration-300 border border-white/60"
+            :class="activeFaq === i ? 'rounded-2xl border-[--lj-blue]' : 'rounded-full'"
           >
             <button
               @click="toggleFaq(i)"
-              class="w-full flex items-center justify-between px-6 py-4 text-left gap-4 hover:bg-[--lj-blue-pale] transition-colors"
+              class="w-full flex items-center justify-between px-6 py-4 text-left gap-4 hover:bg-[--lj-blue-pale]/50 transition-colors"
             >
               <span class="text-sm font-bold" style="color: var(--lj-navy);">{{ faq.q }}</span>
               <div
@@ -573,5 +631,16 @@ const fetchStats = async () => {
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+
+/* FAQ section — no gaps, Lottie fills completely */
+.faq-section {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  /* Remove any browser default margin */
+  margin-top: 0;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
 }
 </style>

@@ -59,7 +59,7 @@ const emit = defineEmits(['trigger-onboarding'])
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col" style="background: var(--lj-bg); color: var(--lj-text);">
+  <div class="flex flex-col" style="background: var(--lj-bg); color: var(--lj-text); min-height: 100vh;">
 
     <!-- ─── Floating Navbar ───────────────────────────────────────────────── -->
     <header
@@ -151,16 +151,16 @@ const emit = defineEmits(['trigger-onboarding'])
     </header>
 
     <!-- ─── Page Content ──────────────────────────────────────────────────────── -->
-    <main class="flex-1 relative z-10 w-full flex flex-col">
+    <main class="flex-1 relative z-10 w-full flex flex-col" style="margin-bottom: 0; padding-bottom: 220px;">
       <RouterView v-slot="{ Component, route }">
         <component :is="Component" :key="route.fullPath" @trigger-onboarding="$emit('trigger-onboarding')" />
       </RouterView>
     </main>
 
-    <!-- ─── Footer ─────────────────────────────────────────────────────────── -->
-    <footer class="relative mt-auto w-full">
-      <!-- City Silhouette SVG -->
-      <img src="/footer.svg" alt="" aria-hidden="true" class="w-full h-auto block" style="pointer-events: none;" />
+    <!-- ─── Footer ────────────────────────────────────────────────────────── -->
+    <footer class="relative w-full" style="margin: 0; padding: 0; margin-top: -220px; z-index: 20; position: relative;">
+      <!-- City Silhouette SVG - sits ON TOP of the FAQ Lottie animation -->
+      <img src="/footer.svg" alt="" aria-hidden="true" class="w-full h-auto block" style="pointer-events: none; display: block; margin: 0; padding: 0;" />
 
       <div class="absolute bottom-0 left-0 w-full px-4 sm:px-6 lg:px-8 pb-5 text-white flex flex-col justify-end">
         <!-- Links Row -->
