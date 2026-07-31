@@ -108,7 +108,7 @@ const handlePrint = () => {
       </div>
 
       <!-- Action Buttons: Print & Export PDF/Excel -->
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2 print:hidden">
         <button
           @click="handlePrint"
           class="py-2.5 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors"
@@ -133,7 +133,7 @@ const handlePrint = () => {
     </div>
 
     <!-- Date Range Filter Bar -->
-    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-4 print:hidden">
       <div class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
         <Filter class="w-4 h-4 text-blue-600" /> Filter Rentang Tanggal Laporan
       </div>
@@ -251,7 +251,7 @@ const handlePrint = () => {
         <button
           @click="handleExportPdf"
           :disabled="isExportingPdf"
-          class="py-2.5 px-5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shadow-md shrink-0 disabled:opacity-50"
+          class="py-2.5 px-5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shadow-md shrink-0 disabled:opacity-50 print:hidden"
         >
           {{ isExportingPdf ? 'Sedang Mengunduh...' : 'Unduh Laporan Format Resmi PDF' }}
         </button>

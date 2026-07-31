@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import {
   User,
   Shield,
@@ -16,18 +16,67 @@ import { useKaderStore } from '@/stores/useKaderStore'
 
 const kaderStore = useKaderStore()
 
+// Sync form dari store saat profile sudah diload
 const profileForm = ref({
-  nama: kaderStore.userProfile.nama || '',
-  email: kaderStore.userProfile.email || '',
-  phone: kaderStore.userProfile.phone || '',
-  role: kaderStore.userProfile.role || '',
-  district: kaderStore.userProfile.wilayah_binaan || '',
-  avatar: '',
+  nama: '',
+  email: '',
+  phone: '',
+  role: '',
+  district: '',
 })
+
+// Sync when store profile changes (e.g. after login fetches profile)
+watch(
+  () => kaderStore.userProfile,
+  (profile) => {
+    profileForm.value.nama = profile.nama || ''
+    profileForm.value.email = profile.email || ''
+    profileForm.value.phone = profile.phone || ''
+    profileForm.value.role = profile.role || ''
+    profileForm.value.district = profile.wilayah_binaan || ''
+  },
+  { immediate: true, deep: true }
+)
+
+// Avatar: gunakan inisial nama jika tidak ada foto
+const avatarPreview = ref(null) // URL hasil pilih file lokal
+const fileInput = ref(null)
+
+const userInitials = computed(() => {
+  const name = profileForm.value.nama || kaderStore.userProfile.nama || ''
+  if (!name) return '?'
+  return name
+    .split(' ')
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() || '')
+    .join('')
+})
+
+const handleAvatarChange = () => {
+  fileInput.value?.click()
+}
+
+const handleFileSelected = (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    alert('Hanya file gambar yang diperbolehkan (JPG, PNG, WEBP).')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    alert('Ukuran file terlalu besar. Maksimum 5MB.')
+    return
+  }
+  // Tampilkan preview lokal
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    avatarPreview.value = e.target.result
+  }
+  reader.readAsDataURL(file)
+}
 
 const isSaved = ref(false)
 const showPasswordModal = ref(false)
-
 const isSaving = ref(false)
 
 const handleSaveProfile = async () => {
@@ -42,7 +91,7 @@ const handleSaveProfile = async () => {
     isSaved.value = true
     setTimeout(() => (isSaved.value = false), 2500)
   } else {
-    alert(result.message) // Fallback simple error alert
+    alert(result.message)
   }
 }
 
@@ -70,22 +119,16 @@ const handleSavePassword = async () => {
   if (result.success) {
     showPasswordModal.value = false
     alert('Kata sandi berhasil diperbarui!')
-    // Reset form
     passwordForm.value = { current_password: '', password: '', password_confirmation: '' }
   } else {
     alert(result.message)
   }
 }
 
-// Settings lokal (TODO: sync ke backend via PATCH /auth/update-profile)
 const localSettings = ref({
   alertAbjHigh: true,
   weeklyReportReminders: true,
 })
-
-const handleAvatarChange = () => {
-  // TODO: implement foto profil upload ke Cloudinary
-}
 </script>
 
 <template>
@@ -117,12 +160,31 @@ const handleAvatarChange = () => {
 
       <!-- Avatar & Photo Upload -->
       <div class="flex items-center gap-5">
+        <!-- Hidden file input -->
+        <input
+          ref="fileInput"
+          type="file"
+          accept="image/*"
+          class="hidden"
+          @change="handleFileSelected"
+        />
+
         <div class="relative">
+          <!-- If photo preview exists, show it; otherwise show initials -->
           <img
-            :src="profileForm.avatar"
-            alt="Avatar"
+            v-if="avatarPreview"
+            :src="avatarPreview"
+            alt="Foto Profil"
             class="w-20 h-20 rounded-3xl object-cover ring-4 ring-blue-500/20"
           />
+          <div
+            v-else
+            class="w-20 h-20 rounded-3xl ring-4 ring-blue-500/20 flex items-center justify-center font-black text-2xl text-white select-none"
+            style="background: linear-gradient(135deg, #4E63DA 0%, #5AF61F 100%);"
+          >
+            {{ userInitials }}
+          </div>
+
           <button
             @click="handleAvatarChange"
             class="absolute -bottom-1 -right-1 p-2 bg-blue-600 text-white rounded-xl shadow-md hover:bg-blue-500 transition-transform active:scale-95"
@@ -131,14 +193,17 @@ const handleAvatarChange = () => {
             <Camera class="w-4 h-4" />
           </button>
         </div>
+
         <div>
-          <div class="font-bold text-slate-900 text-base">{{ profileForm.nama }}</div>
-          <div class="text-xs text-slate-500">{{ profileForm.role }}</div>
+          <div class="font-bold text-slate-900 text-base">{{ profileForm.nama || '—' }}</div>
+          <div class="text-xs text-slate-500">{{ profileForm.role || 'Kader Kesehatan' }}</div>
           <button @click="handleAvatarChange" class="text-xs text-blue-600 font-bold hover:underline mt-1">
-            Ubah Foto
+            {{ avatarPreview ? 'Ganti Foto' : 'Unggah Foto' }}
           </button>
+          <p v-if="avatarPreview" class="text-[10px] text-amber-600 mt-0.5">Preview lokal. Simpan profil untuk menggunakan foto ini.</p>
         </div>
       </div>
+
 
       <!-- Form Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
