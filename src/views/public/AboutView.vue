@@ -17,278 +17,43 @@ const toggleSection = (index) => {
 /* ─── Policy sections ─────────────────────────────────────────────────────── */
 const sections = [
   {
-    id: 'pengantar',
+    id: 'apa-itu',
     icon: Shield,
-    title: '1. Pengantar',
+    title: '1. Apa itu LensaJentik?',
     color: '#4E63DA',
-    content: `Selamat datang di LensaJentik. Kami berkomitmen penuh untuk melindungi privasi dan keamanan data setiap pengguna yang mengakses platform kami, baik warga masyarakat maupun kader kesehatan.
-
-Kebijakan Privasi ini menjelaskan bagaimana LensaJentik mengumpulkan, menggunakan, menyimpan, dan melindungi informasi yang Anda berikan saat menggunakan layanan kami. Dengan mengakses dan menggunakan LensaJentik, Anda menyetujui praktik yang dijelaskan dalam kebijakan ini.
-
-LensaJentik adalah platform pemetaan dan mitigasi risiko Demam Berdarah Dengue (DBD) dan Malaria berbasis Web-GIS yang dikembangkan untuk mendukung program kesehatan masyarakat Indonesia. Kami memahami bahwa data yang kami kelola bersifat sensitif dan berdampak langsung pada kesehatan publik.`
+    content: `LensaJentik adalah platform pemetaan dan mitigasi risiko Demam Berdarah Dengue (DBD) dan Malaria berbasis Web-GIS. Kami menggabungkan data cuaca, kader kesehatan, dan laporan warga untuk membantu komunitas tetap aman.`
   },
   {
-    id: 'data-dikumpulkan',
-    icon: Database,
-    title: '2. Informasi yang Kami Kumpulkan',
-    color: '#4E63DA',
-    content: `LensaJentik dirancang dengan prinsip minimalisasi data — kami hanya mengumpulkan informasi yang benar-benar diperlukan untuk menjalankan fungsi platform:
-
-a. Data Laporan Warga (Anonim):
-• Titik koordinat lokasi genangan jentik yang dilaporkan
-• Foto genangan yang diunggah (opsional)
-• Keterangan singkat mengenai lokasi
-• Estimasi tingkat risiko berdasarkan parameter yang diisi
-• Data sesi anonim (session-based) — tanpa nama, email, atau identitas pribadi
-
-b. Data Kader Kesehatan (Terautentikasi):
-• Nama lengkap kader (sesuai registrasi)
-• Alamat email untuk keperluan autentikasi
-• Data institusi/puskesmas asal
-• Data ABJ (Angka Bebas Jentik) yang diinput
-• Riwayat pelaporan dan aktivitas pemantauan
-
-c. Data Teknis Otomatis:
-• Alamat IP (hanya untuk keperluan keamanan dan debugging)
-• Jenis browser dan perangkat
-• Halaman yang dikunjungi (statistik penggunaan)
-• Timestamp akses
-
-Kami TIDAK mengumpulkan:
-✗ Nomor telepon pribadi
-✗ Data lokasi real-time di luar titik laporan
-✗ Informasi finansial atau pembayaran
-✗ Data kesehatan individu yang dapat diidentifikasi`
-  },
-  {
-    id: 'penggunaan-data',
+    id: 'visi',
     icon: Eye,
-    title: '3. Bagaimana Kami Menggunakan Data',
-    color: '#4E63DA',
-    content: `Data yang dikumpulkan LensaJentik digunakan secara eksklusif untuk tujuan-tujuan berikut:
-
-a. Pemetaan Risiko Kesehatan Masyarakat:
-• Memvisualisasikan sebaran titik genangan jentik pada peta Web-GIS interaktif
-• Menghitung dan menampilkan Angka Bebas Jentik (ABJ) per wilayah
-• Menghasilkan peta heatmap risiko DBD dan Malaria
-• Menganalisis tren dan pola penyebaran vektor penyakit
-
-b. Fasilitasi Tindakan Mitigasi:
-• Memberikan notifikasi kepada kader kesehatan terdekat saat ada laporan baru
-• Menyediakan data analitik bagi dinas kesehatan untuk pengambilan keputusan
-• Mendukung program 3M Plus (Menguras, Menutup, Mendaur Ulang)
-
-c. Peningkatan Layanan:
-• Menganalisis pola penggunaan untuk meningkatkan UX/UI platform
-• Mengidentifikasi bug dan masalah teknis
-• Mengukur efektivitas program edukasi dan mitigasi
-
-d. Komunikasi (hanya untuk akun Kader):
-• Pengiriman notifikasi terkait laporan di wilayah tugas
-• Informasi pembaruan sistem dan fitur baru
-• Pengingat jadwal pemantauan jentik berkala`
-  },
-  {
-    id: 'penyimpanan-keamanan',
-    icon: Lock,
-    title: '4. Penyimpanan & Keamanan Data',
+    title: '2. Visi Kami',
     color: '#22C55E',
-    content: `LensaJentik menerapkan standar keamanan berlapis untuk melindungi data yang tersimpan di platform kami:
-
-a. Infrastruktur:
-• Backend API di-hosting di platform cloud dengan sertifikasi keamanan internasional (Railway)
-• Database terenkripsi saat istirahat (encryption at rest) menggunakan AES-256
-• Koneksi jaringan diamankan dengan HTTPS/TLS 1.3
-
-b. Keamanan Aplikasi:
-• Autentikasi kader menggunakan Laravel Sanctum dengan token-based API authentication
-• Password di-hash menggunakan algoritma bcrypt/argon2
-• Validasi input di sisi server untuk mencegah SQL Injection dan XSS
-• Rate limiting untuk mencegah brute-force attack
-• CORS (Cross-Origin Resource Sharing) dikonfigurasi secara ketat
-
-c. Keamanan Data:
-• Backup database dilakukan secara berkala dan otomatis
-• Log akses dicatat untuk keperluan audit keamanan
-• Data sensitif tidak pernah dikirimkan dalam format plaintext
-• File upload (foto laporan) diproses dan divalidasi sebelum disimpan
-
-d. Monitoring:
-• Pemantauan uptime server 24/7
-• Alert otomatis untuk aktivitas mencurigakan
-• Audit keamanan berkala pada dependensi dan library`
+    content: `Menciptakan lingkungan yang bebas dari ancaman penyakit yang ditularkan oleh nyamuk melalui partisipasi aktif masyarakat dan pemanfaatan teknologi.`
   },
   {
-    id: 'berbagi-data',
-    icon: UserCheck,
-    title: '5. Berbagi Data dengan Pihak Ketiga',
-    color: '#4E63DA',
-    content: `LensaJentik memegang teguh prinsip bahwa data pengguna bukanlah komoditas. Kami TIDAK menjual, menyewakan, atau memperdagangkan data pengguna dalam bentuk apa pun kepada pihak ketiga.
-
-Data dapat dibagikan dalam kondisi terbatas berikut:
-
-a. Kepada Dinas Kesehatan & Institusi Terkait:
-• Data agregat ABJ dan peta risiko (bukan data individu pelapor)
-• Laporan statistik anonim untuk perencanaan program kesehatan
-• Semua data yang dibagikan bersifat agregat dan tidak dapat diidentifikasi ke individu
-
-b. Kepada Penyedia Layanan Teknis:
-• Railway (cloud hosting) — memproses data sesuai infrastruktur deployment
-• Cloudinary (penyimpanan media) — menyimpan foto laporan yang diunggah
-• Kedua penyedia terikat oleh kebijakan privasi dan standar keamanan mereka sendiri
-
-c. Kewajiban Hukum:
-• Jika diwajibkan oleh peraturan perundang-undangan yang berlaku
-• Jika diperlukan untuk melindungi hak, properti, atau keselamatan LensaJentik, pengguna, atau masyarakat
-• Dalam hal ini, kami akan memberitahukan pengguna sejauh dimungkinkan oleh hukum`
-  },
-  {
-    id: 'cookie-tracking',
-    icon: Cookie,
-    title: '6. Cookie & Teknologi Pelacakan',
-    color: '#4E63DA',
-    content: `LensaJentik menggunakan cookie dan teknologi serupa secara minimal untuk memastikan platform berfungsi dengan baik:
-
-a. Cookie Esensial (Wajib):
-• Session cookie untuk menjaga status login kader
-• CSRF token cookie untuk keamanan form submission
-• Cookie ini tidak melacak aktivitas Anda di luar LensaJentik
-
-b. Cookie Fungsional:
-• Preferensi tampilan (jika ada fitur kustomisasi)
-• Cookie ini bersifat opsional dan dapat dinonaktifkan
-
-c. Analytics (Terbatas):
-• Kami menggunakan analytics sederhana untuk menghitung jumlah kunjungan dan halaman yang diakses
-• Data bersifat agregat dan anonim
-• Tidak menggunakan Google Analytics atau third-party tracker
-
-d. Yang TIDAK Kami Gunakan:
-✗ Third-party advertising cookies
-✗ Cross-site tracking cookies
-✗ Fingerprinting atau teknik pelacakan invasif
-✗ Social media tracking pixels
-
-Anda dapat mengelola preferensi cookie melalui pengaturan browser Anda. Namun, menonaktifkan cookie esensial dapat memengaruhi fungsi platform.`
-  },
-  {
-    id: 'hak-pengguna',
-    icon: FileText,
-    title: '7. Hak-Hak Pengguna',
-    color: '#4E63DA',
-    content: `Sesuai dengan Undang-Undang Nomor 27 Tahun 2022 tentang Perlindungan Data Pribadi (UU PDP) dan prinsip privasi universal, setiap pengguna LensaJentik memiliki hak-hak berikut:
-
-a. Hak Akses:
-• Meminta informasi tentang data apa yang kami simpan tentang Anda
-• Khusus akun Kader: melihat profil dan data yang tercatat
-
-b. Hak Koreksi:
-• Memperbaiki data yang tidak akurat atau tidak lengkap
-• Kader dapat memperbarui profil melalui halaman Pengaturan
-
-c. Hak Penghapusan (Right to Erasure):
-• Meminta penghapusan data pribadi dari sistem kami
-• Data laporan anonim yang sudah diagregasi ke statistik publik tidak dapat dihapus karena sudah menjadi bagian dari data kesehatan masyarakat
-
-d. Hak Keberatan:
-• Keberatan terhadap pemrosesan data dalam kondisi tertentu
-• Menarik persetujuan kapan saja untuk pemrosesan yang berbasis persetujuan
-
-e. Hak Portabilitas Data:
-• Meminta salinan data dalam format yang terstruktur dan umum digunakan
-• Hanya berlaku untuk akun Kader terdaftar
-
-Untuk menggunakan hak-hak tersebut, silakan hubungi kami melalui email yang tercantum di bagian Kontak. Kami akan merespons dalam waktu maksimal 14 hari kerja.`
-  },
-  {
-    id: 'retensi-data',
-    icon: Server,
-    title: '8. Retensi & Penghapusan Data',
-    color: '#4E63DA',
-    content: `Kebijakan retensi data LensaJentik mengikuti prinsip penyimpanan minimal — kami menyimpan data hanya selama diperlukan:
-
-a. Data Laporan Anonim:
-• Disimpan secara permanen sebagai bagian dari dataset kesehatan masyarakat
-• Data ini bersifat anonim dan tidak terhubung ke identitas pelapor
-• Digunakan untuk analisis tren jangka panjang dan penelitian
-
-b. Data Akun Kader:
-• Disimpan selama akun aktif
-• Data dihapus dalam waktu 60 hari setelah permintaan penghapusan akun
-• Log aktivitas kader disimpan maksimal 2 tahun untuk keperluan audit
-
-c. Data Sesi Anonim:
-• Session token kadaluarsa otomatis setelah periode inactivity
-• Tidak ada data personal yang disimpan dari sesi anonim
-
-d. File Upload (Foto):
-• Foto laporan disimpan di Cloudinary
-• Foto dihapus jika laporan terkait dihapus
-• Backup sistem disimpan maksimal 90 hari
-
-e. Backup Database:
-• Backup penuh disimpan 30 hari
-• Backup inkremental mingguan
-• Semua backup terenkripsi`
-  },
-  {
-    id: 'keamanan-anak',
-    icon: AlertTriangle,
-    title: '9. Perlindungan Anak',
+    id: 'misi',
+    icon: Shield,
+    title: '3. Misi Kami',
     color: '#F59E0B',
-    content: `LensaJentik tidak secara sengaja mengumpulkan data pribadi dari anak di bawah usia 13 tahun tanpa persetujuan orang tua atau wali.
-
-• Platform kami dirancang untuk digunakan oleh masyarakat umum dan kader kesehatan dewasa
-• Jika Anda adalah orang tua atau wali dan mengetahui bahwa anak Anda telah memberikan data pribadi kepada kami tanpa persetujuan Anda, silakan hubungi kami
-• Kami akan segera menghapus data tersebut dari sistem kami
-
-Fitur-fitur edukasi di LensaJentik (seperti kuis risiko DBD) dirancang aman untuk diakses oleh segala usia dan tidak mengumpulkan data personal dari pengguna yang tidak terautentikasi.`
+    content: `• Memberikan informasi risiko penyebaran penyakit secara real-time.
+• Memfasilitasi pelaporan warga mengenai genangan air.
+• Memberikan edukasi yang mudah dipahami tentang pencegahan DBD.`
   },
   {
-    id: 'perubahan-kebijakan',
-    icon: Globe,
-    title: '10. Perubahan Kebijakan Privasi',
+    id: 'tim',
+    icon: UserCheck,
+    title: '4. Tim di Balik LensaJentik',
     color: '#4E63DA',
-    content: `Kebijakan Privasi ini dapat diperbarui dari waktu ke waktu untuk mencerminkan perubahan pada praktik kami atau karena alasan operasional, hukum, atau peraturan lainnya.
-
-a. Pemberitahuan Perubahan:
-• Perubahan signifikan akan diumumkan melalui notifikasi di platform
-• Kader terdaftar akan menerima pemberitahuan melalui email
-• Banner pemberitahuan akan ditampilkan di halaman utama
-
-b. Tanggal Efektif:
-• Setiap versi kebijakan mencantumkan tanggal efektif di bagian akhir dokumen
-• Perubahan berlaku segera setelah dipublikasikan, kecuali dinyatakan lain
-• Penggunaan platform setelah perubahan berlaku merupakan persetujuan Anda terhadap kebijakan yang diperbarui
-
-c. Riwayat Versi:
-• Versi 1.0 — 30 Juli 2026 (versi pertama)
-
-Kami mendorong Anda untuk meninjau Kebijakan Privasi ini secara berkala.`
-  },
-  {
-    id: 'kontak',
-    icon: Mail,
-    title: '11. Kontak & Pengaduan',
-    color: '#22C55E',
-    content: `Jika Anda memiliki pertanyaan, kekhawatiran, atau keluhan terkait Kebijakan Privasi ini atau praktik data LensaJentik, jangan ragu untuk menghubungi kami:
-
-📧 Email Privasi: privasi@lensajentik.id
-📧 Email Umum: halo@lensajentik.id
-🌐 Website: https://lensajentik.id
-
-Untuk pengaduan terkait perlindungan data pribadi, Anda juga berhak untuk menghubungi otoritas perlindungan data yang berwenang sesuai dengan ketentuan UU PDP.
-
-Kami berkomitmen untuk menanggapi setiap pertanyaan dan menyelesaikan setiap keluhan secara transparan dan tepat waktu.`
+    content: `Kami adalah tim yang berdedikasi tinggi dalam bidang teknologi dan kesehatan masyarakat, bersatu untuk membawa perubahan positif bagi Indonesia.`
   }
 ]
 
 /* ─── Quick-nav cards ─────────────────────────────────────────────────────── */
 const quickCards = [
-  { icon: Shield, label: 'Privasi\nTerjamin', desc: 'Data Anda\n100% terlindungi' },
-  { icon: Lock, label: 'Enkripsi\nAES-256', desc: 'Standar keamanan\nlevel perbankan' },
-  { icon: Eye, label: 'Minimalisasi\nData', desc: 'Hanya data yang\nbenar-benar diperlukan' },
-  { icon: UserCheck, label: 'Tanpa\nPelacakan', desc: 'Bebas tracker\n& third-party ads' },
+  { icon: Globe, label: 'Inovatif', desc: 'Teknologi Web-GIS' },
+  { icon: UserCheck, label: 'Kolaboratif', desc: 'Warga & Kader' },
+  { icon: Database, label: 'Informatif', desc: 'Data Real-time' },
+  { icon: FileText, label: 'Edukatif', desc: 'Artikel & Panduan' },
 ]
 </script>
 
@@ -331,8 +96,8 @@ const quickCards = [
       </div>
 
       <!-- Sway wave bottom -->
-      <div class="absolute bottom-0 left-0 w-full z-10 pointer-events-none" style="transform: translateY(1px);">
-        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
+      <div class="absolute bottom-0 left-0 w-full z-10" style="transform: translateY(1px);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
       </div>
     </div>
 
@@ -369,37 +134,32 @@ const quickCards = [
 
           <div class="relative z-10">
             <div class="lj-section-label mb-6" style="width: fit-content;">
-              KOMITMEN KAMI
+              MENGAPA LENSAJENTIK ADA
             </div>
             <h2 class="lj-heading mb-6">
-              Privasi sebagai <span class="font-garamond" style="color: var(--lj-blue);">Hak Dasar</span>
+              Kesehatan sebagai <span class="font-garamond" style="color: var(--lj-blue);">Tanggung Jawab Bersama</span>
             </h2>
             <div class="space-y-4 text-sm leading-relaxed" style="color: var(--lj-muted); max-width: 680px;">
               <p>
-                <strong style="color: var(--lj-navy);">LensaJentik dibangun di atas fondasi kepercayaan.</strong>
-                Sebagai platform kesehatan masyarakat, kami memahami bahwa data yang kami kelola — mulai dari
-                laporan genangan jentik hingga data pemantauan kader — memiliki dampak langsung pada kehidupan
-                dan kesehatan masyarakat Indonesia.
+                <strong style="color: var(--lj-navy);">LensaJentik dibangun dari kepedulian.</strong>
+                Sebagai platform kesehatan masyarakat, kami memahami bahwa penanganan penyakit
+                menular memerlukan kolaborasi seluruh elemen masyarakat.
               </p>
               <p>
-                Kami berkomitmen untuk:
+                Nilai inti kami:
               </p>
               <ul class="space-y-2 ml-4">
                 <li class="flex items-start gap-2">
                   <span class="mt-0.5 w-2 h-2 rounded-full shrink-0" style="background: var(--lj-green-dk);"></span>
-                  <span><strong style="color: var(--lj-navy);">Transparansi</strong> — setiap pengguna berhak tahu data apa yang dikumpulkan dan untuk apa.</span>
+                  <span><strong style="color: var(--lj-navy);">Empati</strong> — peduli terhadap keselamatan bersama.</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="mt-0.5 w-2 h-2 rounded-full shrink-0" style="background: var(--lj-green-dk);"></span>
-                  <span><strong style="color: var(--lj-navy);">Minimalisasi</strong> — kami hanya mengumpulkan data yang benar-benar diperlukan.</span>
+                  <span><strong style="color: var(--lj-navy);">Sinergi</strong> — warga dan tenaga kesehatan bekerja sama.</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="mt-0.5 w-2 h-2 rounded-full shrink-0" style="background: var(--lj-green-dk);"></span>
-                  <span><strong style="color: var(--lj-navy);">Keamanan</strong> — standar industri terbaik untuk melindungi data yang dipercayakan.</span>
-                </li>
-                <li class="flex items-start gap-2">
-                  <span class="mt-0.5 w-2 h-2 rounded-full shrink-0" style="background: var(--lj-green-dk);"></span>
-                  <span><strong style="color: var(--lj-navy);">Kontrol Pengguna</strong> — Anda memegang kendali atas data Anda sendiri.</span>
+                  <span><strong style="color: var(--lj-navy);">Progresif</strong> — memadukan teknologi dengan aksi nyata.</span>
                 </li>
               </ul>
             </div>
@@ -410,7 +170,7 @@ const quickCards = [
       <!-- ─── Accordion Sections ────────────────────────────────────────────── -->
       <section class="space-y-4">
         <div class="lj-section-label mb-6 mx-auto" style="width: fit-content;">
-          ISI KEBIJAKAN PRIVASI
+          INFORMASI LEBIH LANJUT
         </div>
 
         <div
