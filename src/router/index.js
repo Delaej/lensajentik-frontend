@@ -13,6 +13,7 @@ import EducationView from '@/views/public/EducationView.vue'
 import QuizView from '@/views/public/QuizView.vue'
 import ArticleDetailView from '@/views/public/ArticleDetailView.vue'
 import PrivacyPolicyView from '@/views/public/PrivacyPolicyView.vue'
+import AboutView from '@/views/public/AboutView.vue'
 
 // Kader views
 import KaderLoginView from '@/views/kader/KaderLoginView.vue'
@@ -84,6 +85,12 @@ const routes = [
         name: 'kebijakan-privasi',
         component: PrivacyPolicyView,
         meta: { title: 'Kebijakan Privasi & Keamanan - LensaJentik' },
+      },
+      {
+        path: 'tentang-kami',
+        name: 'about',
+        component: AboutView,
+        meta: { title: 'Tentang Kami - LensaJentik' },
       },
     ],
   },

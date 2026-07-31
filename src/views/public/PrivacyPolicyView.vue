@@ -312,10 +312,10 @@ const quickCards = [
         <ArrowLeft class="w-4 h-4" /> Kembali
       </RouterLink>
 
-      <div class="relative z-10 max-w-2xl">
+      <div class="relative z-10 max-w-2xl pt-16">
         <div
-          class="lj-section-label mb-6 mx-auto animate-on-scroll"
-          style="width: fit-content; background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: white;"
+          class="lj-section-label mb-6 mx-auto animate-on-scroll flex items-center gap-2"
+          style="width: fit-content; background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); color: white; font-weight: 700;"
         >
           <Shield class="w-3.5 h-3.5" /> LEGAL & KEBIJAKAN
         </div>
@@ -330,10 +330,6 @@ const quickCards = [
         </p>
       </div>
 
-      <!-- Sway wave bottom -->
-      <div class="absolute bottom-0 left-0 w-full z-10 pointer-events-none" style="transform: translateY(1px);">
-        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
-      </div>
     </div>
 
     <!-- ─── Main Content ──────────────────────────────────────────────────────── -->

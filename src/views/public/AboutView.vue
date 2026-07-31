@@ -77,28 +77,21 @@ const quickCards = [
         <ArrowLeft class="w-4 h-4" /> Kembali
       </RouterLink>
 
-      <div class="relative z-10 max-w-2xl">
+      <div class="relative z-10 max-w-2xl pt-16">
         <div
-          class="lj-section-label mb-6 mx-auto animate-on-scroll"
-          style="width: fit-content; background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: white;"
+          class="lj-section-label mb-6 mx-auto animate-on-scroll flex items-center gap-2"
+          style="width: fit-content; background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); color: white; font-weight: 700;"
         >
-          <Shield class="w-3.5 h-3.5" /> LEGAL & KEBIJAKAN
+          <Shield class="w-3.5 h-3.5" /> TENTANG LENSAJENTIK
         </div>
         <h1 class="text-3xl sm:text-5xl font-black leading-tight mb-4 animate-on-scroll delay-100" style="color: white;">
-          Kebijakan <span class="font-garamond highlight-green" style="color: var(--lj-navy);">Privasi</span>
+          Mengenal <span class="font-garamond highlight-green" style="color: var(--lj-navy);">Kami</span>
         </h1>
         <p class="text-sm sm:text-base font-medium animate-on-scroll delay-200 max-w-lg mx-auto" style="color: rgba(255,255,255,0.85);">
-          Transparansi penuh tentang bagaimana LensaJentik mengumpulkan, menggunakan, dan melindungi data Anda.
-        </p>
-        <p class="text-xs mt-3 animate-on-scroll delay-300" style="color: rgba(255,255,255,0.6);">
-          Terakhir diperbarui: 30 Juli 2026 &nbsp;·&nbsp; Versi 1.0
+          Platform kolaboratif untuk memutus mata rantai penyebaran Demam Berdarah Dengue (DBD) dan Malaria di Indonesia.
         </p>
       </div>
 
-      <!-- Sway wave bottom -->
-      <div class="absolute bottom-0 left-0 w-full z-10" style="transform: translateY(1px);">
-        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
-      </div>
     </div>
 
     <!-- ─── Main Content ──────────────────────────────────────────────────────── -->

@@ -164,8 +164,8 @@ const emit = defineEmits(['trigger-onboarding'])
 
       <div class="absolute bottom-0 left-0 w-full px-4 sm:px-6 lg:px-8 pb-5 text-white flex flex-col justify-end">
         <!-- Links Row -->
-        <div class="flex flex-col md:flex-row items-center justify-between mb-3 gap-3 max-w-5xl mx-auto w-full">
-          <ul class="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-8 text-[11px] sm:text-xs font-medium opacity-90">
+        <div class="flex flex-col md:flex-row items-center justify-center mb-3 gap-3 max-w-5xl mx-auto w-full">
+          <ul class="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-[11px] sm:text-xs font-medium opacity-90">
             <li><RouterLink to="/" class="hover:text-white transition-colors">Home</RouterLink></li>
             <li class="relative group cursor-pointer hover:text-white transition-colors py-2">
               <span class="flex items-center gap-1">Services <ChevronDown class="w-3 h-3" /></span>
