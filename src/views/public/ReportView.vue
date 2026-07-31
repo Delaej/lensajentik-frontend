@@ -270,6 +270,8 @@ const handleSubmit = async () => {
       gamificationStore.addPoints(result.poin_didapat)
     }
     step.value = 'success'
+    // Scroll ke atas setelah 100ms — trigger animasi
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
   } catch (err) {
     alert('Gagal mengirim laporan: ' + (err.response?.data?.message || err.message))
   } finally {
