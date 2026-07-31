@@ -200,7 +200,7 @@ const handlePrint = () => {
         </div>
         <div class="p-3 bg-slate-50 rounded-xl">
           <div class="text-slate-400 font-medium">Penanggung Jawab:</div>
-          <div class="font-bold text-slate-800">{{ kaderStore.userProfile.name || 'Kader Kesehatan' }}</div>
+          <div class="font-bold text-slate-800">{{ kaderStore.userProfile.nama || 'Kader Kesehatan' }}</div>
         </div>
         <div class="p-3 bg-slate-50 rounded-xl">
           <div class="text-slate-400 font-medium">Tanggal Cetak:</div>
