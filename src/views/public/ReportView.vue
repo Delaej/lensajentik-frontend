@@ -286,14 +286,21 @@ const resetForm = () => {
 
 <template>
   <div>
-    <!-- ─── Header illustration (Lottie placeholder) ─── -->
-    <div class="hero-full-width lottie-placeholder relative" style="height: 280px; border-radius: 0;">
-      <Map class="w-16 h-16 mb-2 mx-auto text-[--lj-blue]" />
-      <span class="font-semibold text-lg text-glow" style="color: var(--lj-blue);">Lottie: Ilustrasi Laporan Warga</span>
-      
+    <!-- ─── Header illustration (Lottie full-width) ─── -->
+    <div class="hero-full-width relative overflow-hidden" style="height: 550px; border-radius: 0; background: var(--lj-blue-pale);">
+      <!-- Lottie fills full width left to right -->
+      <div class="absolute inset-0 z-0 pointer-events-none">
+        <Vue3Lottie
+          animationLink="/illustrasi_laporan.json"
+          :loop="true"
+          :autoplay="true"
+          class="w-full h-full"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
+        />
+      </div>
       <!-- Sway wave bottom -->
-      <div class="absolute bottom-0 left-0 w-full z-10" style="transform: translateY(1px);">
-        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
+      <div class="absolute left-0 w-full z-10 pointer-events-none" style="bottom: -2px; transform: translateY(1px);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
       </div>
     </div>
 

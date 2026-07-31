@@ -116,14 +116,20 @@ const nextQuizStep = () => {
 
 <template>
   <div class="pb-24">
-    <!-- ─── Hero illustration (Lottie placeholder) ─── -->
-    <div class="hero-full-width lottie-placeholder relative" style="height: 320px; border-radius: 0;">
-      <Home class="w-16 h-16 mb-2 mx-auto text-[--lj-blue]" />
-      <span class="font-semibold text-lg text-glow" style="color: var(--lj-blue);">Lottie: Ilustrasi Rumah &amp; Edukasi DBD</span>
-      
+    <!-- ─── Hero illustration (Lottie full-width) ─── -->
+    <div class="hero-full-width relative overflow-hidden" style="height: 550px; border-radius: 0; background: var(--lj-blue-pale);">
+      <div class="absolute inset-0 z-0 pointer-events-none">
+        <Vue3Lottie
+          animationLink="/illustrasi_edukasi.json"
+          :loop="true"
+          :autoplay="true"
+          class="w-full h-full"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
+        />
+      </div>
       <!-- Sway wave bottom -->
-      <div class="absolute bottom-0 left-0 w-full z-10" style="transform: translateY(1px);">
-        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block" style="height: 70px; object-fit: fill;" />
+      <div class="absolute left-0 w-full z-10 pointer-events-none" style="bottom: -2px; transform: translateY(1px);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
       </div>
     </div>
 
@@ -136,105 +142,145 @@ const nextQuizStep = () => {
       </div>
 
       <!-- ─── Fakta DBD Slider ─── -->
-      <section class="animate-on-scroll">
-        <div class="lj-section-label mb-8 mx-auto" style="width: fit-content;">FAKTA TERKAIT DBD</div>
+      <section class="animate-on-scroll relative">
+        <!-- Ambient glow blobs -->
+        <div class="absolute top-10 -left-32 w-96 h-96 rounded-full blur-[100px] pointer-events-none opacity-40 z-0" style="background:#95FE6D;"></div>
+        <div class="absolute bottom-10 -right-32 w-96 h-96 rounded-full blur-[100px] pointer-events-none opacity-40 z-0" style="background:#4E63DA;"></div>
 
-        <div v-if="isLoading" class="lottie-placeholder flex-col" style="height: 240px;">
+        <div class="lj-section-label mb-8 mx-auto text-center relative z-10" style="width: fit-content; background: white;">FAKTA TERKAIT DBD</div>
+
+        <div v-if="isLoading" class="lottie-placeholder flex-col relative z-10" style="height: 240px;">
           <Loader2 class="w-8 h-8 animate-spin text-[--lj-blue] mb-2" />
           <span class="text-sm font-semibold text-[--lj-blue]">Memuat fakta...</span>
         </div>
 
-        <div v-else class="relative">
-          <div
-            class="lj-card overflow-hidden grid grid-cols-1 md:grid-cols-2 gap-0"
-            style="border-color: var(--lj-blue);"
-          >
-            <!-- Text -->
-            <div class="p-8 space-y-4">
-              <h3 class="text-xl font-bold" style="color: var(--lj-navy);">{{ facts[factSlideIndex]?.judul }}</h3>
-              <p class="text-sm leading-relaxed" style="color: var(--lj-muted);">{{ facts[factSlideIndex]?.isi }}</p>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
+            <!-- Left Side: Lottie -->
+            <div class="flex flex-col items-center justify-center">
+                 <div class="text-center mb-4">
+                     <h2 class="text-3xl font-bold" style="color: var(--lj-green-dk);">Tahukah <span style="color: var(--lj-navy);">Kamu...</span></h2>
+                     <div class="inline-block mt-2 px-6 py-2 rounded-full shadow-sm" style="background: var(--lj-blue); color: white; font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.5rem;">apa itu DBD?</div>
+                 </div>
+                 <Vue3Lottie
+                    animationLink="/illustrasi_edukasi_apaitudbdb.json"
+                    :loop="true"
+                    :autoplay="true"
+                    class="w-full"
+                    style="max-width: 350px;"
+                    :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
+                  />
             </div>
 
-            <!-- Stat side -->
-            <div class="flex flex-col items-center justify-center p-8" style="background: var(--lj-blue-pale);">
-              <div class="text-4xl font-black" style="color: var(--lj-blue);">{{ facts[factSlideIndex]?.stat }}</div>
-              <p class="text-xs text-center mt-2 leading-relaxed" style="color: var(--lj-muted); max-width: 200px;">
-                {{ facts[factSlideIndex]?.statLabel }}
-              </p>
+            <!-- Right Side: Slidable Card -->
+            <div class="relative">
+                <div class="lj-card p-10 bg-white shadow-xl flex flex-col items-center justify-center text-center relative" style="min-height: 350px; border-radius: 24px; border-color: var(--lj-blue-pale);">
+                   <!-- Icon instead of graphic -->
+                   <div class="w-16 h-16 rounded-full flex items-center justify-center mb-6" style="background: var(--lj-blue-pale); color: var(--lj-blue);">
+                     <BookOpen class="w-8 h-8" />
+                   </div>
+                   
+                   <h3 class="relative z-10 text-2xl font-bold mb-4" style="color: var(--lj-navy);">Informasi Penting</h3>
+                   <div class="relative z-10 text-4xl font-black mb-4" style="color: var(--lj-green-dk);">{{ facts[factSlideIndex]?.stat }}</div>
+                   <p class="relative z-10 text-base leading-relaxed mx-auto font-medium" style="color: var(--lj-muted); max-width: 280px;">
+                     {{ facts[factSlideIndex]?.statLabel }}
+                   </p>
+
+                   <!-- Dots -->
+                   <div class="relative z-10 flex justify-center gap-2 mt-10">
+                     <button
+                       v-for="(_, i) in facts"
+                       :key="i"
+                       @click="factSlideIndex = i"
+                       class="rounded-full transition-all"
+                       :style="{ width: factSlideIndex === i ? '20px' : '8px', height: '8px', background: factSlideIndex === i ? 'var(--lj-blue)' : 'var(--lj-border)' }"
+                     />
+                   </div>
+                </div>
+                
+                <!-- Navigation -->
+                <button @click="prevFact" class="absolute -left-5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:scale-110 transition-transform z-20" style="border: 1px solid var(--lj-border);">
+                  <ChevronLeft class="w-5 h-5" style="color: var(--lj-blue);" />
+                </button>
+                <button @click="nextFact" class="absolute -right-5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:scale-110 transition-transform z-20" style="border: 1px solid var(--lj-border);">
+                  <ChevronRight class="w-5 h-5" style="color: var(--lj-blue);" />
+                </button>
             </div>
-          </div>
-
-          <!-- Navigation -->
-          <button @click="prevFact" class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white shadow-md flex items-center justify-center hover:scale-110 transition-transform z-10" style="border: 1px solid var(--lj-border);">
-            <ChevronLeft class="w-5 h-5" style="color: var(--lj-blue);" />
-          </button>
-          <button @click="nextFact" class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white shadow-md flex items-center justify-center hover:scale-110 transition-transform z-10" style="border: 1px solid var(--lj-border);">
-            <ChevronRight class="w-5 h-5" style="color: var(--lj-blue);" />
-          </button>
-
-          <!-- Dots -->
-          <div class="flex justify-center gap-2 mt-6">
-            <button
-              v-for="(_, i) in facts"
-              :key="i"
-              @click="factSlideIndex = i"
-              class="rounded-full transition-all"
-              :style="{ width: factSlideIndex === i ? '20px' : '8px', height: '8px', background: factSlideIndex === i ? 'var(--lj-blue)' : 'var(--lj-border)' }"
-            />
-          </div>
         </div>
       </section>
 
       <!-- ─── Gerakan 3M ─── -->
-      <section class="animate-on-scroll relative">
-        <div class="lj-section-label mb-4 mx-auto" style="width: fit-content;">PANDUAN GERAKAN 3M</div>
-        <div class="text-center mb-10">
-          <h2 class="lj-heading">Hanya dengan <span class="font-garamond" style="color: var(--lj-blue);">Tiga Langkah,</span></h2>
-          <p class="text-base mt-1" style="color: var(--lj-green-dk); font-weight: 700;">satu rumah lebih aman.</p>
+      <section class="animate-on-scroll hero-full-width relative" style="padding-top: 140px; padding-bottom: 140px;">
+        <!-- Background Lottie -->
+        <div class="absolute z-0 pointer-events-none" style="overflow: hidden; top: 0; left: 0; right: 0; bottom: 0;">
+          <Vue3Lottie
+            animationLink="/illustrasi_landing_bg_faq.json"
+            :loop="true"
+            :autoplay="true"
+            style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"
+            :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
+          />
+        </div>
+        
+        <!-- Sway top (hadapbawah) -->
+        <div class="absolute top-0 left-0 w-full z-10 pointer-events-none" style="transform: translateY(-2px); top: -1px;">
+          <img src="/sway-hadapbawah.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
+        </div>
+        
+        <!-- Sway bottom (hadapatas) -->
+        <div class="absolute left-0 w-full z-10 pointer-events-none" style="bottom: -2px; transform: translateY(1px);">
+          <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
         </div>
 
-        <!-- Slider Controls -->
-        <button @click="scrollLeft" class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white shadow-md items-center justify-center hover:scale-110 transition-transform z-20" style="border: 1px solid var(--lj-border);">
-          <ChevronLeft class="w-5 h-5 text-[--lj-blue]" />
-        </button>
-        <button @click="scrollRight" class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-10 h-10 rounded-full bg-white shadow-md items-center justify-center hover:scale-110 transition-transform z-20" style="border: 1px solid var(--lj-border);">
-          <ChevronRight class="w-5 h-5 text-[--lj-blue]" />
-        </button>
-
-        <div class="relative w-full">
-          <!-- Wave SVG connector (absolute behind cards) -->
-          <div class="hidden md:block absolute top-12 left-0 right-0 pointer-events-none z-0" style="height: 60px;">
-            <svg viewBox="0 0 900 60" preserveAspectRatio="none" class="w-full h-full">
-              <path d="M150 30 Q350 0 450 30 Q550 60 750 30" fill="none" stroke="var(--lj-blue)" stroke-width="2.5" stroke-dasharray="8 4"/>
-            </svg>
+        <div class="max-w-6xl mx-auto px-4 relative z-20">
+          <div class="lj-section-label mb-4 mx-auto text-center" style="width: fit-content; background: white;">PANDUAN GERAKAN 3M</div>
+          <div class="text-center mb-10">
+            <h2 class="lj-heading">Hanya dengan <span class="font-garamond" style="color: var(--lj-blue);">Tiga Langkah,</span></h2>
+            <p class="text-base mt-1" style="color: var(--lj-green-dk); font-weight: 700; background: rgba(255,255,255,0.7); display: inline-block; padding: 2px 8px; border-radius: 8px;">satu rumah lebih aman.</p>
           </div>
 
-          <!-- Horizontal Scroll Container -->
-          <div
-            ref="mSliderContainer"
-            class="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-6 pb-4 pt-2 px-2 relative z-10"
-            style="scroll-behavior: smooth;"
-          >
-            <div
-              v-for="(m, i) in gerakanM"
-              :key="i"
-              class="snap-center shrink-0 w-full sm:w-[320px] lj-card p-6 text-center space-y-4 animate-on-scroll"
-              :class="`delay-${(i + 1) * 100}`"
-            >
-              <!-- Lottie placeholder -->
-              <div class="lottie-placeholder mx-auto flex-col" style="width: 100%; height: 140px;">
-                <component :is="m.icon" class="w-10 h-10 mb-2" :style="{ color: m.color }" />
-                <span class="text-xs font-semibold" :style="{ color: m.color }">Lottie: Gerakan {{ m.title }}</span>
-              </div>
+          <!-- Slider Controls -->
+          <button @click="scrollLeft" class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white shadow-md items-center justify-center hover:scale-110 transition-transform z-20" style="border: 1px solid var(--lj-border);">
+            <ChevronLeft class="w-5 h-5 text-[--lj-blue]" />
+          </button>
+          <button @click="scrollRight" class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-10 h-10 rounded-full bg-white shadow-md items-center justify-center hover:scale-110 transition-transform z-20" style="border: 1px solid var(--lj-border);">
+            <ChevronRight class="w-5 h-5 text-[--lj-blue]" />
+          </button>
 
+          <div class="relative w-full">
+            <!-- Wave SVG connector (absolute behind cards) -->
+            <div class="hidden md:block absolute top-12 left-0 right-0 pointer-events-none z-0" style="height: 60px;">
+              <svg viewBox="0 0 900 60" preserveAspectRatio="none" class="w-full h-full">
+                <path d="M150 30 Q350 0 450 30 Q550 60 750 30" fill="none" stroke="var(--lj-blue)" stroke-width="2.5" stroke-dasharray="8 4"/>
+              </svg>
+            </div>
+
+            <!-- Horizontal Scroll Container -->
+            <div
+              ref="mSliderContainer"
+              class="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-6 pb-4 pt-2 px-2 relative z-10"
+              style="scroll-behavior: smooth;"
+            >
               <div
-                class="w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-sm mx-auto"
-                :style="{ background: m.color }"
+                v-for="(m, i) in gerakanM"
+                :key="i"
+                class="snap-center shrink-0 w-full sm:w-[320px] lj-card p-6 text-center space-y-4 animate-on-scroll bg-white/95 backdrop-blur-sm"
+                :class="`delay-${(i + 1) * 100}`"
               >
-                {{ m.num }}
+                <!-- Lottie placeholder -->
+                <div class="lottie-placeholder mx-auto flex-col" style="width: 100%; height: 140px; background: transparent; border: none; shadow: none;">
+                  <component :is="m.icon" class="w-10 h-10 mb-2" :style="{ color: m.color }" />
+                  <span class="text-xs font-semibold" :style="{ color: m.color }">Lottie: Gerakan {{ m.title }}</span>
+                </div>
+
+                <div
+                  class="w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-sm mx-auto"
+                  :style="{ background: m.color }"
+                >
+                  {{ m.num }}
+                </div>
+                <h3 class="text-lg font-bold" :style="{ color: m.color }">{{ m.title }}</h3>
+                <p class="text-xs leading-relaxed" style="color: var(--lj-muted);">{{ m.desc }}</p>
               </div>
-              <h3 class="text-lg font-bold" :style="{ color: m.color }">{{ m.title }}</h3>
-              <p class="text-xs leading-relaxed" style="color: var(--lj-muted);">{{ m.desc }}</p>
             </div>
           </div>
         </div>
@@ -242,7 +288,7 @@ const nextQuizStep = () => {
 
       <!-- ─── Artikel DBD ─── -->
       <section class="animate-on-scroll">
-        <div class="lj-section-label mb-4 mx-auto" style="width: fit-content;">ARTIKEL TERKAIT DBD</div>
+        <div class="lj-section-label mb-4 mx-auto text-center" style="width: fit-content;">ARTIKEL TERKAIT DBD</div>
         <div class="text-center mb-10">
           <h2 class="lj-heading">
             Kabar <span class="font-garamond" style="color: var(--lj-blue);">terkini,</span>
@@ -309,7 +355,7 @@ const nextQuizStep = () => {
 
       <!-- ─── Kalkulator Risiko DBD ─── -->
       <section class="animate-on-scroll">
-        <div class="lj-section-label mb-4 mx-auto" style="width: fit-content;">KALKULATOR RISIKO DBD</div>
+        <div class="lj-section-label mb-4 mx-auto text-center" style="width: fit-content;">KALKULATOR RISIKO DBD</div>
 
         <div
           class="lj-card p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative overflow-hidden"
@@ -332,10 +378,15 @@ const nextQuizStep = () => {
             </button>
           </div>
 
-          <!-- Illustration (Lottie placeholder) -->
-          <div class="lottie-placeholder flex-col relative z-10 bg-white/50 backdrop-blur-sm border-white" style="height: 260px; border-radius: 30px;">
-            <Calculator class="w-16 h-16 mb-2 text-[--lj-blue]" />
-            <span class="text-sm font-semibold text-[--lj-blue]">Lottie: Ilustrasi Kalkulator</span>
+          <!-- Illustration (Lottie) -->
+          <div class="relative z-10 overflow-hidden" style="height: 280px; border-radius: 24px;">
+            <Vue3Lottie
+              animationLink="/illustrasi_edukasi_kalkulator.json"
+              :loop="true"
+              :autoplay="true"
+              class="w-full h-full"
+              :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
+            />
           </div>
         </div>
       </section>

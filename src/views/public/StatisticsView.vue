@@ -224,6 +224,24 @@ const levelBadgeStyle = (level) => {
 
 <template>
   <div style="background-color: var(--lj-bg); min-height: 100vh;">
+
+    <!-- ─── Hero illustration (Lottie full-width) ─── -->
+    <div class="hero-full-width relative overflow-hidden" style="height: 550px; border-radius: 0; background: var(--lj-blue-pale);">
+      <div class="absolute inset-0 z-0 pointer-events-none">
+        <Vue3Lottie
+          animationLink="/illustrasi_statistik.json"
+          :loop="true"
+          :autoplay="true"
+          class="w-full h-full"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
+        />
+      </div>
+      <!-- Sway wave bottom -->
+      <div class="absolute left-0 w-full z-10 pointer-events-none" style="bottom: -2px; transform: translateY(1px);">
+        <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
+      </div>
+    </div>
+
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-20 space-y-8">
 
       <!-- Header -->

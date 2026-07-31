@@ -201,6 +201,19 @@ const toggleFaq = (idx) => {
   activeFaq.value = activeFaq.value === idx ? null : idx
 }
 
+/* ─── Rain drops for FAQ section ────────────────────────────────────────────────────── */
+const rainDrops = Array.from({ length: 60 }, (_, i) => ({
+  id: i,
+  style: {
+    left: `${Math.random() * 100}%`,
+    animationDuration: `${0.6 + Math.random() * 0.8}s`,
+    animationDelay: `${Math.random() * 2}s`,
+    opacity: `${0.12 + Math.random() * 0.18}`,
+    height: `${14 + Math.floor(Math.random() * 20)}px`,
+    width: '1.5px',
+  }
+}))
+
 /* ─── Stat cards — data dari backend API ──────────────────────────────────── */
 const statCards = ref([])
 
@@ -361,17 +374,17 @@ const fetchStats = async () => {
 
             <!-- Visual side (Lottie animation) -->
             <div class="flex items-center justify-center p-6 bg-[--lj-bg] overflow-hidden">
-              <div v-if="features[featureSliderIndex].lottie" class="w-full flex items-center justify-center h-[280px]">
+              <div v-if="features[featureSliderIndex].lottie" class="w-full flex items-center justify-center h-[360px]">
                 <Vue3Lottie
                   :key="featureSliderIndex"
                   :animationLink="features[featureSliderIndex].lottie"
                   :loop="true"
                   :autoplay="true"
-                  class="w-full h-full max-h-[280px]"
+                  class="w-full h-full max-h-[360px]"
                   :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
                 />
               </div>
-              <div v-else class="lottie-placeholder w-full flex-col bg-white border-dashed border-2 shadow-inner" style="height: 280px; border-color: var(--lj-border);">
+              <div v-else class="lottie-placeholder w-full flex-col bg-white border-dashed border-2 shadow-inner" style="height: 360px; border-color: var(--lj-border);">
                 <component :is="features[featureSliderIndex].icon" class="w-16 h-16 mb-3" :style="{ color: features[featureSliderIndex].accent }" />
                 <span class="text-sm font-semibold" :style="{ color: features[featureSliderIndex].accent }">
                   Ilustrasi {{ features[featureSliderIndex].label }}
@@ -491,33 +504,26 @@ const fetchStats = async () => {
     </section>
 
     <!-- ─── FAQ ─────────────────────────────────────────────────────────── -->
-    <section class="faq-section hero-full-width relative" style="margin-bottom: 0; padding-bottom: 220px; min-height: 600px;">
-      <!-- Background Lottie Animation FULL width + extra 220px for footer overlap -->
-      <div class="absolute z-0 pointer-events-none" style="overflow: hidden; top: 0; left: 0; right: 0; bottom: 0;">
-        <Vue3Lottie
-          animationLink="/illustrasi_landing_bg_faq.json"
-          :loop="true"
-          :autoplay="true"
-          style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"
-          :rendererSettings="{ preserveAspectRatio: 'xMidYMin slice' }"
-        />
+    <section class="faq-section hero-full-width relative" style="margin-bottom: 0; padding-bottom: 220px; min-height: 600px; background: #F4F9F6; overflow: hidden;">
+      <!-- Ambient glow blobs -->
+      <div class="absolute top-10 -left-32 w-96 h-96 rounded-full blur-[100px] pointer-events-none opacity-40 z-0" style="background:#95FE6D;"></div>
+      <div class="absolute bottom-40 -right-32 w-96 h-96 rounded-full blur-[100px] pointer-events-none opacity-40 z-0" style="background:#4E63DA;"></div>
+      
+      <!-- Rain animation canvas -->
+      <div class="faq-rain-container absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div v-for="drop in rainDrops" :key="drop.id" class="rain-drop" :style="drop.style"></div>
       </div>
 
-      <!-- Sway wave top - overlaps upward to cover section boundary seamlessly -->
-      <div class="absolute left-0 w-full z-10 pointer-events-none" style="top: -78px;">
-        <img src="/sway-hadapbawah.svg" alt="" aria-hidden="true" style="width: 100%; display: block; height: auto;" />
-      </div>
-
-      <div class="max-w-3xl mx-auto px-4 sm:px-6 relative z-20" style="padding-top: 120px; padding-bottom: 60px;">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 relative z-20" style="padding-top: 80px; padding-bottom: 60px;">
         <div class="text-center mb-10 animate-on-scroll">
-          <div class="lj-section-label mb-4 mx-auto bg-white/90 backdrop-blur shadow-sm" style="width: fit-content;">PERTANYAAN PALING SERING DITANYAKAN</div>
+          <div class="lj-section-label mb-4 mx-auto bg-white shadow-sm" style="width: fit-content;">PERTANYAAN PALING SERING DITANYAKAN</div>
         </div>
 
         <div class="space-y-4 animate-on-scroll">
           <div
             v-for="(faq, i) in faqs"
             :key="i"
-            class="lj-card overflow-hidden bg-white/95 backdrop-blur-md shadow-md transition-all duration-300 border border-white/60"
+            class="lj-card overflow-hidden bg-white shadow-md transition-all duration-300 border"
             :class="activeFaq === i ? 'rounded-2xl border-[--lj-blue]' : 'rounded-full'"
           >
             <button
@@ -633,14 +639,40 @@ const fetchStats = async () => {
   opacity: 0;
 }
 
-/* FAQ section — no gaps, Lottie fills completely */
+/* FAQ section — white background with rain decoration */
 .faq-section {
   position: relative;
   overflow: hidden;
   display: block;
-  /* Remove any browser default margin */
   margin-top: 0;
   margin-bottom: 0 !important;
   padding-bottom: 0 !important;
+}
+
+/* Rain drops */
+.rain-drop {
+  position: absolute;
+  top: -30px;
+  background: linear-gradient(to bottom, transparent, #4E63DA 40%, #22C55E);
+  border-radius: 2px;
+  animation: rain-fall linear infinite;
+  transform: rotate(15deg);
+}
+
+@keyframes rain-fall {
+  0% {
+    top: -40px;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    top: 110%;
+    opacity: 0;
+  }
 }
 </style>

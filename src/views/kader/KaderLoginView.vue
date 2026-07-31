@@ -34,33 +34,34 @@ const handleLogin = async () => {
 <template>
   <div class="min-h-screen w-full flex" style="font-family:'Satoshi',sans-serif;">
 
-    <!-- ── Left Column: Illustration Placeholder ──────────────────────────── -->
-    <div class="hidden md:flex md:w-[44%] relative items-center justify-center overflow-hidden select-none"
-      style="background:#f3f4f6;">
-      <!-- Checkerboard pattern -->
-      <div class="absolute inset-0 opacity-35" style="
-        background-image:
-          linear-gradient(45deg,#e5e7eb 25%,transparent 25%),
-          linear-gradient(-45deg,#e5e7eb 25%,transparent 25%),
-          linear-gradient(45deg,transparent 75%,#e5e7eb 75%),
-          linear-gradient(-45deg,transparent 75%,#e5e7eb 75%);
-        background-size:32px 32px;
-        background-position:0 0,0 16px,16px -16px,-16px 0px;
-      "></div>
-      <!-- Placeholder label -->
-      <div class="relative z-10 px-5 py-2.5 bg-white/80 backdrop-blur-md rounded-2xl border border-slate-200 text-center">
-        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">Placeholder Ilustrasi</span>
-        <p class="text-[10px] text-slate-400 mt-0.5">Area ilustrasi login kader</p>
+    <!-- ── Left Column: Lottie Illustration ──────────────────────────── -->
+    <div class="hidden md:flex md:w-[55%] relative overflow-hidden select-none z-10"
+      style="background: var(--lj-blue-pale);">
+      <!-- Lottie fills entire left column -->
+      <div class="absolute inset-0 z-0">
+        <Vue3Lottie
+          animationLink="/illustrasi login.json"
+          :loop="true"
+          :autoplay="true"
+          class="w-full h-full"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
+        />
+      </div>
+      <!-- Right-facing sway (overlaps the Lottie, pointing left toward the login card) -->
+      <div class="absolute top-0 right-0 h-full z-10 pointer-events-none flex items-stretch" style="width: 80px; transform: translateX(1px);">
+        <svg viewBox="0 0 80 900" preserveAspectRatio="none" class="w-full h-full block" fill="#F8FAFC" xmlns="http://www.w3.org/2000/svg">
+          <path d="M80 0 Q0 450 80 900 L80 900 L80 0 Z" />
+        </svg>
       </div>
     </div>
 
     <!-- ── Right Column: Login Form ─────────────────────────────────────── -->
-    <div class="flex-1 min-h-screen flex items-center justify-center p-6 sm:p-12 lg:p-16 relative overflow-hidden"
+    <div class="flex-1 min-h-screen flex items-center justify-center p-6 sm:p-12 lg:p-16 relative z-20"
       style="background:#F8FAFC;">
       <!-- Ambient glow blobs -->
-      <div class="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl pointer-events-none opacity-50"
+      <div class="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl pointer-events-none opacity-50 z-0"
         style="background:#5AF61F;"></div>
-      <div class="absolute -bottom-20 -left-20 w-64 h-64 rounded-full blur-3xl pointer-events-none opacity-20"
+      <div class="absolute -bottom-20 -left-20 w-64 h-64 rounded-full blur-[100px] pointer-events-none opacity-40 z-20"
         style="background:#4E63DA;"></div>
 
       <div class="w-full max-w-sm z-10 space-y-8">
