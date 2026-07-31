@@ -309,7 +309,7 @@ const resetForm = () => {
       <!-- ════════════════════════════════════════════════════ -->
       <!-- STEP: FORM                                          -->
       <!-- ════════════════════════════════════════════════════ -->
-      <template v-if="step === 'form'">
+      <div v-if="step === 'form'" :key="'form'">
         
         <!-- Page Title -->
         <div class="text-center animate-on-scroll mb-8">
@@ -491,12 +491,12 @@ const resetForm = () => {
           </button>
         </form>
         </div> <!-- End of Big Card Container -->
-      </template>
+      </div>
 
       <!-- ════════════════════════════════════════════════════ -->
       <!-- STEP: SUCCESS                                       -->
       <!-- ════════════════════════════════════════════════════ -->
-      <template v-else>
+      <div v-else :key="'success'">
         <!-- Section label -->
         <div class="text-center animate-on-scroll">
           <div class="lj-section-label mb-2 mx-auto" style="width: fit-content;">LAPORAN ANDA TERKIRIM</div>
@@ -573,7 +573,7 @@ const resetForm = () => {
             <ArrowLeft class="w-4 h-4" /> Kembali ke Beranda
           </button>
         </div>
-      </template>
+      </div>
     </div>
   </div>
 </template>
