@@ -81,14 +81,21 @@ const isSaving = ref(false)
 
 const handleSaveProfile = async () => {
   isSaving.value = true
-  const result = await kaderStore.updateProfile({
+  const data = {
     nama: profileForm.value.nama,
-    phone: profileForm.value.phone
-  })
+    phone: profileForm.value.phone,
+  }
+  // Sertakan file avatar jika dipilih
+  if (fileInput.value?.files?.[0]) {
+    data.avatar = fileInput.value.files[0]
+  }
+  const result = await kaderStore.updateProfile(data)
   isSaving.value = false
-  
+
   if (result.success) {
     isSaved.value = true
+    avatarPreview.value = null // reset preview
+    fileInput.value.value = '' // reset input
     setTimeout(() => (isSaved.value = false), 2500)
   } else {
     alert(result.message)

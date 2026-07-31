@@ -11,6 +11,7 @@ export const useKaderStore = defineStore('kader', {
       nama: '',
       email: '',
       phone: '',
+      avatar: '',
       role: '',
       wilayah_kode: null,
       wilayah_binaan: '',
@@ -97,6 +98,7 @@ export const useKaderStore = defineStore('kader', {
           nama: profile.nama || profile.name || '',
           email: profile.email || '',
           phone: profile.phone || profile.telepon || '',
+          avatar: profile.avatar || '',
           role: profile.role === 'kader' ? 'Kader Kesehatan' : (profile.role || ''),
           wilayah_kode: profile.wilayah_kode || null,
           wilayah_binaan: profile.wilayah_tugas?.nama || profile.wilayah?.nama || profile.wilayah_binaan || '',
@@ -108,23 +110,40 @@ export const useKaderStore = defineStore('kader', {
 
     async updateProfile(updatedData) {
       try {
-        // Map field ke nama backend (backend expect 'nama', bukan 'name')
-        const payload = {}
-        if (updatedData.nama !== undefined) payload.nama = updatedData.nama
-        if (updatedData.name !== undefined && updatedData.nama === undefined) payload.nama = updatedData.name
-        if (updatedData.phone !== undefined) payload.phone = updatedData.phone
-        if (updatedData.current_password !== undefined) payload.current_password = updatedData.current_password
-        if (updatedData.password !== undefined) payload.password = updatedData.password
-        if (updatedData.password_confirmation !== undefined) payload.password_confirmation = updatedData.password_confirmation
+        // Jika ada file avatar, pakai FormData (multipart)
+        const hasFile = updatedData.avatar instanceof File
+        let response
 
-        const response = await authService.updateProfile(payload)
-        if (response.data) {
-          const p = response.data
+        if (hasFile) {
+          const formData = new FormData()
+          if (updatedData.nama !== undefined) formData.append('nama', updatedData.nama)
+          if (updatedData.name !== undefined && updatedData.nama === undefined) formData.append('nama', updatedData.name)
+          if (updatedData.phone !== undefined) formData.append('phone', updatedData.phone)
+          if (updatedData.current_password !== undefined) formData.append('current_password', updatedData.current_password)
+          if (updatedData.password !== undefined) formData.append('password', updatedData.password)
+          if (updatedData.password_confirmation !== undefined) formData.append('password_confirmation', updatedData.password_confirmation)
+          if (updatedData.avatar !== undefined) formData.append('avatar', updatedData.avatar)
+          response = await apiClient.patch('/auth/update-profile', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          })
+        } else {
+          const payload = {}
+          if (updatedData.nama !== undefined) payload.nama = updatedData.nama
+          if (updatedData.name !== undefined && updatedData.nama === undefined) payload.nama = updatedData.name
+          if (updatedData.phone !== undefined) payload.phone = updatedData.phone
+          if (updatedData.current_password !== undefined) payload.current_password = updatedData.current_password
+          if (updatedData.password !== undefined) payload.password = updatedData.password
+          if (updatedData.password_confirmation !== undefined) payload.password_confirmation = updatedData.password_confirmation
+          response = await authService.updateProfile(payload)
+        }
+        const p = (response && response.data) ? response.data : null
+        if (p) {
           this.userProfile = {
             ...this.userProfile,
             nama: p.nama || p.name || this.userProfile.nama,
             email: p.email || this.userProfile.email,
             phone: p.phone || p.telepon || this.userProfile.phone,
+            avatar: p.avatar || this.userProfile.avatar,
           }
         }
         return { success: true }
