@@ -309,7 +309,7 @@ const resetForm = () => {
       <!-- ════════════════════════════════════════════════════ -->
       <!-- STEP: FORM                                          -->
       <!-- ════════════════════════════════════════════════════ -->
-      <template v-if="step === 'form'">
+      <div v-if="step === 'form'">
         
         <!-- Page Title -->
         <div class="text-center animate-on-scroll mb-8">
@@ -569,11 +569,47 @@ const resetForm = () => {
 
         <!-- Back to home -->
         <div class="text-center animate-on-scroll">
-          <button @click="resetForm" class="lj-btn-primary px-8">
+          <RouterLink to="/" class="lj-btn-primary px-8 inline-flex items-center gap-2">
             <ArrowLeft class="w-4 h-4" /> Kembali ke Beranda
-          </button>
+          </RouterLink>
         </div>
-      </template>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- STEP: SUCCESS                                         -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div v-else>
+        <div class="text-center space-y-6 animate-on-scroll">
+          <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto">
+            <CheckCircle2 class="w-12 h-12" />
+          </div>
+          <div>
+            <h2 class="text-2xl font-black" style="color: var(--lj-navy);">Laporan Terkirim!</h2>
+            <p class="text-sm mt-2" style="color: var(--lj-muted);">
+              Terima kasih! Laporan kamu telah tercatat di sistem kami.<br/>
+              Kader kesehatan akan menindaklanjuti laporan ini.
+            </p>
+          </div>
+
+          <div class="p-6 rounded-3xl bg-white border shadow-sm space-y-3 text-left">
+            <h3 class="text-sm font-bold" style="color: var(--lj-navy);">Detail Laporan</h3>
+            <div class="text-xs space-y-1" style="color: var(--lj-muted);">
+              <p><strong>Lokasi:</strong> {{ address }}</p>
+              <p><strong>Deskripsi:</strong> {{ description }}</p>
+              <p><strong>Status:</strong> <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" style="background: #FEF3C7; color: #92400E;">Belum Ditangani</span></p>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <RouterLink to="/peta-resiko" class="lj-btn-primary px-6 py-3 inline-flex items-center gap-2 justify-center" style="background: #4E63DA;">
+              <Map class="w-4 h-4" /> Lihat Peta Risiko
+            </RouterLink>
+            <button @click="resetForm" class="px-6 py-3 rounded-xl font-bold text-sm border inline-flex items-center gap-2 justify-center" style="border-color: var(--lj-border); color: var(--lj-navy);">
+              <ArrowLeft class="w-4 h-4" /> Buat Laporan Baru
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
