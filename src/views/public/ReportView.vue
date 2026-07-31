@@ -63,18 +63,15 @@ onMounted(async () => {
       maxZoom: 18,
     }).addTo(mapInstance)
 
-    const markerIcon = L.icon({
-      iconUrl: '/marker-icon.png',
-      iconRetinaUrl: '/marker-icon-2x.png',
-      shadowUrl: '/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41],
+    // Fix Leaflet default icon path di Vite
+    delete L.Icon.Default.prototype._getIconUrl
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     })
     marker = L.marker([lat, lng], {
       draggable: true,
-      icon: markerIcon,
     }).addTo(mapInstance)
 
     marker.on('dragend', async (e) => {
@@ -314,12 +311,12 @@ const resetForm = () => {
       </div>
     </div>
 
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-8" :key="step">
 
       <!-- ════════════════════════════════════════════════════ -->
       <!-- STEP: FORM                                          -->
       <!-- ════════════════════════════════════════════════════ -->
-      <div v-if="step === 'form'" :key="'form'">
+      <div v-if="step === 'form'">
         
         <!-- Page Title -->
         <div class="text-center animate-on-scroll mb-8">
@@ -506,7 +503,7 @@ const resetForm = () => {
       <!-- ════════════════════════════════════════════════════ -->
       <!-- STEP: SUCCESS                                       -->
       <!-- ════════════════════════════════════════════════════ -->
-      <div v-else :key="'success'">
+      <div v-else>
         <!-- Section label -->
         <div class="text-center animate-on-scroll">
           <div class="lj-section-label mb-2 mx-auto" style="width: fit-content;">LAPORAN ANDA TERKIRIM</div>
