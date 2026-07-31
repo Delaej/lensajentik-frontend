@@ -17,6 +17,7 @@ const kaderStore = useKaderStore()
 
 onMounted(async () => {
   await kaderStore.fetchMyAbjRecords()
+  updateRegionScores()
 })
 
 const selectedFilterMonth = ref('all')
