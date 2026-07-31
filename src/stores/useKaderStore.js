@@ -8,7 +8,7 @@ export const useKaderStore = defineStore('kader', {
   state: () => ({
     isAuthenticated: !!localStorage.getItem('kader_token'),
     userProfile: {
-      name: '',
+      nama: '',
       email: '',
       phone: '',
       role: '',
@@ -18,12 +18,21 @@ export const useKaderStore = defineStore('kader', {
     // Dari /kader/dashboard
     quickMetrics: {
       skorRisiko: null,
+      skorRisikoDbd: null,
+      skorRisikoMalaria: null,
       levelRisiko: null,
+      confidence: null,
       rataAbj: 0,
       totalRumahDiperiksa: 0,
       totalRumahPositif: 0,
       jumlahLaporanAbj: 0,
+      persentaseBebasJentik: 0,
+      laporanAktif: 0,
+      laporanBelumDitangani: 0,
     },
+    prediksi7Hari: [],
+    laporanWargaStats: { total: 0, aktif: 0, belum_ditangani: 0 },
+    wilayahInfo: null,
     tugasPending: [],
     abjRecords: [],
     notifications: [],
@@ -51,7 +60,8 @@ export const useKaderStore = defineStore('kader', {
     // ── Auth ────────────────────────────────────────────────────────────
     async login(email, password) {
       try {
-        await authService.login({ email, password })
+        const response = await authService.login({ email, password })
+        // Simpan token — authService sudah menyimpannya di localStorage
         this.isAuthenticated = true
         await Promise.all([
           this.fetchProfile(),
@@ -59,18 +69,21 @@ export const useKaderStore = defineStore('kader', {
           this.fetchMyAbjRecords(),
           this.fetchNotifications(),
         ])
-        return true
+        return response
       } catch (error) {
         console.error('Login failed:', error)
-        return false
+        throw error
       }
     },
 
     async logout() {
       try { await authService.logout() } catch { /* abaikan */ }
       this.isAuthenticated = false
-      this.userProfile = { name: '', email: '', phone: '', role: '', wilayah_kode: null, wilayah_binaan: '' }
-      this.quickMetrics = { skorRisiko: null, levelRisiko: null, rataAbj: 0, totalRumahDiperiksa: 0, totalRumahPositif: 0, jumlahLaporanAbj: 0 }
+      this.userProfile = { nama: '', email: '', phone: '', role: '', wilayah_kode: null, wilayah_binaan: '' }
+      this.quickMetrics = { skorRisiko: null, skorRisikoDbd: null, skorRisikoMalaria: null, levelRisiko: null, confidence: null, rataAbj: 0, totalRumahDiperiksa: 0, totalRumahPositif: 0, jumlahLaporanAbj: 0, persentaseBebasJentik: 0, laporanAktif: 0, laporanBelumDitangani: 0 }
+      this.prediksi7Hari = []
+      this.laporanWargaStats = { total: 0, aktif: 0, belum_ditangani: 0 }
+      this.wilayahInfo = null
       this.tugasPending = []
       this.abjRecords = []
       this.notifications = []
@@ -81,12 +94,12 @@ export const useKaderStore = defineStore('kader', {
       try {
         const profile = await authService.getProfile()
         this.userProfile = {
-          name: profile.name || profile.nama || '',
+          nama: profile.nama || profile.name || '',
           email: profile.email || '',
           phone: profile.phone || profile.telepon || '',
           role: profile.role === 'kader' ? 'Kader Kesehatan' : (profile.role || ''),
           wilayah_kode: profile.wilayah_kode || null,
-          wilayah_binaan: profile.wilayah?.nama || profile.wilayah_binaan || '',
+          wilayah_binaan: profile.wilayah_tugas?.nama || profile.wilayah?.nama || profile.wilayah_binaan || '',
         }
       } catch (error) {
         console.error('Fetch profile failed:', error)
@@ -95,12 +108,21 @@ export const useKaderStore = defineStore('kader', {
 
     async updateProfile(updatedData) {
       try {
-        const response = await authService.updateProfile(updatedData)
+        // Map field ke nama backend (backend expect 'nama', bukan 'name')
+        const payload = {}
+        if (updatedData.nama !== undefined) payload.nama = updatedData.nama
+        if (updatedData.name !== undefined && updatedData.nama === undefined) payload.nama = updatedData.name
+        if (updatedData.phone !== undefined) payload.phone = updatedData.phone
+        if (updatedData.current_password !== undefined) payload.current_password = updatedData.current_password
+        if (updatedData.password !== undefined) payload.password = updatedData.password
+        if (updatedData.password_confirmation !== undefined) payload.password_confirmation = updatedData.password_confirmation
+
+        const response = await authService.updateProfile(payload)
         if (response.data) {
           const p = response.data
           this.userProfile = {
             ...this.userProfile,
-            name: p.name || p.nama || this.userProfile.name,
+            nama: p.nama || p.name || this.userProfile.nama,
             email: p.email || this.userProfile.email,
             phone: p.phone || p.telepon || this.userProfile.phone,
           }
@@ -118,15 +140,40 @@ export const useKaderStore = defineStore('kader', {
         const res = await apiClient.get('/kader/dashboard')
         const d = res.data?.data || res.data
         if (!d) return
+
+        // Skor risiko (backend bisa return dbd & malaria terpisah, atau satu skor)
+        const skorUtama = d.skor_risiko_terkini?.dbd || d.skor_risiko_terkini
         this.quickMetrics = {
-          skorRisiko: d.skor_risiko_terkini?.skor ?? null,
-          levelRisiko: d.skor_risiko_terkini?.level ?? null,
+          skorRisiko: skorUtama?.skor ?? null,
+          skorRisikoDbd: d.skor_risiko_terkini?.dbd?.skor ?? null,
+          skorRisikoMalaria: d.skor_risiko_terkini?.malaria?.skor ?? null,
+          levelRisiko: skorUtama?.level ?? null,
+          confidence: skorUtama?.confidence ?? null,
           rataAbj: d.ringkasan_abj?.rata_rata_persen ?? 0,
           totalRumahDiperiksa: d.ringkasan_abj?.total_rumah_diperiksa ?? 0,
           totalRumahPositif: d.ringkasan_abj?.total_rumah_positif ?? 0,
           jumlahLaporanAbj: d.ringkasan_abj?.jumlah_laporan ?? 0,
+          persentaseBebasJentik: d.ringkasan_abj?.persentase_bebas_jentik ?? 0,
+          laporanAktif: d.laporan_warga?.aktif ?? 0,
+          laporanBelumDitangani: d.laporan_warga?.belum_ditangani ?? 0,
         }
+        this.prediksi7Hari = d.prediksi || []
+        this.laporanWargaStats = d.laporan_warga || { total: 0, aktif: 0, belum_ditangani: 0 }
+        this.wilayahInfo = d.wilayah || null
         this.tugasPending = d.tugas_pending || []
+
+        // Update profil juga jika dashboard mengembalikan info kader
+        if (d.kader) {
+          this.userProfile = {
+            ...this.userProfile,
+            nama: d.kader.nama || this.userProfile.nama,
+            email: d.kader.email || this.userProfile.email,
+            phone: d.kader.phone || this.userProfile.phone,
+            role: d.kader.role === 'kader' ? 'Kader Kesehatan' : (d.kader.role || this.userProfile.role),
+            wilayah_kode: d.kader.wilayah_kode || this.userProfile.wilayah_kode,
+            wilayah_binaan: d.kader.wilayah_binaan || this.userProfile.wilayah_binaan,
+          }
+        }
       } catch (error) {
         console.error('Fetch dashboard failed:', error)
       }
@@ -136,17 +183,27 @@ export const useKaderStore = defineStore('kader', {
     async fetchMyAbjRecords() {
       try {
         const response = await abjService.fetchAbjRecords()
-        const records = response.data || response
+        const paginator = response.data || response
+        let records = []
+        if (paginator && Array.isArray(paginator.data)) {
+          records = paginator.data
+        } else if (Array.isArray(paginator)) {
+          records = paginator
+        } else {
+          records = [paginator].filter(Boolean)
+        }
+
         this.abjRecords = records.map((rec) => ({
           id: rec.id,
           date: rec.tanggal_pemeriksaan,
           weekLabel: rec.tanggal_pemeriksaan,
           location: rec.wilayah ? rec.wilayah.nama : 'Wilayah Binaan',
           diperiksa: rec.jumlah_rumah_diperiksa,
-          positifJentik: rec.jumlah_rumah_positif_jentik,
+          positifJentik: rec.jumlah_rumah_positif,
           abjScore: rec.abj_persen,
           status: rec.abj_persen >= 95 ? 'Aman' : rec.abj_persen >= 90 ? 'Waspada' : 'Bahaya',
           notes: rec.catatan || '',
+          kaderName: rec.user ? (rec.user.nama || rec.user.name || 'Kader') : 'Kader',
         }))
       } catch (error) {
         console.error('Fetch ABJ records failed:', error)
@@ -159,7 +216,7 @@ export const useKaderStore = defineStore('kader', {
           wilayah_kode: recordData.wilayah_kode,
           tanggal_pemeriksaan: recordData.date,
           jumlah_rumah_diperiksa: recordData.diperiksa,
-          jumlah_rumah_positif_jentik: recordData.positifJentik,
+          jumlah_rumah_positif: recordData.positifJentik,
           catatan: recordData.notes,
         }
         await abjService.storeAbjRecord(payload)
@@ -186,7 +243,7 @@ export const useKaderStore = defineStore('kader', {
           title: n.judul || 'Notifikasi',
           description: n.pesan || '',
           date: n.created_at || new Date().toISOString(),
-          read: n.is_read || n.is_dibaca || false,
+          read: n.is_dibaca !== undefined ? n.is_dibaca : (n.is_read || false),
           priority: n.tipe === 'kenaikan_risiko' || n.tipe === 'cuaca_ekstrem' ? 'high' : 'low',
           type: n.tipe || 'system',
         }))

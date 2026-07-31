@@ -16,7 +16,14 @@ import { useKaderStore } from '@/stores/useKaderStore'
 
 const kaderStore = useKaderStore()
 
-const profileForm = ref({ ...kaderStore.userProfile })
+const profileForm = ref({
+  nama: kaderStore.userProfile.nama || '',
+  email: kaderStore.userProfile.email || '',
+  phone: kaderStore.userProfile.phone || '',
+  role: kaderStore.userProfile.role || '',
+  district: kaderStore.userProfile.wilayah_binaan || '',
+  avatar: '',
+})
 
 const isSaved = ref(false)
 const showPasswordModal = ref(false)
@@ -26,7 +33,7 @@ const isSaving = ref(false)
 const handleSaveProfile = async () => {
   isSaving.value = true
   const result = await kaderStore.updateProfile({
-    name: profileForm.value.name,
+    nama: profileForm.value.nama,
     phone: profileForm.value.phone
   })
   isSaving.value = false
@@ -125,7 +132,7 @@ const handleAvatarChange = () => {
           </button>
         </div>
         <div>
-          <div class="font-bold text-slate-900 text-base">{{ profileForm.name }}</div>
+          <div class="font-bold text-slate-900 text-base">{{ profileForm.nama }}</div>
           <div class="text-xs text-slate-500">{{ profileForm.role }}</div>
           <button @click="handleAvatarChange" class="text-xs text-blue-600 font-bold hover:underline mt-1">
             Ubah Foto
@@ -140,7 +147,7 @@ const handleAvatarChange = () => {
           <div class="relative">
             <User class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
-              v-model="profileForm.name"
+              v-model="profileForm.nama"
               type="text"
               class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
             />

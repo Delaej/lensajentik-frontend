@@ -50,7 +50,7 @@ const chartBars = computed(() => {
         <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center flex-wrap gap-2">
           {{ greeting }},
           <span class="px-3 py-0.5 rounded-full text-slate-900 font-black" style="background:#5AF61F;">
-            {{ kaderStore.userProfile.name || 'Kader' }}!
+            {{ kaderStore.userProfile.nama || 'Kader' }}!
           </span>
         </h1>
         <p class="text-sm text-slate-500 font-medium mt-1.5">
