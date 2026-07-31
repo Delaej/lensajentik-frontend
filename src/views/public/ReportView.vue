@@ -63,8 +63,18 @@ onMounted(async () => {
       maxZoom: 18,
     }).addTo(mapInstance)
 
+    const markerIcon = L.icon({
+      iconUrl: '/marker-icon.png',
+      iconRetinaUrl: '/marker-icon-2x.png',
+      shadowUrl: '/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41],
+    })
     marker = L.marker([lat, lng], {
       draggable: true,
+      icon: markerIcon,
     }).addTo(mapInstance)
 
     marker.on('dragend', async (e) => {
@@ -359,8 +369,8 @@ const resetForm = () => {
           <!-- Map (overflow hidden HANYA di sini agar tiles tidak bocor) -->
           <div class="overflow-hidden relative" style="border-radius: 0 0 18px 18px; z-index: 10;">
             <div ref="mapContainer" style="height: 260px;" class="w-full relative">
-              <!-- GPS overlay button -->
-              <div class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+              <!-- GPS overlay button — hanya muncul sebelum lokasi terdeteksi -->
+              <div v-if="!latitude" class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
                 <button
                   @click="handleGetGps"
                   class="lj-btn-primary pointer-events-auto text-xs px-5 py-2.5 shadow-xl"
