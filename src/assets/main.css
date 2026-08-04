@@ -55,17 +55,24 @@
 ::-webkit-scrollbar-thumb:hover { background: var(--lj-blue); }
 
 /* ─── Page Transitions ─────────────────────────────────────────────────────── */
+/*
+ * Simultaneous enter + leave (no mode="out-in").
+ * Leaving element is taken out-of-flow so the entering element slides
+ * into its natural position without stacking.
+ */
+
 /* Top-level route transitions (App.vue) — layout changes */
 .page-enter-active,
 .page-leave-active {
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
+.page-leave-active {
+  position: absolute;
+}
 .page-enter-from {
   opacity: 0;
   transform: translateY(18px);
 }
-
 .page-leave-to {
   opacity: 0;
   transform: translateY(-12px);
@@ -76,12 +83,13 @@
 .child-slide-leave-active {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
+.child-slide-leave-active {
+  position: absolute;
+}
 .child-slide-enter-from {
   opacity: 0;
   transform: translateX(24px);
 }
-
 .child-slide-leave-to {
   opacity: 0;
   transform: translateX(-20px);
@@ -92,12 +100,13 @@
 .child-fade-leave-active {
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
+.child-fade-leave-active {
+  position: absolute;
+}
 .child-fade-enter-from {
   opacity: 0;
   transform: translateY(10px);
 }
-
 .child-fade-leave-to {
   opacity: 0;
   transform: translateY(-6px);

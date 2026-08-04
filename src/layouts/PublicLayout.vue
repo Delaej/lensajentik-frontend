@@ -153,7 +153,7 @@ const emit = defineEmits(['trigger-onboarding'])
     <!-- ─── Page Content ──────────────────────────────────────────────────────── -->
     <main class="flex-1 relative z-10 w-full flex flex-col" style="margin-bottom: 0; padding-bottom: 220px;">
       <RouterView v-slot="{ Component, route }">
-        <Transition name="child-slide" mode="out-in">
+        <Transition name="child-slide">
           <component :is="Component" :key="route.fullPath" @trigger-onboarding="$emit('trigger-onboarding')" />
         </Transition>
       </RouterView>
