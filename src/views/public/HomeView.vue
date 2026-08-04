@@ -238,13 +238,14 @@ const fetchStats = async () => {
   <div>
     <!-- ─── Hero Section ─────────────────────────────────────────────────── -->
     <section class="hero-full-width overflow-hidden bg-[--lj-blue-pale] relative" style="min-height: 700px;">
-      <!-- Lottie Background fills full height -->
-      <div class="absolute inset-0 z-0 pointer-events-none" style="border-radius: 0;">
+      <!-- Lottie centered, content at designed size — background fills edges -->
+      <div class="absolute inset-0 z-0 pointer-events-none flex items-center justify-center" style="border-radius: 0;">
         <Vue3Lottie
           animationLink="/landing_page.json"
           :loop="true"
           :autoplay="true"
-          class="w-full h-full"
+          class="h-full"
+          style="width: 100%; max-width: 1200px;"
           :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
         />
       </div>
@@ -320,13 +321,14 @@ const fetchStats = async () => {
 
     <!-- ─── Feature Slider ───────────────────────────────────────────────── -->
     <section class="pt-24 pb-48 relative hero-full-width">
-      <!-- Background Lottie -->
-      <div class="absolute inset-0 z-0 pointer-events-none" style="border-radius: 0;">
+      <!-- Background Lottie — centered, content at designed size -->
+      <div class="absolute inset-0 z-0 pointer-events-none flex items-center justify-center" style="border-radius: 0;">
         <Vue3Lottie
           animationLink="/illustrasi_landing_bg_fiturkami.json"
           :loop="true"
           :autoplay="true"
-          class="w-full h-full"
+          class="h-full"
+          style="width: 100%; max-width: 1200px;"
           :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
         />
       </div>

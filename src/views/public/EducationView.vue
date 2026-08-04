@@ -229,12 +229,13 @@ const nextQuizStep = () => {
   <div class="pb-24">
     <!-- ─── Hero illustration (Lottie full-width) ─── -->
     <div class="hero-full-width relative overflow-hidden" style="height: 650px; border-radius: 0; background: var(--lj-blue-pale);">
-      <div class="absolute inset-0 z-0 pointer-events-none">
+      <div class="absolute inset-0 z-0 pointer-events-none flex items-center justify-center">
         <Vue3Lottie
           animationLink="/illustrasi_edukasi.json"
           :loop="true"
           :autoplay="true"
-          class="w-full h-full"
+          class="h-full"
+          style="width: 100%; max-width: 1200px;"
           :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
         />
       </div>
@@ -327,13 +328,14 @@ const nextQuizStep = () => {
 
       <!-- ─── Gerakan 3M ─── -->
       <section class="animate-on-scroll hero-full-width relative" style="padding-top: 140px; padding-bottom: 140px;">
-        <!-- Background Lottie -->
-        <div class="absolute z-0 pointer-events-none" style="overflow: hidden; top: 0; left: 0; right: 0; bottom: 0;">
+        <!-- Background Lottie — centered, content at designed size -->
+        <div class="absolute inset-0 z-0 pointer-events-none flex items-center justify-center">
           <Vue3Lottie
             animationLink="/illustrasi_landing_bg_faq.json"
             :loop="true"
             :autoplay="true"
-            style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"
+            class="h-full"
+            style="width: 100%; max-width: 1200px;"
             :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
           />
         </div>

@@ -297,13 +297,14 @@ const resetForm = () => {
   <div>
     <!-- ─── Header illustration (Lottie full-width) ─── -->
     <div class="hero-full-width relative overflow-hidden" style="height: 650px; border-radius: 0; background: var(--lj-blue-pale);">
-      <!-- Lottie fills full width left to right -->
-      <div class="absolute inset-0 z-0 pointer-events-none">
+      <!-- Lottie centered, content at designed size — background fills edges -->
+      <div class="absolute inset-0 z-0 pointer-events-none flex items-center justify-center">
         <Vue3Lottie
           animationLink="/illustrasi_laporan.json"
           :loop="true"
           :autoplay="true"
-          class="w-full h-full"
+          class="h-full"
+          style="width: 100%; max-width: 1200px;"
           :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
         />
       </div>
