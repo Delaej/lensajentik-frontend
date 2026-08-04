@@ -14,6 +14,9 @@ const canEnter = ref(false)
 // ── template refs ────────────────────────────────────────────────
 const mosquitoWrap = ref(null)
 
+// ── safety timer ref ─────────────────────────────────────────────
+let flightTimer = null
+
 // ── helpers ──────────────────────────────────────────────────────
 function setStage(s) { stage.value = s }
 
@@ -38,17 +41,33 @@ function startWipe() {
 
 function startMosquito() {
   setStage('mosquito-enter')
-  // listen for animationend on the mosquito-wrap element
+
+  // Safety timer: always set, in case animationend doesn't fire
+  // (e.g. animation overridden, CSS var not resolved, browser quirk)
+  clearFlightTimer()
+  flightTimer = setTimeout(onFlightEnd, 2100)
+
+  // Also listen for animationend as the primary / happy path
   const el = mosquitoWrap.value
   if (el) {
-    el.addEventListener('animationend', onFlightEnd, { once: true })
-  } else {
-    // fallback: wait the flight duration
-    setTimeout(onFlightEnd, 1700)
+    el.addEventListener('animationend', onFlightEndFromEvent, { once: true })
   }
 }
 
+function clearFlightTimer() {
+  if (flightTimer) {
+    clearTimeout(flightTimer)
+    flightTimer = null
+  }
+}
+
+function onFlightEndFromEvent() {
+  clearFlightTimer()
+  onFlightEnd()
+}
+
 function onFlightEnd() {
+  clearFlightTimer()
   setStage('mosquito-idle')
   canEnter.value = true
 }
@@ -261,7 +280,7 @@ onMounted(() => {
   gap: 26px;
   opacity: 0;
   transform: translateY(16px) scale(0.96);
-  transition: opacity var(--dur-blank) ease, transform 650ms cubic-bezier(0.22, 0.9, 0.3, 1);
+  transition: opacity var(--dur-blank, 550ms) ease, transform 650ms cubic-bezier(0.22, 0.9, 0.3, 1);
   pointer-events: none;
 }
 [data-stage='loading'] .loader-stage {
@@ -342,7 +361,7 @@ onMounted(() => {
   pointer-events: none;
 }
 [data-stage='wipe'] .iris-wipe {
-  animation: irisOpen var(--dur-wipe) cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  animation: irisOpen var(--dur-wipe, 900ms) cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
 [data-stage='mosquito-enter'] .iris-wipe,
 [data-stage='mosquito-idle'] .iris-wipe,
@@ -358,7 +377,7 @@ onMounted(() => {
 .scene {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -404,7 +423,7 @@ onMounted(() => {
     rgba(16, 21, 46, 0.38) 100%
   );
   opacity: 0;
-  transition: opacity var(--dur-spot) ease;
+  transition: opacity var(--dur-spot, 900ms) ease;
   pointer-events: none;
 }
 [data-stage='mosquito-idle'] .spotlight-overlay,
@@ -440,7 +459,7 @@ onMounted(() => {
   justify-content: center;
 }
 [data-stage='mosquito-enter'] .mosquito-wrap {
-  animation: flyIn var(--dur-fly) cubic-bezier(0.22, 0.9, 0.3, 1) forwards;
+  animation: flyIn var(--dur-fly, 1700ms) cubic-bezier(0.22, 0.9, 0.3, 1) forwards;
 }
 [data-stage='mosquito-idle'] .mosquito-wrap,
 [data-stage='entering'] .mosquito-wrap {
@@ -545,14 +564,14 @@ onMounted(() => {
 .iris-close {
   position: absolute;
   inset: 0;
-  z-index: 4;
+  z-index: 5;
   background: var(--navy);
   clip-path: circle(150% at 50% 48%);
   opacity: 0;
   pointer-events: none;
 }
 [data-stage='entering'] .iris-close {
-  animation: irisClose var(--dur-close) cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  animation: irisClose var(--dur-close, 650ms) cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
 @keyframes irisClose {
   0%   { clip-path: circle(150% at 50% 48%); opacity: 1; }
