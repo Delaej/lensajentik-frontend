@@ -56,52 +56,45 @@
 
 /* ─── Page Transitions ─────────────────────────────────────────────────────── */
 /*
- * Simultaneous enter + leave (no mode="out-in").
- * Leaving element is taken out-of-flow so the entering element slides
- * into its natural position without stacking.
+ * Simultaneous enter + leave — leaving element is absolutely positioned
+ * so both elements occupy the same space without layout shift.
+ *
+ * Each transition uses separate curves for enter (decelerating → ease-out)
+ * and leave (accelerating → ease-in) so the motion feels directional.
  */
 
-/* Top-level route transitions (App.vue) — layout changes */
-.page-enter-active,
-.page-leave-active {
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.page-leave-active {
-  position: absolute;
-}
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(18px);
-}
-.page-leave-to {
-  opacity: 0;
-  transform: translateY(-12px);
-}
-
-/* Child-route transitions — public pages: slide + fade */
-.child-slide-enter-active,
-.child-slide-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* ── Public pages (child-slide): card-forward feel ──────────────── */
+.child-slide-enter-active {
+  transition: opacity 0.32s cubic-bezier(0.0, 0, 0.2, 1),
+              transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .child-slide-leave-active {
+  transition: opacity 0.22s cubic-bezier(0.55, 0, 1, 0.45),
+              transform 0.25s cubic-bezier(0.55, 0, 1, 0.45);
   position: absolute;
+  inset: 0;
+  width: 100%;
 }
 .child-slide-enter-from {
   opacity: 0;
-  transform: translateX(24px);
+  transform: translateY(22px);
 }
 .child-slide-leave-to {
   opacity: 0;
-  transform: translateX(-20px);
+  transform: scale(0.97);
 }
 
-/* Child-route transitions — kader / auth pages: quick fade */
-.child-fade-enter-active,
-.child-fade-leave-active {
-  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+/* ── Kader / Auth pages (child-fade): subtle professional feel ──── */
+.child-fade-enter-active {
+  transition: opacity 0.25s cubic-bezier(0.0, 0, 0.2, 1),
+              transform 0.28s cubic-bezier(0.0, 0, 0.2, 1);
 }
 .child-fade-leave-active {
+  transition: opacity 0.18s cubic-bezier(0.4, 0, 1, 1),
+              transform 0.2s cubic-bezier(0.4, 0, 1, 1);
   position: absolute;
+  inset: 0;
+  width: 100%;
 }
 .child-fade-enter-from {
   opacity: 0;
@@ -109,7 +102,6 @@
 }
 .child-fade-leave-to {
   opacity: 0;
-  transform: translateY(-6px);
 }
 
 /* ─── Scroll Animations ────────────────────────────────────────────────────── */
