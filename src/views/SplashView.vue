@@ -139,7 +139,7 @@ onMounted(() => {
             <img
               ref="mosquitoImg"
               id="mosquito-img"
-              src="/nyamuk.png"
+              :src="'/nyamuk.png'"
               alt="Nyamuk"
               @error="handleMosquitoImgError"
             />

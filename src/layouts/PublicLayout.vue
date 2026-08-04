@@ -164,31 +164,22 @@ const emit = defineEmits(['trigger-onboarding'])
 
       <div class="absolute bottom-0 left-0 w-full px-4 sm:px-6 lg:px-8 pb-5 text-white flex flex-col justify-end">
         <!-- Links Row -->
-<<<<<<< HEAD
         <div class="flex flex-col md:flex-row items-center justify-between mb-3 gap-3 max-w-5xl mx-auto w-full">
           <ul class="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-8 text-[11px] sm:text-xs font-medium opacity-90">
             <li><RouterLink to="/beranda" class="hover:text-white transition-colors">Home</RouterLink></li>
-            <li class="flex items-center gap-1 cursor-pointer hover:text-white transition-colors">Services <ChevronDown class="w-3 h-3" /></li>
+            <li class="relative group cursor-pointer hover:text-white transition-colors py-2">
+              <span class="flex items-center gap-1">Services <ChevronDown class="w-3 h-3" /></span>
+              <div class="absolute bottom-full left-0 mb-2 w-36 bg-white rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 flex flex-col overflow-hidden text-xs font-bold border border-gray-100 py-1" style="color: var(--lj-navy);">
+                <RouterLink to="/beranda/peta-resiko" class="px-4 py-2.5 hover:bg-[#EEF1FD] hover:text-[#4E63DA] transition-colors">Peta Risiko</RouterLink>
+                <RouterLink to="/beranda/laporan" class="px-4 py-2.5 hover:bg-[#EEF1FD] hover:text-[#4E63DA] transition-colors">Laporan</RouterLink>
+                <RouterLink to="/beranda/edukasi" class="px-4 py-2.5 hover:bg-[#EEF1FD] hover:text-[#4E63DA] transition-colors">Edukasi</RouterLink>
+                <RouterLink to="/beranda/statistik" class="px-4 py-2.5 hover:bg-[#EEF1FD] hover:text-[#4E63DA] transition-colors">Statistik</RouterLink>
+              </div>
+            </li>
             <li><RouterLink to="/beranda/edukasi" class="hover:text-white transition-colors">Blog</RouterLink></li>
             <li><span class="cursor-pointer hover:text-white transition-colors">Help Center</span></li>
             <li><span class="cursor-pointer hover:text-white transition-colors">About</span></li>
             <li><RouterLink to="/beranda/kebijakan-privasi" class="hover:text-white transition-colors">Kebijakan Privasi</RouterLink></li>
-=======
-        <div class="flex flex-col md:flex-row items-center justify-center mb-3 gap-3 max-w-5xl mx-auto w-full">
-          <ul class="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-[11px] sm:text-xs font-medium opacity-90">
-            <li><RouterLink to="/" class="hover:text-white transition-colors">Home</RouterLink></li>
-            <li class="relative group cursor-pointer hover:text-white transition-colors py-2">
-              <span class="flex items-center gap-1">Services <ChevronDown class="w-3 h-3" /></span>
-              <div class="absolute bottom-full left-0 mb-2 w-36 bg-white rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 flex flex-col overflow-hidden text-xs font-bold border border-gray-100 py-1" style="color: var(--lj-navy);">
-                <RouterLink to="/peta-resiko" class="px-4 py-2.5 hover:bg-[#EEF1FD] hover:text-[#4E63DA] transition-colors">Peta Risiko</RouterLink>
-                <RouterLink to="/laporan" class="px-4 py-2.5 hover:bg-[#EEF1FD] hover:text-[#4E63DA] transition-colors">Laporan</RouterLink>
-                <RouterLink to="/edukasi" class="px-4 py-2.5 hover:bg-[#EEF1FD] hover:text-[#4E63DA] transition-colors">Edukasi</RouterLink>
-                <RouterLink to="/statistik" class="px-4 py-2.5 hover:bg-[#EEF1FD] hover:text-[#4E63DA] transition-colors">Statistik</RouterLink>
-              </div>
-            </li>
-            <li><RouterLink to="/tentang-kami" class="hover:text-white transition-colors">About</RouterLink></li>
-            <li><RouterLink to="/kebijakan-privasi" class="hover:text-white transition-colors">Kebijakan Privasi</RouterLink></li>
->>>>>>> 26c564d75452f23f72beb716b0c894d2e50a383b
           </ul>
         </div>
         <div class="text-center">
