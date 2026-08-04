@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 // ── reactive state ───────────────────────────────────────────────
-const stage = ref('blank')          // blank | loading | wipe | mosquito-enter | mosquito-idle | entering
+const stage = ref('blank')          // blank | loading | wipe | mosquito-enter | mosquito-idle | entering | entered
 const progress = ref(0)
 const progressPct = ref('0%')
 const canEnter = ref(false)
@@ -57,15 +57,19 @@ async function enterSite() {
   if (!canEnter.value) return
   canEnter.value = false
   setStage('entering')
-  setTimeout(async () => {
-    try {
-      await router.replace({ name: 'home' })
-    } catch (err) {
-      // Navigation failed — revert to idle so the user can try again
-      console.error('Splash navigation failed:', err)
-      setStage('mosquito-idle')
-      canEnter.value = true
-    }
+  // Wait for iris-close animation to finish
+  setTimeout(() => {
+    // Hide the splash overlay so content behind becomes visible
+    setStage('entered')
+    // Ensure the browser has applied display:none before navigating
+    requestAnimationFrame(() => {
+      router.replace({ name: 'home' }).catch(err => {
+        // Navigation failed — revert splash so user can try again
+        console.error('Splash navigation failed:', err)
+        setStage('mosquito-idle')
+        canEnter.value = true
+      })
+    })
   }, 650)  // matches --dur-close
 }
 
@@ -80,10 +84,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- The preloader sits on top; the route change to /beranda unmounts this component -->
+  <!-- The preloader sits on top; hidden via is-entered class before route change -->
   <div
     id="splash-preloader"
     :data-stage="stage"
+    :class="{ 'is-entered': stage === 'entered' }"
     aria-live="polite"
   >
     <!-- ── background blobs ────────────────────────────────── -->
@@ -205,6 +210,11 @@ onMounted(() => {
   background: var(--paper);
   overflow: hidden;
   font-family: 'Inter', 'Satoshi', sans-serif;
+}
+
+/* Hide once iris closes — ensures content beneath is visible before route change */
+#splash-preloader.is-entered {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
