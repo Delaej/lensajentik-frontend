@@ -504,7 +504,7 @@ const fetchStats = async () => {
     </section>
 
     <!-- ─── FAQ ─────────────────────────────────────────────────────────── -->
-    <section class="faq-section hero-full-width relative" style="margin-bottom: 0; padding-bottom: 220px; min-height: 600px; background: #F4F9F6; overflow: hidden;">
+    <section class="faq-section hero-full-width relative z-30" style="margin-bottom: 0; padding-bottom: 220px; min-height: 600px; background: #F4F9F6;">
       <!-- Ambient glow blobs -->
       <div class="absolute top-10 -left-32 w-96 h-96 rounded-full blur-[100px] pointer-events-none opacity-40 z-0" style="background:#95FE6D;"></div>
       <div class="absolute bottom-40 -right-32 w-96 h-96 rounded-full blur-[100px] pointer-events-none opacity-40 z-0" style="background:#4E63DA;"></div>
@@ -642,7 +642,6 @@ const fetchStats = async () => {
 /* FAQ section — white background with rain decoration */
 .faq-section {
   position: relative;
-  overflow: hidden;
   display: block;
   margin-top: 0;
   margin-bottom: 0 !important;
