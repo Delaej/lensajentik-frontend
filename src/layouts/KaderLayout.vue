@@ -158,7 +158,11 @@ const handleLogout = () => {
           </button>
           <span class="font-bold text-slate-900 text-sm">Portal Kader</span>
         </div>
-        <RouterView />
+        <RouterView v-slot="{ Component, route }">
+          <Transition name="child-fade" mode="out-in">
+            <component :is="Component" :key="route.fullPath" />
+          </Transition>
+        </RouterView>
       </main>
     </div>
 

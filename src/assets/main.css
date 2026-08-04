@@ -55,6 +55,7 @@
 ::-webkit-scrollbar-thumb:hover { background: var(--lj-blue); }
 
 /* ─── Page Transitions ─────────────────────────────────────────────────────── */
+/* Top-level route transitions (App.vue) — layout changes */
 .page-enter-active,
 .page-leave-active {
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -62,12 +63,44 @@
 
 .page-enter-from {
   opacity: 0;
-  transform: translateY(16px);
+  transform: translateY(18px);
 }
 
 .page-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateY(-12px);
+}
+
+/* Child-route transitions — public pages: slide + fade */
+.child-slide-enter-active,
+.child-slide-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.child-slide-enter-from {
+  opacity: 0;
+  transform: translateX(24px);
+}
+
+.child-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+/* Child-route transitions — kader / auth pages: quick fade */
+.child-fade-enter-active,
+.child-fade-leave-active {
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.child-fade-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.child-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 /* ─── Scroll Animations ────────────────────────────────────────────────────── */
