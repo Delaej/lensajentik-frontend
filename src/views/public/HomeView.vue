@@ -245,7 +245,7 @@ const fetchStats = async () => {
           :loop="true"
           :autoplay="true"
           class="w-full h-full"
-          :rendererSettings="{ preserveAspectRatio: 'xMidYMax slice' }"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
         />
       </div>
 
@@ -327,7 +327,7 @@ const fetchStats = async () => {
           :loop="true"
           :autoplay="true"
           class="w-full h-full"
-          :rendererSettings="{ preserveAspectRatio: 'xMidYMin slice' }"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
         />
       </div>
       

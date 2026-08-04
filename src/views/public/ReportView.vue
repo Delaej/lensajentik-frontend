@@ -296,7 +296,7 @@ const resetForm = () => {
 <template>
   <div>
     <!-- ─── Header illustration (Lottie full-width) ─── -->
-    <div class="hero-full-width relative overflow-hidden" style="height: 550px; border-radius: 0; background: var(--lj-blue-pale);">
+    <div class="hero-full-width relative overflow-hidden" style="height: 650px; border-radius: 0; background: var(--lj-blue-pale);">
       <!-- Lottie fills full width left to right -->
       <div class="absolute inset-0 z-0 pointer-events-none">
         <Vue3Lottie
@@ -304,7 +304,7 @@ const resetForm = () => {
           :loop="true"
           :autoplay="true"
           class="w-full h-full"
-          :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
         />
       </div>
       <!-- Sway wave bottom -->

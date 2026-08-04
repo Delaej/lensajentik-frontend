@@ -94,14 +94,14 @@ const goToMap = (kode) => router.push(`/beranda/peta-resiko?kode=${kode}`)
   <div style="background-color: var(--lj-bg); min-height: 100vh;">
 
     <!-- ─── Hero illustration (Lottie full-width) ─── -->
-    <div class="hero-full-width relative overflow-hidden" style="height: 550px; border-radius: 0; background: var(--lj-blue-pale);">
+    <div class="hero-full-width relative overflow-hidden" style="height: 650px; border-radius: 0; background: var(--lj-blue-pale);">
       <div class="absolute inset-0 z-0 pointer-events-none">
         <Vue3Lottie
           animationLink="/illustrasi_statistik.json"
           :loop="true"
           :autoplay="true"
           class="w-full h-full"
-          :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
         />
       </div>
       <!-- Sway wave bottom -->

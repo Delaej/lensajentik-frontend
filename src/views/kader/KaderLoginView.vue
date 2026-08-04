@@ -47,7 +47,7 @@ const handleLogin = async () => {
           :loop="true"
           :autoplay="true"
           class="w-full h-full"
-          :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
         />
       </div>
       <!-- Right-facing sway (overlaps the Lottie, pointing left toward the login card) -->

@@ -228,14 +228,14 @@ const nextQuizStep = () => {
 <template>
   <div class="pb-24">
     <!-- ─── Hero illustration (Lottie full-width) ─── -->
-    <div class="hero-full-width relative overflow-hidden" style="height: 550px; border-radius: 0; background: var(--lj-blue-pale);">
+    <div class="hero-full-width relative overflow-hidden" style="height: 650px; border-radius: 0; background: var(--lj-blue-pale);">
       <div class="absolute inset-0 z-0 pointer-events-none">
         <Vue3Lottie
           animationLink="/illustrasi_edukasi.json"
           :loop="true"
           :autoplay="true"
           class="w-full h-full"
-          :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
         />
       </div>
       <!-- Sway wave bottom -->
@@ -334,10 +334,10 @@ const nextQuizStep = () => {
             :loop="true"
             :autoplay="true"
             style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"
-            :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
+            :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
           />
         </div>
-        
+
         <!-- Sway top -->
         <div class="absolute top-0 left-0 w-full z-10 pointer-events-none" style="top: -2px; transform: rotate(180deg);">
           <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
