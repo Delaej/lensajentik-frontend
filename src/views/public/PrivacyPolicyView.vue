@@ -305,7 +305,7 @@ const quickCards = [
 
       <!-- Back button -->
       <RouterLink
-        to="/"
+        to="/beranda"
         class="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 hover:scale-105"
         style="background: rgba(255,255,255,0.15); color: white; backdrop-filter: blur(4px);"
       >
@@ -585,7 +585,7 @@ const quickCards = [
                 <Mail class="w-4 h-4" /> privasi@lensajentik.id
               </a>
               <RouterLink
-                to="/"
+                to="/beranda"
                 class="px-6 py-3 rounded-full text-sm font-bold transition-all duration-200 hover:scale-105"
                 style="background: rgba(255,255,255,0.15); color: white;"
               >

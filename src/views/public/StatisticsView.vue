@@ -87,7 +87,7 @@ const levelColor = (level) => {
   return '#9CA3AF'
 }
 
-const goToMap = (kode) => router.push(`/peta-resiko?kode=${kode}`)
+const goToMap = (kode) => router.push(`/beranda/peta-resiko?kode=${kode}`)
 </script>
 
 <template>

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LensaJentik — Loading</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     LENSAJENTIK — LOADING SEQUENCE
+     ------------------------------------------------------------
+     Alur: kosong -> loading (logo + %) -> transisi "buka lensa"
+     (iris wipe, sesuai nama "Lensa"Jentik) -> nyamuk terbang dari
+     kanan-atas ke tengah -> nyamuk melayang tenang -> spotlight
+     menyala di atasnya -> teks ajakan klik -> klik nyamuk -> lensa
+     menutup -> masuk ke situs.
+
+     GANTI ASET:
+     - Ganti src="nyamuk.png" di bawah dengan path gambar nyamuk
+       asli kamu (PNG transparan, menghadap depan/bawah paling pas).
+       Jika file belum ada, fallback SVG nyamuk otomatis dipakai
+       supaya preview tetap terlihat bagus.
+     - Ganti isi #site dengan markup halaman asli kamu (atau ganti
+       jadi <iframe> ke halaman utama), lalu hapus konten placeholder.
+     ============================================================ */
+
+  :root{
+    --mint-1:#eaf6ec;
+    --mint-2:#dcefe1;
+    --green:#7ed957;
+    --green-dark:#4caf3d;
+    --indigo:#4f5fd6;
+    --navy:#1b2347;
+    --ink:#16213e;
+    --paper:#ffffff;
+
+    --dur-load:2200ms;
+    --dur-wipe:900ms;
+    --dur-fly:1700ms;
+    --dur-spot:900ms;
+    --dur-close:650ms;
+    --dur-blank:550ms;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    overflow:hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
+
+  /* ---------- underlying site (revealed after click) ---------- */
+  #site{
+    position:fixed; inset:0;
+    background:var(--mint-1);
+    opacity:0;
+    transform:scale(1.02);
+    transition:opacity 700ms ease, transform 900ms ease;
+    display:flex; flex-direction:column;
+  }
+  #site.revealed{opacity:1; transform:scale(1);}
+  .site-nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 48px; background:var(--paper);
+    box-shadow:0 2px 10px rgba(27,35,71,.06);
+  }
+  .site-logo{font-family:'Poppins',sans-serif; font-weight:700; font-size:20px; color:var(--navy);}
+  .site-logo span{color:var(--green-dark);}
+  .site-links{display:flex; gap:28px; font-size:14px; font-weight:500; color:var(--ink); opacity:.75;}
+  .site-hero{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:40px;
+  }
+  .site-hero h1{font-family:'Poppins',sans-serif; font-size:clamp(28px,4vw,44px); margin:0 0 12px; color:var(--navy);}
+  .site-hero p{max-width:520px; color:#4b5670; font-size:15px; line-height:1.6;}
+
+  /* ================= PRELOADER ================= */
+  #preloader{
+    position:fixed; inset:0; z-index:100;
+    background:var(--paper);
+    overflow:hidden;
+  }
+
+  /* ---- Background blobs: soft blurred gradients, corner-anchored ---- */
+  .bg-blob{
+    position:absolute; border-radius:50%;
+    filter:blur(70px);
+    opacity:.55;
+    pointer-events:none;
+    z-index:0;
+  }
+  .bg-blob.top-right{
+    width:520px; height:520px;
+    top:-160px; right:-140px;
+    background:radial-gradient(circle, var(--green) 0%, rgba(126,217,87,0) 72%);
+  }
+  .bg-blob.bottom-left{
+    width:560px; height:560px;
+    bottom:-180px; left:-160px;
+    background:radial-gradient(circle, var(--indigo) 0%, rgba(79,95,214,0) 72%);
+  }
+
+  /* ---- Stage 1: loading mark ---- */
+  .loader-stage{
+    position:absolute; inset:0; z-index:2;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:26px;
+    opacity:0;
+    transform:translateY(16px) scale(.96);
+    transition:opacity var(--dur-blank) ease, transform 650ms cubic-bezier(.22,.9,.3,1);
+    pointer-events:none;
+  }
+  body[data-stage="loading"] .loader-stage{
+    opacity:1; transform:translateY(0) scale(1);
+    pointer-events:auto;
+  }
+  body[data-stage="wipe"] .loader-stage,
+  body[data-stage="mosquito-enter"] .loader-stage,
+  body[data-stage="mosquito-idle"] .loader-stage,
+  body[data-stage="entering"] .loader-stage,
+  body[data-stage="entered"] .loader-stage{
+    opacity:0; pointer-events:none;
+  }
+
+  .mark{position:relative; width:96px; height:96px;}
+  .mark svg{width:100%; height:100%; animation:breathe 1.8s ease-in-out infinite;}
+  @keyframes breathe{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.06); }
+  }
+
+  .loader-copy{text-align:center;}
+  .loader-copy .brand{
+    font-family:'Poppins',sans-serif; font-weight:700; font-size:20px; color:var(--navy); margin:0 0 4px;
+    letter-spacing:.2px;
+  }
+  .loader-copy .brand span{color:var(--green-dark);}
+  .loader-copy .tagline{font-size:13px; color:#5b6580; margin:0;}
+
+  .progress-track{
+    width:220px; height:6px; border-radius:999px;
+    background:rgba(27,35,71,.08); overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; width:0%; border-radius:999px;
+    background:linear-gradient(90deg, var(--green) 0%, var(--indigo) 100%);
+    transition:width 120ms linear;
+  }
+  .progress-pct{
+    font-family:'Poppins',sans-serif; font-weight:600; font-size:13px; color:var(--indigo);
+    min-width:38px; text-align:center;
+  }
+  .progress-row{display:flex; align-items:center; gap:10px;}
+
+  /* ---- Iris / lens wipe transition (signature move) ---- */
+  .iris-wipe{
+    position:absolute; inset:0; z-index:2;
+    background:var(--paper);
+    clip-path:circle(0% at 50% 50%);
+    pointer-events:none;
+  }
+  body[data-stage="wipe"] .iris-wipe{
+    animation:irisOpen var(--dur-wipe) cubic-bezier(.65,0,.35,1) forwards;
+  }
+  body[data-stage="mosquito-enter"] .iris-wipe,
+  body[data-stage="mosquito-idle"] .iris-wipe,
+  body[data-stage="entering"] .iris-wipe{
+    clip-path:circle(150% at 50% 50%);
+  }
+  @keyframes irisOpen{
+    from{ clip-path:circle(0% at 50% 50%); }
+    to{ clip-path:circle(150% at 50% 50%); }
+  }
+
+  /* ---- Stage 2: mosquito scene ---- */
+  .scene{
+    position:absolute; inset:0; z-index:2;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:18px;
+    opacity:0;
+  }
+  body[data-stage="mosquito-enter"] .scene,
+  body[data-stage="mosquito-idle"] .scene,
+  body[data-stage="entering"] .scene{ opacity:1; }
+
+  /* soft warm glow behind mosquito, present before hard spotlight */
+  .ambient-glow{
+    position:absolute; width:420px; height:420px; border-radius:50%;
+    background:radial-gradient(circle, rgba(126,217,87,.28) 0%, rgba(79,95,214,.10) 45%, transparent 72%);
+    filter:blur(4px);
+    opacity:0;
+    transition:opacity 700ms ease;
+  }
+  body[data-stage="mosquito-idle"] .ambient-glow,
+  body[data-stage="entering"] .ambient-glow{ opacity:1; }
+
+  /* spotlight vignette — kept intentionally light, not a heavy shadow */
+  .spotlight-overlay{
+    position:absolute; inset:0;
+    background:radial-gradient(circle 170px at 50% 48%, transparent 0%, transparent 55%, rgba(16,21,46,.38) 100%);
+    opacity:0;
+    transition:opacity var(--dur-spot) ease;
+    pointer-events:none;
+  }
+  body[data-stage="mosquito-idle"] .spotlight-overlay,
+  body[data-stage="entering"] .spotlight-overlay{ opacity:1; }
+
+  .mosquito-btn{
+    position:relative;
+    background:none; border:none; padding:36px; margin:0; cursor:default;
+    display:flex; align-items:center; justify-content:center;
+    -webkit-tap-highlight-color:transparent;
+  }
+  body[data-stage="mosquito-idle"] .mosquito-btn{ cursor:pointer; }
+
+  .mosquito-wrap{
+    width:120px; height:120px;
+    transform:translate(64vw,-46vh) rotate(-28deg) scale(.55);
+    opacity:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  body[data-stage="mosquito-enter"] .mosquito-wrap{
+    animation:flyIn var(--dur-fly) cubic-bezier(.22,.9,.3,1) forwards;
+  }
+  body[data-stage="mosquito-idle"] .mosquito-wrap,
+  body[data-stage="entering"] .mosquito-wrap{
+    transform:translate(0,0) rotate(0deg) scale(1); opacity:1;
+    animation:hover 2.6s ease-in-out infinite;
+  }
+  @keyframes flyIn{
+    0%   { transform:translate(64vw,-46vh) rotate(-28deg) scale(.55); opacity:0; }
+    12%  { opacity:1; }
+    42%  { transform:translate(24vw,-14vh) rotate(14deg) scale(.85); }
+    68%  { transform:translate(-6vw,6vh) rotate(-10deg) scale(1.06); }
+    86%  { transform:translate(2.5vw,-2vw) rotate(5deg) scale(.97); }
+    100% { transform:translate(0,0) rotate(0deg) scale(1); opacity:1; }
+  }
+  @keyframes hover{
+    0%,100%{ transform:translate(0,0) rotate(0deg) scale(1); }
+    50%{ transform:translate(0,-8px) rotate(-2deg) scale(1); }
+  }
+
+  /* wing-flutter layer: fast tiny wobble, independent of the flight path */
+  .flutter{ width:100%; height:100%; animation:flutterFast .12s linear infinite; }
+  body[data-stage="mosquito-idle"] .flutter,
+  body[data-stage="entering"] .flutter{ animation:flutterSlow .9s ease-in-out infinite; }
+  @keyframes flutterFast{
+    0%,100%{ transform:rotate(-4deg); }
+    50%{ transform:rotate(4deg); }
+  }
+  @keyframes flutterSlow{
+    0%,100%{ transform:rotate(-1.5deg); }
+    50%{ transform:rotate(1.5deg); }
+  }
+
+  #mosquito-img{ width:100%; height:100%; object-fit:contain; display:block; user-select:none; -webkit-user-drag:none; }
+  .mosquito-fallback{ width:100%; height:100%; display:none; }
+  .mosquito-fallback.show{ display:block; }
+
+  /* click ripple ring hinting at interactivity */
+  .hit-ring{
+    position:absolute; width:130px; height:130px; border-radius:50%;
+    border:1.5px solid rgba(79,95,214,.35);
+    opacity:0; pointer-events:none;
+  }
+  body[data-stage="mosquito-idle"] .hit-ring{
+    opacity:1; animation:ping 1.8s ease-out infinite;
+  }
+  @keyframes ping{
+    0%{ transform:scale(.8); opacity:.55; }
+    80%{ transform:scale(1.35); opacity:0; }
+    100%{ opacity:0; }
+  }
+
+  .cta-text{
+    text-align:center; opacity:0; transform:translateY(-6px);
+    transition:opacity 500ms ease 150ms, transform 500ms ease 150ms;
+    pointer-events:none;
+  }
+  body[data-stage="mosquito-idle"] .cta-text,
+  body[data-stage="entering"] .cta-text{ opacity:1; transform:translateY(0); }
+  .cta-text p{
+    margin:0; padding:9px 20px; border-radius:999px;
+    font-family:'Poppins',sans-serif; font-weight:600; font-size:14px;
+    color:#ffffff; background:rgba(27,35,71,.82);
+    backdrop-filter:blur(4px);
+    box-shadow:0 6px 18px rgba(27,35,71,.18);
+    animation:pulseText 1.8s ease-in-out infinite;
+  }
+  .cta-text span{color:var(--green);}
+  @keyframes pulseText{
+    0%,100%{ opacity:.55; } 50%{ opacity:1; }
+  }
+
+  /* ---- Stage 3: iris close on click ---- */
+  .iris-close{
+    position:absolute; inset:0; z-index:4; background:var(--navy);
+    clip-path:circle(150% at 50% 48%);
+    opacity:0;
+    pointer-events:none;
+  }
+  body[data-stage="entering"] .iris-close{
+    animation:irisClose var(--dur-close) cubic-bezier(.65,0,.35,1) forwards;
+  }
+  @keyframes irisClose{
+    0%{ clip-path:circle(150% at 50% 48%); opacity:1; }
+    100%{ clip-path:circle(0% at 50% 48%); opacity:1; }
+  }
+
+  body[data-stage="entered"] #preloader{ display:none; }
+</style>
+</head>
+<body data-stage="blank">
+
+  <!-- ============ SITU ASLI (letakkan markup situsmu di sini) ============ -->
+  <div id="site">
+    <nav class="site-nav">
+      <div class="site-logo">Lensa<span>Jentik</span></div>
+      <div class="site-links">
+        <span>Beranda</span><span>Peta Resiko</span><span>Laporan</span><span>Edukasi</span><span>Statistik</span>
+      </div>
+    </nav>
+    <div class="site-hero">
+      <h1>Selamat datang di LensaJentik 👋</h1>
+      <p>Ini adalah placeholder halaman utama. Ganti div <code>#site</code> ini dengan markup situsmu yang sebenarnya, atau arahkan ke halaman utama setelah animasi selesai.</p>
+    </div>
+  </div>
+
+  <!-- ============ PRELOADER ============ -->
+  <div id="preloader" aria-live="polite">
+
+    <div class="bg-blob top-right"></div>
+    <div class="bg-blob bottom-left"></div>
+
+    <!-- Stage 1: logo + progress -->
+    <div class="loader-stage">
+      <div class="mark">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 12C34 20 26 34 30 52C33 65 45 72 50 72C50 50 50 30 50 12Z" fill="var(--green)"/>
+          <circle cx="66" cy="24" r="7" fill="var(--navy)"/>
+          <path d="M62 40C74 46 80 58 74 72C71 79 62 84 58 82C58 68 58 54 62 40Z" fill="var(--indigo)"/>
+        </svg>
+      </div>
+      <div class="loader-copy">
+        <p class="brand">Lensa<span>Jentik</span></p>
+        <p class="tagline">Menyiapkan data lingkunganmu...</p>
+      </div>
+      <div class="progress-row">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <span class="progress-pct" id="progressPct">0%</span>
+      </div>
+    </div>
+
+    <!-- Iris wipe transition between stage 1 and stage 2 -->
+    <div class="iris-wipe"></div>
+
+    <!-- Stage 2: mosquito scene -->
+    <div class="scene">
+      <div class="ambient-glow"></div>
+      <div class="spotlight-overlay"></div>
+
+      <button class="mosquito-btn" id="mosquitoBtn" aria-label="Klik nyamuk untuk masuk ke LensaJentik">
+        <div class="hit-ring"></div>
+        <div class="mosquito-wrap" id="mosquitoWrap">
+          <div class="flutter">
+            <!-- Ganti src ini dengan aset nyamuk asli kamu -->
+            <img id="mosquito-img" src="nyamuk.png" alt="Nyamuk"
+                 onerror="document.getElementById('mosquito-img').style.display='none'; document.getElementById('mosquitoFallback').classList.add('show');">
+            <svg id="mosquitoFallback" class="mosquito-fallback" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="46" cy="30" rx="26" ry="14" fill="rgba(79,95,214,.28)" transform="rotate(-24 46 30)"/>
+              <ellipse cx="76" cy="34" rx="26" ry="14" fill="rgba(126,217,87,.28)" transform="rotate(18 76 34)"/>
+              <path d="M60 34C64 46 66 60 64 76C63 88 58 96 54 100" stroke="var(--navy)" stroke-width="5" stroke-linecap="round" fill="none"/>
+              <path d="M56 96 L44 108 M56 96 L50 112 M64 96 L76 108 M64 96 L70 112 M58 60 L40 58 M62 60 L80 58" stroke="var(--navy)" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M56 34 C44 32 34 30 24 26" stroke="var(--navy)" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="59" cy="33" r="6" fill="var(--navy)"/>
+            </svg>
+          </div>
+        </div>
+      </button>
+
+      <div class="cta-text">
+        <p>Ketuk <span>nyamuk</span> untuk masuk</p>
+      </div>
+    </div>
+
+    <!-- Iris close on click -->
+    <div class="iris-close"></div>
+  </div>
+
+<script>
+(function(){
+  var body = document.body;
+  var fill = document.getElementById('progressFill');
+  var pct  = document.getElementById('progressPct');
+  var mosquitoBtn  = document.getElementById('mosquitoBtn');
+  var mosquitoWrap = document.getElementById('mosquitoWrap');
+  var siteEl = document.getElementById('site');
+
+  var canEnter = false;
+
+  // ---- Stage 0: blank -> loading (small delay so the page never "pops" straight into the loader) ----
+  setTimeout(function(){
+    body.setAttribute('data-stage', 'loading');
+    setTimeout(startProgress, 550); // matches --dur-blank
+  }, 200);
+
+  // ---- Stage 1: fake progress (swap for real asset-loading progress if you have one) ----
+  function startProgress(){
+    var progress = 0;
+    var loadTimer = setInterval(function(){
+      progress += Math.random() * 14 + 6;
+      if (progress >= 100){
+        progress = 100;
+        clearInterval(loadTimer);
+        setTimeout(startWipe, 260);
+      }
+      fill.style.width = progress + '%';
+      pct.textContent = Math.round(progress) + '%';
+    }, 160);
+  }
+
+  function startWipe(){
+    body.setAttribute('data-stage', 'wipe');
+    setTimeout(startMosquito, 900); // matches --dur-wipe
+  }
+
+  function startMosquito(){
+    body.setAttribute('data-stage', 'mosquito-enter');
+    mosquitoWrap.addEventListener('animationend', onFlightEnd, { once:true });
+  }
+
+  function onFlightEnd(){
+    body.setAttribute('data-stage', 'mosquito-idle');
+    canEnter = true;
+  }
+
+  function enterSite(){
+    if (!canEnter) return;
+    canEnter = false;
+    body.setAttribute('data-stage', 'entering');
+    setTimeout(function(){
+      body.setAttribute('data-stage', 'entered');
+      siteEl.classList.add('revealed');
+      // Ganti baris di bawah dengan logika aslimu, mis. window.location.href = '/beranda';
+    }, 650); // matches --dur-close
+  }
+
+  mosquitoBtn.addEventListener('click', enterSite);
+  mosquitoBtn.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); enterSite(); }
+  });
+})();
+</script>
+</body>
+</html>

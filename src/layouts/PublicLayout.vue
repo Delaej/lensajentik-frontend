@@ -12,15 +12,15 @@ const isMobileMenuOpen = ref(false)
 const scrolled = ref(false)
 
 const navItems = [
-  { name: 'Beranda',    path: '/' },
-  { name: 'Peta Resiko', path: '/peta-resiko' },
-  { name: 'Laporan',    path: '/laporan' },
-  { name: 'Edukasi',    path: '/edukasi' },
-  { name: 'Statistik',  path: '/statistik' },
+  { name: 'Beranda',    path: '/beranda' },
+  { name: 'Peta Resiko', path: '/beranda/peta-resiko' },
+  { name: 'Laporan',    path: '/beranda/laporan' },
+  { name: 'Edukasi',    path: '/beranda/edukasi' },
+  { name: 'Statistik',  path: '/beranda/statistik' },
 ]
 
 const isActive = (path) => {
-  if (path === '/') return route.path === '/'
+  if (path === '/beranda') return route.path === '/beranda' || route.path === '/beranda/'
   return route.path.startsWith(path)
 }
 
@@ -73,7 +73,7 @@ const emit = defineEmits(['trigger-onboarding'])
       >
 
         <!-- Brand Logo -->
-        <RouterLink to="/" class="flex items-center gap-2 shrink-0 group">
+        <RouterLink to="/beranda" class="flex items-center gap-2 shrink-0 group">
           <img src="/LOGO_LENSAJENTIK.svg" alt="Logo LensaJentik" class="h-6 w-auto transition-transform group-hover:scale-105" />
           <span class="font-bold text-lg tracking-tight" style="color: var(--lj-navy);">
             Lensa<span style="color: var(--lj-green-dk);">Jentik</span>
@@ -100,7 +100,7 @@ const emit = defineEmits(['trigger-onboarding'])
         <div class="flex items-center gap-2 ml-auto">
           <!-- Notification Bell -->
           <RouterLink
-            to="/notifikasi"
+            to="/beranda/notifikasi"
             class="relative w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-[--lj-green-pale]"
             title="Notifikasi"
           >
@@ -166,12 +166,12 @@ const emit = defineEmits(['trigger-onboarding'])
         <!-- Links Row -->
         <div class="flex flex-col md:flex-row items-center justify-between mb-3 gap-3 max-w-5xl mx-auto w-full">
           <ul class="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-8 text-[11px] sm:text-xs font-medium opacity-90">
-            <li><RouterLink to="/" class="hover:text-white transition-colors">Home</RouterLink></li>
+            <li><RouterLink to="/beranda" class="hover:text-white transition-colors">Home</RouterLink></li>
             <li class="flex items-center gap-1 cursor-pointer hover:text-white transition-colors">Services <ChevronDown class="w-3 h-3" /></li>
-            <li><RouterLink to="/edukasi" class="hover:text-white transition-colors">Blog</RouterLink></li>
+            <li><RouterLink to="/beranda/edukasi" class="hover:text-white transition-colors">Blog</RouterLink></li>
             <li><span class="cursor-pointer hover:text-white transition-colors">Help Center</span></li>
             <li><span class="cursor-pointer hover:text-white transition-colors">About</span></li>
-            <li><RouterLink to="/kebijakan-privasi" class="hover:text-white transition-colors">Kebijakan Privasi</RouterLink></li>
+            <li><RouterLink to="/beranda/kebijakan-privasi" class="hover:text-white transition-colors">Kebijakan Privasi</RouterLink></li>
           </ul>
           <div class="flex items-center gap-3 opacity-90">
             <a href="#" class="hover:text-white transition-colors"><Youtube class="w-4 h-4" /></a>

@@ -3,6 +3,9 @@ import PublicLayout from '@/layouts/PublicLayout.vue'
 import KaderLayout from '@/layouts/KaderLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 
+// Opening / splash
+import SplashView from '@/views/SplashView.vue'
+
 // Public views
 import HomeView from '@/views/public/HomeView.vue'
 import RiskMapView from '@/views/public/RiskMapView.vue'
@@ -26,9 +29,19 @@ import KaderNotificationsView from '@/views/kader/KaderNotificationsView.vue'
 import KaderSettingsView from '@/views/kader/KaderSettingsView.vue'
 
 const routes = [
-  // Public Routes (Warga)
+  // ── Opening / Splash ──────────────────────────────────────────
+  // Splash is shown only once per session; user is redirected to
+  // /beranda (home) after clicking the mosquito.
   {
     path: '/',
+    name: 'splash',
+    component: SplashView,
+    meta: { title: 'LensaJentik — Selamat Datang' },
+  },
+
+  // Public Routes (Warga) — mounted under /beranda
+  {
+    path: '/beranda',
     component: PublicLayout,
     children: [
       {
@@ -158,7 +171,7 @@ const routes = [
     ],
   },
 
-  // Catch-all 404
+  // Catch-all 404 → splash
   {
     path: '/:pathMatch(.*)*',
     redirect: '/',

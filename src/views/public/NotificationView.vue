@@ -79,7 +79,7 @@ const formatDate = (d) => {
 
       <!-- Header -->
       <div class="flex items-center justify-between mb-8">
-        <RouterLink to="/" class="w-8 h-8 flex items-center justify-center hover:bg-black/5 rounded-full transition-colors">
+        <RouterLink to="/beranda" class="w-8 h-8 flex items-center justify-center hover:bg-black/5 rounded-full transition-colors">
           <ArrowLeft class="w-5 h-5" style="color: var(--lj-navy);" />
         </RouterLink>
         <div class="px-4 py-1.5 rounded-full border-2 text-xs font-bold" style="border-color: #95FE6D; background: white; color: var(--lj-navy);">

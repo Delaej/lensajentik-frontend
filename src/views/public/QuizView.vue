@@ -88,7 +88,7 @@ const optionPrefix = ['A', 'B', 'C', 'D', 'E']
     <div class="max-w-2xl mx-auto px-4 sm:px-6 py-10 relative z-10 space-y-12 min-h-screen flex flex-col">
       <!-- Header -->
       <div class="flex items-center justify-between">
-        <button @click="isFirstQ ? $router.push('/edukasi') : goPrev()" class="w-8 h-8 flex items-center justify-center hover:bg-black/5 rounded-full transition-colors">
+        <button @click="isFirstQ ? $router.push('/beranda/edukasi') : goPrev()" class="w-8 h-8 flex items-center justify-center hover:bg-black/5 rounded-full transition-colors">
           <ChevronLeft class="w-5 h-5" style="color: var(--lj-navy);" />
         </button>
         <div class="px-4 py-1.5 rounded-full border-2 text-xs font-bold" style="border-color: #95FE6D; background: white; color: var(--lj-navy);">
