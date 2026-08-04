@@ -6,16 +6,13 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 // ── reactive state ───────────────────────────────────────────────
-const stage = ref('blank')          // blank | loading | wipe | mosquito-enter | mosquito-idle | entering | entered
+const stage = ref('blank')          // blank | loading | wipe | mosquito-enter | mosquito-idle | entering
 const progress = ref(0)
 const progressPct = ref('0%')
 const canEnter = ref(false)
-const siteRevealed = ref(false)
 
 // ── template refs ────────────────────────────────────────────────
 const mosquitoWrap = ref(null)
-const mosquitoImg  = ref(null)
-const fallbackSvg  = ref(null)
 
 // ── helpers ──────────────────────────────────────────────────────
 function setStage(s) { stage.value = s }
@@ -56,20 +53,20 @@ function onFlightEnd() {
   canEnter.value = true
 }
 
-function enterSite() {
+async function enterSite() {
   if (!canEnter.value) return
   canEnter.value = false
   setStage('entering')
-  setTimeout(() => {
-    setStage('entered')
-    // Navigate to main app
-    router.replace({ name: 'home' })
+  setTimeout(async () => {
+    try {
+      await router.replace({ name: 'home' })
+    } catch (err) {
+      // Navigation failed — revert to idle so the user can try again
+      console.error('Splash navigation failed:', err)
+      setStage('mosquito-idle')
+      canEnter.value = true
+    }
   }, 650)  // matches --dur-close
-}
-
-function handleMosquitoImgError() {
-  if (mosquitoImg.value)  mosquitoImg.value.style.display = 'none'
-  if (fallbackSvg.value)  fallbackSvg.value.classList.add('show')
 }
 
 // ── lifecycle ────────────────────────────────────────────────────
@@ -83,11 +80,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- The preloader sits on top; once "entered" stage fires we navigate away -->
+  <!-- The preloader sits on top; the route change to /beranda unmounts this component -->
   <div
     id="splash-preloader"
     :data-stage="stage"
-    :class="{ 'is-entered': stage === 'entered' }"
     aria-live="polite"
   >
     <!-- ── background blobs ────────────────────────────────── -->
@@ -136,17 +132,9 @@ onMounted(() => {
         <div class="hit-ring"></div>
         <div class="mosquito-wrap" ref="mosquitoWrap" id="mosquitoWrap">
           <div class="flutter">
-            <img
-              ref="mosquitoImg"
-              id="mosquito-img"
-              :src="'/nyamuk.png'"
-              alt="Nyamuk"
-              @error="handleMosquitoImgError"
-            />
+            <!-- Primary mosquito visual — inline SVG, always visible -->
             <svg
-              ref="fallbackSvg"
-              id="mosquitoFallback"
-              class="mosquito-fallback"
+              class="mosquito-svg"
               viewBox="0 0 120 120"
               xmlns="http://www.w3.org/2000/svg"
             >
@@ -176,7 +164,7 @@ onMounted(() => {
    LENSAJENTIK — SPLASH / OPENING PAGE (Vue 3 SFC)
    Alur: kosong → loading (logo + %) → iris wipe → nyamuk
          terbang → melayang → spotlight → ketuk → iris tutup
-         → router.replace('/') → masuk ke situs.
+         → router.replace('/beranda') → masuk ke situs.
    ============================================================ */
 
 :root {
@@ -217,11 +205,6 @@ onMounted(() => {
   background: var(--paper);
   overflow: hidden;
   font-family: 'Inter', 'Satoshi', sans-serif;
-}
-
-/* Hide once fully entered (router will navigate away but just in case) */
-#splash-preloader.is-entered {
-  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -279,8 +262,7 @@ onMounted(() => {
 [data-stage='wipe'] .loader-stage,
 [data-stage='mosquito-enter'] .loader-stage,
 [data-stage='mosquito-idle'] .loader-stage,
-[data-stage='entering'] .loader-stage,
-[data-stage='entered'] .loader-stage {
+[data-stage='entering'] .loader-stage {
   opacity: 0;
   pointer-events: none;
 }
@@ -474,6 +456,7 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   animation: flutterFast 0.12s linear infinite;
+  position: relative;
 }
 [data-stage='mosquito-idle'] .flutter,
 [data-stage='entering'] .flutter {
@@ -488,21 +471,14 @@ onMounted(() => {
   50%      { transform: rotate(1.5deg); }
 }
 
-#mosquito-img {
+/* Primary mosquito visual — inline SVG, always visible */
+.mosquito-svg {
   width: 100%;
   height: 100%;
-  object-fit: contain;
   display: block;
   user-select: none;
   -webkit-user-drag: none;
 }
-.mosquito-fallback {
-  width: 100%;
-  height: 100%;
-  display: none;
-}
-.mosquito-fallback.show { display: block; }
-
 /* click ripple ring */
 .hit-ring {
   position: absolute;
