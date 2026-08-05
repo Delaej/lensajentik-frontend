@@ -25,7 +25,7 @@ let resizeObserver = null
 let mutationObserver = null
 
 // ── track the target element ───────────────────────────────────────
-function updateSpotlight() {
+async function updateSpotlight() {
   const step = currentStep.value
   if (!step) return
 
@@ -43,6 +43,12 @@ function updateSpotlight() {
       return
     }
 
+    // Scroll the target into view (smooth, centered)
+    el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+
+    // Wait for scroll to settle, then position spotlight
+    await waitForScrollSettle(el)
+
     const rect = el.getBoundingClientRect()
     // add padding around the target
     const pad = 8
@@ -56,6 +62,35 @@ function updateSpotlight() {
   } catch {
     // ignore errors from invalid selectors
   }
+}
+
+// ── wait for scroll to finish ──────────────────────────────────────
+function waitForScrollSettle(targetEl) {
+  return new Promise((resolve) => {
+    let lastY = window.scrollY
+    let stableCount = 0
+    const check = () => {
+      const currentY = window.scrollY
+      if (Math.abs(currentY - lastY) < 2) {
+        stableCount++
+        if (stableCount >= 4) {
+          // Double-check the element is visible
+          const rect = targetEl.getBoundingClientRect()
+          const isVisible = rect.top > -50 && rect.bottom < window.innerHeight + 50
+          if (isVisible || stableCount >= 8) {
+            resolve()
+            return
+          }
+        }
+      } else {
+        stableCount = 0
+      }
+      lastY = currentY
+      requestAnimationFrame(check)
+    }
+    // Start checking after a short delay to let the smooth scroll begin
+    setTimeout(() => requestAnimationFrame(check), 80)
+  })
 }
 
 function updateTooltipPosition(preferred) {
@@ -139,18 +174,52 @@ function onKeydown(e) {
 watch([currentStepIdx, isActive], async () => {
   if (isActive.value) {
     await nextTick()
-    updateSpotlight()
+    await updateSpotlight()
   }
 })
 
 // ── observe DOM mutations while tour is active ──────────────────────
 function startObserving() {
-  resizeObserver = new ResizeObserver(() => updateSpotlight())
+  resizeObserver = new ResizeObserver(() => {
+    const step = currentStep.value
+    if (!step) return
+    try {
+      const el = document.querySelector(step.selector)
+      if (el) {
+        const rect = el.getBoundingClientRect()
+        const pad = 8
+        spotRect.value = {
+          top: rect.top - pad,
+          left: rect.left - pad,
+          width: rect.width + pad * 2,
+          height: rect.height + pad * 2,
+        }
+        updateTooltipPosition(step.position || 'bottom')
+      }
+    } catch { /* ignore */ }
+  })
   resizeObserver.observe(document.body)
 
   mutationObserver = new MutationObserver(() => {
-    // small delay to let DOM settle
-    requestAnimationFrame(() => updateSpotlight())
+    // small delay to let DOM settle, then update (no scroll needed for mutations)
+    requestAnimationFrame(() => {
+      const step = currentStep.value
+      if (!step) return
+      try {
+        const el = document.querySelector(step.selector)
+        if (el) {
+          const rect = el.getBoundingClientRect()
+          const pad = 8
+          spotRect.value = {
+            top: rect.top - pad,
+            left: rect.left - pad,
+            width: rect.width + pad * 2,
+            height: rect.height + pad * 2,
+          }
+          updateTooltipPosition(step.position || 'bottom')
+        }
+      } catch { /* ignore */ }
+    })
   })
   mutationObserver.observe(document.body, { childList: true, subtree: true, attributes: true })
 }

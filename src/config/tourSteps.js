@@ -10,39 +10,39 @@ export const tourSteps = {
   // ── Beranda / Home ──────────────────────────────────────────────
   home: [
     {
-      selector: 'header',
-      title: 'Navigasi Utama',
+      selector: 'h1',
+      title: 'Hero & Judul Utama',
       description:
-        'Navbar mengambang berisi menu Beranda, Peta Resiko, Laporan, Edukasi, dan Statistik. Klik menu mana saja untuk berpindah halaman.',
+        'Bagian pembuka LensaJentik. Judul dan tombol "Lihat Peta Sekarang" mengajak kamu langsung mengeksplorasi peta risiko wilayahmu.',
       position: 'bottom',
     },
     {
-      selector: 'header a[href="/beranda/peta-resiko"]',
-      title: 'Peta Resiko',
+      selector: 'section:nth-of-type(2)',
+      title: 'Tentang LensaJentik',
       description:
-        'Buka Peta Resiko Web-GIS untuk melihat sebaran risiko DBD di wilayah kamu secara real-time.',
+        'Bagian ini menjelaskan misi kami dan menampilkan data statistik darurat DBD di Indonesia — rekor tertinggi, beban global, dan ketimpangan antarwilayah.',
       position: 'bottom',
     },
     {
-      selector: 'header a[href="/beranda/laporan"]',
-      title: 'Laporan',
+      selector: 'section:nth-of-type(3)',
+      title: 'Fitur Unggulan',
       description:
-        'Laporkan temuan genangan jentik nyamuk di sekitar kamu. Data ini membantu pemetaan risiko.',
+        'Slider interaktif yang menampilkan empat fitur utama: Peta Risiko, Laporan Warga, Edukasi, dan Statistik. Gunakan panah kiri/kanan atau dot navigasi untuk menjelajah.',
       position: 'bottom',
     },
     {
-      selector: 'header a[href="/beranda/edukasi"]',
-      title: 'Edukasi',
+      selector: 'section:nth-of-type(4)',
+      title: 'Cara Kerja',
       description:
-        'Akses artikel kesehatan, kalkulator risiko personal, dan kuis interaktif tentang DBD & malaria.',
+        'Diagram langkah-demi-langkah menjelaskan alur LensaJentik: buka peta → laporkan genangan → subscribe wilayah → pantau perkembangan. Ketuk nomor langkah untuk melihat detailnya.',
       position: 'bottom',
     },
     {
-      selector: 'header a[href="/kader/login"]',
-      title: 'Login Kader',
+      selector: '.faq-section',
+      title: 'Pertanyaan Umum (FAQ)',
       description:
-        'Kader kesehatan bisa login di sini untuk mengelola data ABJ, laporan, dan notifikasi.',
-      position: 'bottom',
+        'Kumpulan pertanyaan paling sering diajukan seputar LensaJentik. Ketuk pertanyaan untuk melihat jawabannya — tidak perlu login untuk mengakses.',
+      position: 'top',
     },
   ],
 
