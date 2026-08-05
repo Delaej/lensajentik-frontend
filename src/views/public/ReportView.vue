@@ -300,7 +300,7 @@ const resetForm = () => {
 <template>
   <div>
     <!-- ─── Header illustration (Lottie full-width) ─── -->
-    <div class="hero-full-width relative overflow-hidden" style="height: 650px; border-radius: 0; background: var(--lj-blue-pale);">
+    <div id="report-hero" class="hero-full-width relative overflow-hidden" style="height: 650px; border-radius: 0; background: var(--lj-blue-pale);">
       <!-- Lottie centered, content at designed size — background fills edges -->
       <div class="absolute inset-0 z-0 pointer-events-none flex items-center justify-center">
         <Vue3Lottie
@@ -336,7 +336,7 @@ const resetForm = () => {
         <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border" style="border-color: var(--lj-border);">
 
         <!-- Map GIS Section -->
-        <div class="animate-on-scroll space-y-0" style="border: 2px solid var(--lj-green-dk); border-radius: 20px;">
+        <div id="report-map-section" class="animate-on-scroll space-y-0" style="border: 2px solid var(--lj-green-dk); border-radius: 20px;">
 
           <!-- Search bar OUTSIDE overflow-hidden card (above map) -->
           <div class="p-3 border-b bg-white relative" style="border-color: var(--lj-border); border-radius: 18px 18px 0 0; z-index: 9999;">
@@ -395,7 +395,7 @@ const resetForm = () => {
         </div>
 
         <!-- Alamat Edit Manual -->
-        <div class="animate-on-scroll">
+        <div id="report-address-section" class="animate-on-scroll mt-6">
           <label class="block text-sm font-bold mb-2" style="color: var(--lj-navy);">Alamat Lokasi Genangan</label>
           <p class="text-xs text-gray-500 mb-2">Anda dapat mengedit alamat yang terdeteksi agar lebih spesifik.</p>
           <textarea
@@ -408,7 +408,7 @@ const resetForm = () => {
         </div>
 
         <!-- Identity toggle -->
-        <div class="grid grid-cols-2 gap-3 animate-on-scroll">
+        <div id="report-mode-section" class="grid grid-cols-2 gap-3 animate-on-scroll mt-6">
           <button
             @click="reportMode = 'identitas'"
             class="py-3 rounded-2xl text-sm font-bold transition-all"
@@ -432,7 +432,7 @@ const resetForm = () => {
         </div>
 
         <!-- Form -->
-        <form @submit.prevent="handleSubmit" class="space-y-6 animate-on-scroll">
+        <form id="report-form-section" @submit.prevent="handleSubmit" class="space-y-6 animate-on-scroll mt-6">
 
           <!-- Name (only if identitas) -->
           <Transition name="slide-toggle">
@@ -496,6 +496,7 @@ const resetForm = () => {
 
           <!-- Submit -->
           <button
+            id="report-submit-btn"
             type="submit"
             :disabled="isSubmitting"
             class="lj-btn-primary w-full justify-center py-4 text-base disabled:opacity-50 mt-4 shadow-lg hover:scale-[1.02]"

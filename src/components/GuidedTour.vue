@@ -21,6 +21,8 @@ const {
 const spotRect = ref({ top: 0, left: 0, width: 0, height: 0, visible: false })
 const tooltipStyle = ref({})
 const tooltipArrow = ref('bottom')
+const tooltipCardRef = ref(null)
+
 let animFrameId = null
 let resizeObserver = null
 let mutationObserver = null
@@ -37,7 +39,7 @@ function calculateRect() {
     const el = document.querySelector(step.selector)
     if (!el) {
       // Fallback: center of screen
-      const w = Math.min(window.innerWidth * 0.8, 500)
+      const w = Math.min(window.innerWidth * 0.85, 480)
       const h = 200
       spotRect.value = {
         top: (window.innerHeight - h) / 2,
@@ -51,7 +53,7 @@ function calculateRect() {
     }
 
     const rect = el.getBoundingClientRect()
-    const pad = 10
+    const pad = 8
 
     spotRect.value = {
       top: rect.top - pad,
@@ -82,12 +84,12 @@ async function updateSpotlight(shouldScroll = true) {
     el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
   }
 
-  // Continuously track element position during animation / scrolling
+  // Track element during smooth scroll animation
   let frames = 0
   const track = () => {
     calculateRect()
     frames++
-    if (frames < 30) {
+    if (frames < 35) {
       animFrameId = requestAnimationFrame(track)
     }
   }
@@ -98,34 +100,24 @@ async function updateSpotlight(shouldScroll = true) {
 // ── tooltip positioning math ───────────────────────────────────────
 function updateTooltipPosition(preferred = 'bottom') {
   const r = spotRect.value
-  const tooltipW = 340
-  const tooltipH = 160
+  if (!r.visible) return
+
+  // Measure card if mounted, fallback to 340x200
+  const cardEl = tooltipCardRef.value
+  const tooltipW = cardEl ? cardEl.offsetWidth : 340
+  const tooltipH = cardEl ? cardEl.offsetHeight : 200
   const gap = 16
-  const margin = 16
+  const margin = 20
 
-  const positions = [preferred, 'bottom', 'top', 'right', 'left']
-  let best = 'bottom'
+  const winW = window.innerWidth
+  const winH = window.innerHeight
 
-  for (const pos of positions) {
-    let fits = false
-    switch (pos) {
-      case 'bottom':
-        fits = r.top + r.height + tooltipH + gap + margin < window.innerHeight
-        break
-      case 'top':
-        fits = r.top - tooltipH - gap - margin > 0
-        break
-      case 'right':
-        fits = r.left + r.width + tooltipW + gap + margin < window.innerWidth
-        break
-      case 'left':
-        fits = r.left - tooltipW - gap - margin > 0
-        break
-    }
-    if (fits) {
-      best = pos
-      break
-    }
+  // Determine best position
+  let best = preferred
+  if (preferred === 'bottom' && r.top + r.height + tooltipH + gap > winH - margin) {
+    best = 'top'
+  } else if (preferred === 'top' && r.top - tooltipH - gap < margin) {
+    best = 'bottom'
   }
 
   tooltipArrow.value = best
@@ -136,33 +128,38 @@ function updateTooltipPosition(preferred = 'bottom') {
 
   switch (best) {
     case 'bottom':
-      tLeft = clamp(centerX - tooltipW / 2, margin, window.innerWidth - tooltipW - margin)
+      tLeft = centerX - tooltipW / 2
       tTop = r.top + r.height + gap
       break
     case 'top':
-      tLeft = clamp(centerX - tooltipW / 2, margin, window.innerWidth - tooltipW - margin)
+      tLeft = centerX - tooltipW / 2
       tTop = r.top - tooltipH - gap
       break
     case 'right':
       tLeft = r.left + r.width + gap
-      tTop = clamp(centerY - tooltipH / 2, margin + 60, window.innerHeight - tooltipH - margin)
+      tTop = centerY - tooltipH / 2
       break
     case 'left':
       tLeft = r.left - tooltipW - gap
-      tTop = clamp(centerY - tooltipH / 2, margin + 60, window.innerHeight - tooltipH - margin)
+      tTop = centerY - tooltipH / 2
       break
     default:
-      tLeft = clamp(centerX - tooltipW / 2, margin, window.innerWidth - tooltipW - margin)
+      tLeft = centerX - tooltipW / 2
       tTop = r.top + r.height + gap
   }
 
+  // STRICT VIEWPORT CLAMPING (Never submerges or goes offscreen)
+  const clampedLeft = clamp(tLeft, margin, winW - tooltipW - margin)
+  const clampedTop = clamp(tTop, margin, winH - tooltipH - margin)
+
   tooltipStyle.value = {
-    left: `${tLeft}px`,
-    top: `${tTop}px`,
+    left: `${clampedLeft}px`,
+    top: `${clampedTop}px`,
   }
 }
 
 function clamp(v, min, max) {
+  if (max < min) return min
   return Math.max(min, Math.min(max, v))
 }
 
@@ -226,7 +223,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- ── Floating "?" FAB button (always fixed bottom right) ──────── -->
+  <!-- ── Floating "?" FAB button (fixed bottom right) ─────────────── -->
   <button
     v-if="!isActive"
     class="tour-fab"
@@ -257,14 +254,24 @@ onUnmounted(() => {
       <!-- Tooltip Card -->
       <div
         v-if="currentStep && spotRect.visible"
+        ref="tooltipCardRef"
         class="tour-tooltip"
         :class="'arrow-' + tooltipArrow"
         :style="tooltipStyle"
       >
+        <!-- Top right close button -->
+        <button
+          class="tour-close-corner"
+          title="Tutup panduan"
+          @click.stop="stop"
+        >
+          <X class="w-4 h-4" />
+        </button>
+
         <!-- Step Indicator & Progress Dots -->
         <div class="tour-header">
           <div class="tour-step-badge">
-            Langkah {{ currentStepIdx + 1 }} dari {{ totalSteps }}
+            LANGKAH {{ currentStepIdx + 1 }} / {{ totalSteps }}
           </div>
 
           <!-- Progress dots -->
@@ -291,16 +298,11 @@ onUnmounted(() => {
             class="tour-btn tour-btn-prev"
             @click.stop="prev"
           >
-            <ChevronLeft class="w-4 h-4" />
+            <ChevronLeft class="w-3.5 h-3.5" />
             Sebelumnya
           </button>
           
           <div class="tour-spacer" />
-
-          <button class="tour-btn tour-btn-close" @click.stop="stop">
-            <X class="w-4 h-4" />
-            Tutup
-          </button>
 
           <button
             v-if="!isLastStep"
@@ -308,7 +310,7 @@ onUnmounted(() => {
             @click.stop="next"
           >
             Lanjutkan
-            <ChevronRight class="w-4 h-4" />
+            <ChevronRight class="w-3.5 h-3.5" />
           </button>
 
           <button
@@ -317,14 +319,14 @@ onUnmounted(() => {
             @click.stop="stop"
           >
             Selesai
-            <ChevronRight class="w-4 h-4" />
+            <ChevronRight class="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
       <!-- Skip Tour Button -->
       <button class="tour-skip-all" @click="stop">
-        Lewati Panduan ✕
+        Lewati panduan
       </button>
     </div>
   </Teleport>
@@ -395,10 +397,10 @@ onUnmounted(() => {
   border-radius: 16px;
   box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.65);
   pointer-events: none;
-  transition: top 0.2s cubic-bezier(0.22, 0.61, 0.36, 1),
-              left 0.2s cubic-bezier(0.22, 0.61, 0.36, 1),
-              width 0.2s cubic-bezier(0.22, 0.61, 0.36, 1),
-              height 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition: top 0.18s cubic-bezier(0.22, 0.61, 0.36, 1),
+              left 0.18s cubic-bezier(0.22, 0.61, 0.36, 1),
+              width 0.18s cubic-bezier(0.22, 0.61, 0.36, 1),
+              height 0.18s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 /* Outer glowing accent ring */
@@ -416,21 +418,45 @@ onUnmounted(() => {
 .tour-tooltip {
   position: fixed;
   z-index: 10002;
-  width: 340px;
+  width: 350px;
   max-width: calc(100vw - 32px);
   background: #ffffff;
   border-radius: 20px;
   padding: 20px 22px 18px;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.8);
-  transition: left 0.2s cubic-bezier(0.22, 0.61, 0.36, 1),
-              top 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.8);
+  transition: left 0.18s cubic-bezier(0.22, 0.61, 0.36, 1),
+              top 0.18s cubic-bezier(0.22, 0.61, 0.36, 1);
   font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
-  animation: tooltipFadeIn 0.25s ease-out;
+  animation: tooltipFadeIn 0.2s ease-out;
+  box-sizing: border-box;
 }
 
 @keyframes tooltipFadeIn {
   from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
+}
+
+/* Close corner button */
+.tour-close-corner {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tour-close-corner:hover {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 /* Arrow indicator */
@@ -469,12 +495,13 @@ onUnmounted(() => {
 .tour-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 12px;
+  padding-right: 28px; /* space for close button */
 }
 
 .tour-step-badge {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -482,17 +509,18 @@ onUnmounted(() => {
   background: var(--lj-blue-pale, #EEF1FD);
   padding: 3px 10px;
   border-radius: 999px;
+  white-space: nowrap;
 }
 
 .tour-dots {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .tour-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #cbd5e1;
   border: none;
@@ -502,7 +530,7 @@ onUnmounted(() => {
 }
 
 .tour-dot.active {
-  width: 18px;
+  width: 16px;
   border-radius: 999px;
   background: var(--lj-blue, #4E63DA);
 }
@@ -510,7 +538,7 @@ onUnmounted(() => {
 /* ── Title & Description ────────────────────────────────────────── */
 .tour-step-title {
   margin: 0 0 6px;
-  font-size: 16.5px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--lj-navy, #1E2B5B);
   line-height: 1.3;
@@ -518,7 +546,7 @@ onUnmounted(() => {
 
 .tour-step-desc {
   margin: 0 0 16px;
-  font-size: 13px;
+  font-size: 12.5px;
   line-height: 1.6;
   color: #475569;
 }
@@ -528,6 +556,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
 }
 
 .tour-spacer {
@@ -537,26 +566,25 @@ onUnmounted(() => {
 .tour-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   border: none;
   border-radius: 999px;
-  padding: 7px 15px;
+  padding: 7px 16px;
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
-.tour-btn-prev,
-.tour-btn-close {
+.tour-btn-prev {
   background: #f1f5f9;
   color: #475569;
 }
 
-.tour-btn-prev:hover,
-.tour-btn-close:hover {
+.tour-btn-prev:hover {
   background: #e2e8f0;
   color: #1e293b;
 }

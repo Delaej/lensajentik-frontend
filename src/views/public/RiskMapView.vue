@@ -446,6 +446,15 @@ const predictionChartData = computed(() => {
       <!-- Map -->
       <div ref="mapContainer" :style="{ height: '480px' }" class="w-full z-0" />
 
+      <!-- Legenda Risiko (Overlay Peta) -->
+      <div class="risk-legend absolute bottom-4 left-4 z-20 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-lg border flex flex-wrap items-center gap-3 text-xs" style="border-color: var(--lj-border);">
+        <span class="font-bold" style="color: var(--lj-navy);">Legenda Risiko:</span>
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span><span class="font-semibold text-gray-700">Tinggi</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span><span class="font-semibold text-gray-700">Sedang</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span><span class="font-semibold text-gray-700">Rendah</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-gray-400 inline-block"></span><span class="font-semibold text-gray-700">Belum Ada Data</span></div>
+      </div>
+
       <!-- Hover Popup: Ringkasan Kecamatan -->
       <div
         v-if="hoverPopupVisible && hoverPopupData"

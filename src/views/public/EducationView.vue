@@ -254,7 +254,7 @@ const nextQuizStep = () => {
       </div>
 
       <!-- ─── Fakta DBD Slider ─── -->
-      <section class="animate-on-scroll relative">
+      <section id="edukasi-stats" class="animate-on-scroll relative">
         <!-- Ambient glow blobs -->
         <div class="absolute top-10 -left-32 w-96 h-96 rounded-full blur-[100px] pointer-events-none opacity-40 z-0" style="background:#95FE6D;"></div>
         <div class="absolute bottom-10 -right-32 w-96 h-96 rounded-full blur-[100px] pointer-events-none opacity-40 z-0" style="background:#4E63DA;"></div>
@@ -401,7 +401,7 @@ const nextQuizStep = () => {
       </section>
 
       <!-- ─── Artikel DBD ─── -->
-      <section class="animate-on-scroll">
+      <section id="edukasi-artikel" class="animate-on-scroll">
         <div class="flex justify-center w-full"><div class="lj-section-label mb-4 text-center" style="width: fit-content;">ARTIKEL TERKAIT DBD</div></div>
         <div class="text-center mb-10">
           <h2 class="lj-heading">
@@ -476,7 +476,7 @@ const nextQuizStep = () => {
       </section>
 
       <!-- ─── Kalkulator Risiko DBD ─── -->
-      <section class="animate-on-scroll">
+      <section id="edukasi-kalkulator" class="animate-on-scroll">
         <div class="flex justify-center w-full"><div class="lj-section-label mb-4 text-center" style="width: fit-content;">KALKULATOR RISIKO DBD</div></div>
 
         <div
@@ -495,7 +495,7 @@ const nextQuizStep = () => {
             <p class="text-sm leading-relaxed" style="color: var(--lj-muted);">
               Jawab beberapa pertanyaan singkat soal kondisi rumah dan lingkunganmu — hasilnya langsung kelihatan, lengkap sama saran yang bisa langsung kamu praktikkan.
             </p>
-            <button @click="startQuiz" class="lj-btn-primary px-8 shadow-lg">
+            <button id="quiz-start-btn" @click="startQuiz" class="lj-btn-primary px-8 shadow-lg">
                Mulai Kuis
             </button>
           </div>

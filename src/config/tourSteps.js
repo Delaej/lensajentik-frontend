@@ -1,6 +1,6 @@
 // ── Guided Tour Step Definitions ────────────────────────────────────
 // Setiap route name memetakan ke array step:
-//   selector    — CSS selector elemen yang di-spotlight (bisa beberapa dipisah koma)
+//   selector    — CSS selector elemen yang di-spotlight
 //   title       — label singkat di tooltip
 //   description — penjelasan konten
 //   position    — 'bottom' | 'top' | 'left' | 'right' (default 'bottom')
@@ -63,7 +63,7 @@ export const tourSteps = {
       position: 'bottom',
     },
     {
-      selector: '.animate-on-scroll.flex.gap-3',
+      selector: 'input[placeholder*="Cari"], .animate-on-scroll.flex.gap-3',
       title: '🔍 Cari Wilayah',
       description:
         'Ketik nama kecamatan, kabupaten, atau kota di sini untuk melihat risiko spesifik wilayahmu. Klik hasil pencarian untuk menampilkan data detail di peta.',
@@ -73,7 +73,14 @@ export const tourSteps = {
       selector: '.animate-on-scroll.relative.lj-card',
       title: '📍 Peta Interaktif',
       description:
-        'Peta Web-GIS menampilkan semua wilayah dengan warna risiko: 🔴 Merah (tinggi), 🟡 Kuning (sedang), 🟢 Hijau (rendah). Zoom masuk dan klik wilayah untuk detail.',
+        'Peta Web-GIS menampilkan semua wilayah dengan warna risiko. Zoom masuk dan klik wilayah mana saja untuk melihat data skor risiko dan cuaca.',
+      position: 'top',
+    },
+    {
+      selector: '.risk-legend',
+      title: '🎨 Legenda Tingkat Risiko',
+      description:
+        'Legenda warna peta: 🔴 Merah (Risiko Tinggi / Banyak Jentik), 🟡 Kuning (Risiko Sedang), 🟢 Hijau (Risiko Rendah / Aman), ⚪ Abu-Abu (Belum Ada Data).',
       position: 'top',
     },
   ],
@@ -81,38 +88,45 @@ export const tourSteps = {
   // ── Laporan ─────────────────────────────────────────────────────────
   laporan: [
     {
-      selector: '.hero-full-width',
+      selector: '#report-hero',
       title: '📋 Halaman Laporan',
       description:
-        'Di sini kamu bisa melaporkan temuan genangan air atau sarang jentik nyamuk di lingkunganmu. Setiap laporan membantu sistem memetakan risiko lebih akurat.',
+        'Di sini kamu bisa melaporkan temuan genangan air atau sarang jentik nyamuk di lingkunganmu. Setiap laporan membantu sistem memetakan risiko secara akurat.',
       position: 'bottom',
     },
     {
-      selector: '.animate-on-scroll.space-y-0',
+      selector: '#report-map-section',
       title: '🗺️ Pilih Lokasi di Peta',
       description:
-        'Gunakan kolom pencarian untuk mencari wilayahmu, atau seret marker di peta untuk menentukan lokasi genangan secara akurat.',
+        'Gunakan kolom pencarian untuk mencari kelurahan/kecamatanmu, atau geser marker di peta untuk menentukan titik lokasi genangan air.',
       position: 'bottom',
     },
     {
-      selector: 'textarea',
-      title: '📝 Deskripsi Alamat',
+      selector: '#report-address-section',
+      title: '📝 Alamat Spesifik',
       description:
-        'Tulis alamat lengkap lokasi genangan — misalnya: "Jl. Mawar No.5, di samping selokan". Makin detail, makin mudah kader menindaklanjuti.',
+        'Tuliskan alamat lengkap lokasi genangan — contoh: "Jl. Diponegoro No 10, selokan sebelah kanan rumah". Makin jelas, makin cepat kader memverifikasi.',
       position: 'top',
     },
     {
-      selector: 'form.space-y-6',
-      title: '📸 Form Laporan',
+      selector: '#report-mode-section',
+      title: '👤 Opsi Identitas Pelapor',
       description:
-        'Unggah foto genangan, pilih apakah ingin lapor dengan identitas atau anonim, isi nama (jika identitas), dan tuliskan deskripsi singkat kondisi lokasi.',
+        'Pilih apakah kamu ingin melaporkan dengan nama/identitasmu atau secara anonim (tanpa menampilkan nama).',
       position: 'top',
     },
     {
-      selector: 'button[type="submit"]',
+      selector: '#report-form-section',
+      title: '📸 Upload Foto & Deskripsi',
+      description:
+        'Unggah foto genangan air/sarang nyamuk yang kamu temukan, lalu tuliskan deskripsi singkat mengenai kondisi lokasi.',
+      position: 'top',
+    },
+    {
+      selector: '#report-submit-btn',
       title: '✅ Kirim Laporan',
       description:
-        'Setelah semua data terisi, klik "Kirim Laporan". Laporanmu akan diverifikasi kader setempat dan membantu memperbarui peta risiko wilayah tersebut.',
+        'Setelah semua data terisi, klik "Kirim Laporan". Laporanmu akan langsung diteruskan ke kader setempat dan kamu bisa mendapatkan poin reward!',
       position: 'top',
     },
   ],
@@ -123,28 +137,28 @@ export const tourSteps = {
       selector: '.hero-full-width',
       title: '📚 Hub Edukasi & Mitigasi',
       description:
-        'Pusat informasi kesehatan LensaJentik. Di sini tersedia artikel, fakta DBD, panduan 3M Plus, dan kuis interaktif untuk meningkatkan kewaspadaanmu.',
+        'Pusat informasi kesehatan LensaJentik. Di sini tersedia artikel, fakta DBD, panduan 3M Plus, dan kalkulator kuis interaktif.',
       position: 'bottom',
     },
     {
-      selector: '.grid.grid-cols-2',
-      title: '📊 Fakta & Statistik DBD',
+      selector: '#edukasi-stats',
+      title: '📊 Fakta & Informasi DBD',
       description:
-        'Fakta penting seputar nyamuk Aedes aegypti, pola gigitan, siklus hidup, dan cara pencegahan yang paling efektif — berdasarkan data resmi Kemenkes.',
+        'Fakta penting seputar nyamuk Aedes aegypti, jam aktif menggigit, tempat bertelur, dan metode pencegahan berbasis riset Kemenkes RI.',
       position: 'bottom',
     },
     {
-      selector: '.snap-center',
-      title: '📰 Artikel Kesehatan',
+      selector: '#edukasi-artikel',
+      title: '📰 Artikel Kesehatan Terbaru',
       description:
-        'Kumpulan artikel terkurasi tentang pencegahan DBD, malaria, lingkungan sehat, dan 3M Plus. Geser kartu untuk melihat semua artikel yang tersedia.',
+        'Kumpulan artikel berita dan panduan pencegahan penyakit tular vektor. Arahkan kursor atau ketuk kartu untuk membaca isi artikel selengkapnya.',
       position: 'bottom',
     },
     {
-      selector: '.lj-btn-green',
-      title: '🧪 Mulai Kuis Risiko',
+      selector: '#edukasi-kalkulator, #quiz-start-btn',
+      title: '🧪 Kalkulator Risiko DBD',
       description:
-        'Klik tombol ini untuk mengikuti kuis interaktif — evaluasi risiko rumahmu dari faktor kebiasaan, kondisi lingkungan, dan pencegahan yang sudah kamu lakukan.',
+        'Klik tombol "Mulai Kuis" di bagian ini untuk mengevaluasi tingkat risiko rumahmu berdasarkan kebiasaan dan kondisi lingkungan sekitarmu.',
       position: 'top',
     },
   ],
