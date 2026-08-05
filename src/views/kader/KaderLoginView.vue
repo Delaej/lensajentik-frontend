@@ -1,11 +1,18 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-vue-next'
 import { useKaderStore } from '@/stores/useKaderStore'
 
 const router = useRouter()
 const kaderStore = useKaderStore()
+
+// Kalau sudah login, langsung arahkan ke dashboard
+onMounted(() => {
+  if (kaderStore.isAuthenticated) {
+    router.replace('/kader/dashboard')
+  }
+})
 
 const email = ref('')
 const password = ref('')

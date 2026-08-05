@@ -1,14 +1,16 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { Bell, User, HelpCircle, Menu, X, ChevronDown, Facebook, Twitter, Instagram, Linkedin, Youtube, Clock } from 'lucide-vue-next'
 import { useGamificationStore } from '@/stores/useGamificationStore'
+import { useKaderStore } from '@/stores/useKaderStore'
 import MosquitoComponent from '@/components/MosquitoComponent.vue'
 import GuidedTour from '@/components/GuidedTour.vue'
 
 const route = useRoute()
 const router = useRouter()
 const gamificationStore = useGamificationStore()
+const kaderStore = useKaderStore()
 
 const isMobileMenuOpen = ref(false)
 const scrolled = ref(false)
@@ -25,6 +27,15 @@ const isActive = (path) => {
   if (path === '/beranda') return route.path === '/beranda' || route.path === '/beranda/'
   return route.path.startsWith(path)
 }
+
+// Dynamic profile link: dashboard if logged in, login if not
+const profileLink = computed(() => {
+  return kaderStore.isAuthenticated ? '/kader/dashboard' : '/kader/login'
+})
+
+const profileTitle = computed(() => {
+  return kaderStore.isAuthenticated ? 'Portal Kader' : 'Login Kader'
+})
 
 const handleScroll = () => {
   scrolled.value = window.scrollY > 10
@@ -111,13 +122,14 @@ const emit = defineEmits(['trigger-onboarding'])
             <Bell class="w-5 h-5" style="color: var(--lj-green-dk);" />
           </RouterLink>
 
-          <!-- Kader Login -->
+          <!-- Kader Login / Portal (dynamic: dashboard if logged in) -->
           <RouterLink
-            to="/kader/login"
+            :to="profileLink"
             class="w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-[--lj-green-pale]"
-            title="Login Kader"
+            :title="profileTitle"
           >
-            <User class="w-5 h-5" style="color: var(--lj-green-dk);" />
+            <User v-if="!kaderStore.isAuthenticated" class="w-5 h-5" style="color: var(--lj-green-dk);" />
+            <User v-else class="w-5 h-5" style="color: var(--lj-blue);" />
           </RouterLink>
 
           <!-- Mobile menu toggle -->
