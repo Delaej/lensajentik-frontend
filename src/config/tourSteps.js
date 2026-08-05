@@ -309,31 +309,31 @@ export const tourSteps = {
   // ── Kader Login ─────────────────────────────────────────────────────
   'kader-login': [
     {
-      selector: 'h1.lj-heading, h1, .lj-card',
-      title: '🔐 Login Kader Kesehatan',
+      selector: 'h1',
+      title: '🔐 Halaman Login Kader',
       description:
-        'Form login khusus untuk kader jumantik dan tenaga kesehatan yang terdaftar. Masukkan email dan kata sandi yang diberikan oleh supervisor wilayahmu.',
+        'Halaman masuk khusus kader jumantik & tenaga kesehatan terdaftar. Di sisi kiri ada ilustrasi Lottie, dan form login di sisi kanan.',
       position: 'bottom',
     },
     {
       selector: 'input[type="email"]',
-      title: '📧 Email Kader',
+      title: '📧 Kolom Email',
       description:
-        'Masukkan alamat email yang didaftarkan saat registrasi kader. Pastikan tidak ada kesalahan ketik sebelum menekan tombol login.',
+        'Masukkan email yang didaftarkan saat registrasi kader. Pastikan penulisan benar sebelum login.',
       position: 'bottom',
     },
     {
       selector: 'input[type="password"]',
-      title: '🔑 Kata Sandi',
+      title: '🔑 Kolom Kata Sandi',
       description:
-        'Masukkan kata sandimu. Klik ikon mata untuk menampilkan/menyembunyikan teks. Lupa kata sandi? Gunakan link "Lupa Kata Sandi" di bawah form.',
+        'Ketik kata sandi kamu. Klik ikon mata 👁️ untuk melihat/menyembunyikan teks. Jika lupa, klik "Lupa password?" di bawahnya.',
       position: 'top',
     },
     {
-      selector: 'button[type="submit"], .lj-btn-primary',
-      title: '▶️ Masuk ke Dashboard',
+      selector: 'button[type="submit"]',
+      title: '▶️ Tombol Masuk',
       description:
-        'Klik setelah mengisi email dan kata sandi. Kamu akan diarahkan ke dashboard pemantauan wilayah binaanmu.',
+        'Klik tombol hijau "Mulai!" setelah email & kata sandi terisi. Kamu akan masuk ke Dashboard Kader wilayah binaanmu.',
       position: 'top',
     },
   ],
@@ -341,49 +341,63 @@ export const tourSteps = {
   // ── Kader Dashboard ─────────────────────────────────────────────────
   'kader-dashboard': [
     {
-      selector: 'h1.lj-heading, h1, nav',
+      selector: 'h1',
       title: '📌 Dashboard Kader',
       description:
-        'Selamat datang di portal kader! Sidebar kiri berisi menu navigasi: Dashboard, Kelola Data ABJ, Riwayat & Tren, Laporan Warga, Notifikasi, dan Pengaturan.',
+        'Halo! Di sini tampil sapaan personal, notifikasi lonceng, dan tombol profil kamu di pojok kanan atas. Sidebar kiri untuk navigasi antar menu kader.',
       position: 'bottom',
     },
     {
-      selector: '.lj-card:first-of-type',
-      title: '📊 Ringkasan Hari Ini',
+      selector: 'a[href="/kader/abj"]',
+      title: '➕ Input Data Baru',
       description:
-        'Ringkasan data utama: jumlah rumah diperiksa hari ini, persentase ABJ wilayahmu, laporan warga masuk, dan status terkini wilayah binaan.',
-      position: 'bottom',
-    },
-    {
-      selector: '.lj-btn-primary, .lj-btn-green',
-      title: '➕ Input Data ABJ',
-      description:
-        'Klik tombol ini untuk mencatat hasil pemeriksaan jentik di lapangan. Data ABJ yang kamu masukkan akan langsung memperbarui peta risiko publik.',
+        'Tombol hijau ini adalah aksi utama kader: mencatat hasil pemeriksaan jentik di lapangan. Data yang kamu input langsung memperbarui peta risiko publik.',
       position: 'top',
+    },
+    {
+      selector: 'a[href="/kader/riwayat"]',
+      title: '📈 Tren ABJ & Riwayat',
+      description:
+        'Grafik batang menampilkan tren ABJ mingguan wilayah binaanmu. Klik "Lihat detail" untuk membuka halaman Riwayat & Tren lengkap dengan tabel data.',
+      position: 'top',
+    },
+    {
+      selector: 'a[href="/kader/notifikasi"]',
+      title: '🔔 Notifikasi Kader',
+      description:
+        'Panel notifikasi menampilkan 3 pesan terbaru. Klik "Lihat Semua" untuk membaca seluruh notifikasi, tandai sudah dibaca, dan filter berdasarkan prioritas.',
+      position: 'left',
     },
   ],
 
   // ── Kader ABJ ───────────────────────────────────────────────────────
   'kader-abj': [
     {
-      selector: 'h1.lj-heading, h1',
-      title: '📋 Kelola Data ABJ',
+      selector: 'select',
+      title: '📍 Langkah 1 — Pilih Area Kerja',
       description:
-        'Halaman untuk mencatat dan mengelola data Angka Bebas Jentik (ABJ). Rumus: ABJ = (rumah tanpa jentik ÷ total rumah diperiksa) × 100%. Target nasional ≥ 95%.',
+        'Pilih desa/kelurahan binaan, RT, RW, dan tanggal pemeriksaan dari dropdown & date picker. Gunakan panduan PSN di kotak biru sebagai referensi lapangan.',
       position: 'bottom',
     },
     {
-      selector: 'form',
-      title: '📝 Form Entri ABJ',
+      selector: 'input[type="number"]',
+      title: '🔢 Langkah 2 — Hitung Rumah',
       description:
-        'Isi form dengan data hasil pemeriksaan: tanggal pemeriksaan, jumlah rumah diperiksa, jumlah rumah positif jentik, dan wilayah kecamatan yang diperiksa.',
+        'Gunakan tombol +/− untuk mengisi jumlah total rumah diperiksa dan jumlah rumah positif jentik. Kalkulator ABJ di bagian hitam akan menghitung skor secara otomatis real-time.',
       position: 'bottom',
     },
     {
-      selector: 'button[type="submit"], .lj-btn-primary',
+      selector: 'textarea',
+      title: '📝 Catatan Lapangan',
+      description:
+        'Tulis temuan khusus di lapangan — misalnya: lokasi spesifik, jenis genangan, atau tindakan yang sudah diambil (pemberian Abate, penyuluhan, dll).',
+      position: 'top',
+    },
+    {
+      selector: 'button:has(svg.lucide-save, .lucide-save), button.bg-emerald-600',
       title: '💾 Simpan Data ABJ',
       description:
-        'Setelah semua data terisi dengan benar, klik Simpan. Data langsung diproses oleh sistem dan skor risiko pada peta publik akan diperbarui secara otomatis.',
+        'Tombol hijau "Simpan Riwayat Data ABJ" di bagian bawah. Setelah tersimpan, data muncul di peta risiko publik dan muncul popup konfirmasi → lanjut ke halaman Riwayat.',
       position: 'top',
     },
   ],
@@ -391,17 +405,24 @@ export const tourSteps = {
   // ── Kader Riwayat ───────────────────────────────────────────────────
   'kader-riwayat': [
     {
-      selector: 'h1.lj-heading, h1',
-      title: '📈 Riwayat & Tren ABJ',
+      selector: 'select',
+      title: '📅 Filter Periode',
       description:
-        'Lihat grafik tren ABJ wilayah binaanmu dari waktu ke waktu. Data ini membantu mengevaluasi efektivitas program PSN dan pemantauan jentik yang kamu lakukan.',
+        'Pilih rentang waktu data: Semua Periode, Bulan Ini, atau Bulan Lalu. Grafik dan tabel akan otomatis menyesuaikan.',
       position: 'bottom',
     },
     {
-      selector: '.lj-card',
-      title: '📊 Grafik Tren',
+      selector: 'table',
+      title: '📋 Tabel Riwayat Pemeriksaan',
       description:
-        'Grafik menampilkan fluktuasi ABJ per periode. Garis naik = kondisi membaik (lebih sedikit jentik). Garis turun = perlu tindakan PSN segera.',
+        'Tabel mencatat semua sesi pemeriksaan: tanggal, lokasi RT/RW, jumlah rumah diperiksa & positif jentik, status ABJ (Aman/Waspada/Bahaya), dan nama petugas.',
+      position: 'top',
+    },
+    {
+      selector: 'input[type="text"]',
+      title: '🔍 Cari Data',
+      description:
+        'Ketik nama lokasi atau kata kunci dari catatan untuk mencari data spesifik di tabel riwayat.',
       position: 'bottom',
     },
   ],
@@ -409,35 +430,42 @@ export const tourSteps = {
   // ── Kader Laporan ───────────────────────────────────────────────────
   'kader-laporan': [
     {
-      selector: 'h1.lj-heading, h1',
-      title: '📬 Laporan Warga',
+      selector: 'button',
+      title: '📥 Export & Cetak Laporan',
       description:
-        'Daftar semua laporan genangan yang dikirim warga di wilayah binaanmu. Kader bertugas memverifikasi, menindaklanjuti, dan mengupdate status setiap laporan.',
+        'Tiga tombol aksi di header: Cetak (print halaman), Ekspor Excel (unduh .xlsx), dan Ekspor PDF (unduh laporan resmi format PDF untuk Puskesmas/Dinkes).',
       position: 'bottom',
     },
     {
-      selector: '.lj-card',
-      title: '📋 Kartu Laporan',
+      selector: 'input[type="date"]',
+      title: '📅 Filter Rentang Tanggal',
       description:
-        'Setiap kartu menampilkan foto, lokasi, deskripsi, dan status laporan warga. Klik kartu untuk membuka detail dan mengubah status (Baru → Diproses → Selesai).',
+        'Tentukan tanggal mulai dan akhir untuk melihat data ABJ pada periode tertentu. Klik "Terapkan Filter" setelah memilih.',
       position: 'bottom',
+    },
+    {
+      selector: '.grid.grid-cols-1.md\\:grid-cols-3, .grid-cols-3',
+      title: '📊 Ringkasan Statistik',
+      description:
+        'Tiga kartu metrik: Total Rumah Diperiksa, Persentase Rata-rata ABJ, dan Jumlah Rumah Positif Jentik — memberi gambaran cepat kondisi wilayah.',
+      position: 'top',
     },
   ],
 
   // ── Kader Notifikasi ────────────────────────────────────────────────
   'kader-notifikasi': [
     {
-      selector: 'h1.lj-heading, h1',
-      title: '🔔 Notifikasi & Pengingat',
+      selector: 'button',
+      title: '🔽 Filter & Tandai Semua',
       description:
-        'Notifikasi khusus kader: pengingat jadwal pemantauan rutin, alert risiko tinggi di wilayah binaan, dan pesan dari supervisor atau sistem pemantauan.',
+        'Tombol "Tandai Semua Dibaca" untuk menandai seluruh notifikasi sekaligus. Tiga tab filter di bawahnya: Semua, Belum Dibaca, Prioritas Tinggi ⚠️.',
       position: 'bottom',
     },
     {
-      selector: '.lj-card',
-      title: '📬 Daftar Notifikasi',
+      selector: '.space-y-3 > :first-child, [class*="rounded-2xl"][class*="border"]',
+      title: '📬 Kartu Notifikasi',
       description:
-        'Baca dan tandai notifikasi sebagai sudah dibaca. Notifikasi mendesak ditandai dengan warna merah agar mudah dikenali dan diprioritaskan.',
+        'Setiap notifikasi menampilkan ikon jenis (cuaca/risiko/pengingat), judul, deskripsi, dan tanggal. Notifikasi belum dibaca memiliki border biru & dot animasi. Klik "Tandai Dibaca" untuk menandai satu per satu.',
       position: 'bottom',
     },
   ],
@@ -445,24 +473,24 @@ export const tourSteps = {
   // ── Kader Pengaturan ────────────────────────────────────────────────
   'kader-pengaturan': [
     {
-      selector: 'h1.lj-heading, h1',
-      title: '⚙️ Pengaturan Profil',
+      selector: 'input:not([type="checkbox"]):not([disabled])',
+      title: '✏️ Edit Profil Kader',
       description:
-        'Kelola profil akunmu: nama lengkap, nomor HP, foto profil, dan wilayah binaan. Informasi ini ditampilkan pada dashboard dan laporan kader.',
+        'Form berisi Nama Lengkap, Nomor Telepon/WA, Email (tidak bisa diubah), dan Wilayah Tugas. Upload foto profil dengan klik ikon kamera di avatar.',
       position: 'bottom',
     },
     {
-      selector: 'form',
-      title: '✏️ Edit Profil',
+      selector: 'button',
+      title: '🔒 Ubah Kata Sandi',
       description:
-        'Update data diri dan kontak di sini. Klik Simpan setelah selesai. Pastikan nomor HP aktif agar bisa menerima notifikasi penting dari sistem.',
-      position: 'bottom',
+        'Tombol "Ubah Kata Sandi" di kartu Keamanan membuka modal untuk mengganti password. Wajib isi kata sandi lama, baru, dan konfirmasi.',
+      position: 'top',
     },
     {
-      selector: 'button[type="submit"], .lj-btn-primary',
-      title: '💾 Simpan Perubahan',
+      selector: 'input[type="checkbox"]',
+      title: '🔔 Preferensi Notifikasi',
       description:
-        'Klik tombol ini untuk menyimpan semua perubahan profil yang sudah kamu buat. Perubahan berlaku langsung setelah tersimpan.',
+        'Dua toggle switch: Peringatan ABJ Rendah (<90%) untuk alert otomatis saat status Bahaya, dan Pengingat Laporan Mingguan tiap Kamis sore.',
       position: 'top',
     },
   ],
