@@ -180,6 +180,49 @@ function onKey(e) {
   if (e.key === 'ArrowLeft')   prev()
 }
 
+// ── Chat bubble ────────────────────────────────────────────────────
+const showBubble = ref(false)
+const bubbleDismissed = ref(false)
+let bubbleTimer = null
+let bubbleShowTimer = null
+
+function startBubbleCycle() {
+  if (bubbleDismissed.value || isActive.value) return
+  // Show bubble after 5 seconds
+  bubbleShowTimer = setTimeout(() => {
+    if (!bubbleDismissed.value && !isActive.value) {
+      showBubble.value = true
+      // Auto-hide after 8 seconds
+      bubbleTimer = setTimeout(() => {
+        showBubble.value = false
+        // Cycle again after 45 seconds
+        setTimeout(startBubbleCycle, 45_000)
+      }, 8_000)
+    }
+  }, 5_000)
+}
+
+function dismissBubble() {
+  showBubble.value = false
+  bubbleDismissed.value = true
+  // Re-enable after 3 minutes
+  setTimeout(() => {
+    bubbleDismissed.value = false
+    startBubbleCycle()
+  }, 3 * 60_000)
+  if (bubbleTimer) clearTimeout(bubbleTimer)
+  if (bubbleShowTimer) clearTimeout(bubbleShowTimer)
+}
+
+// Stop bubble when tour starts
+watch(isActive, (val) => {
+  if (val) {
+    showBubble.value = false
+    if (bubbleTimer) clearTimeout(bubbleTimer)
+    if (bubbleShowTimer) clearTimeout(bubbleShowTimer)
+  }
+})
+
 // ── Watchers ──────────────────────────────────────────────────────
 watch([currentStepIdx, isActive], async ([, active]) => {
   if (active) await updateSpotlight(true)
@@ -187,8 +230,17 @@ watch([currentStepIdx, isActive], async ([, active]) => {
 
 watch(isActive, val => val ? startObserving() : stopObserving())
 
-onMounted(() => window.addEventListener('keydown', onKey))
-onUnmounted(() => { window.removeEventListener('keydown', onKey); stopObserving() })
+onMounted(() => {
+  window.addEventListener('keydown', onKey)
+  startBubbleCycle()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKey)
+  stopObserving()
+  if (bubbleTimer) clearTimeout(bubbleTimer)
+  if (bubbleShowTimer) clearTimeout(bubbleShowTimer)
+})
 </script>
 
 <template>
@@ -202,6 +254,15 @@ onUnmounted(() => { window.removeEventListener('keydown', onKey); stopObserving(
   >
     <HelpCircle class="w-6 h-6" />
     <span class="tour-fab-ping" />
+
+    <!-- Chat bubble ajakan -->
+    <Transition name="bubble-pop">
+      <div v-if="showBubble" class="tour-bubble" @click.stop>
+        <button class="tour-bubble-close" @click.stop="dismissBubble" aria-label="Tutup">&times;</button>
+        <p>Butuh bantuan?</p>
+        <span class="tour-bubble-sub">Klik di sini untuk panduan halaman</span>
+      </div>
+    </Transition>
   </button>
 
   <!-- ── Active Tour ───────────────────────────────────────────────── -->
@@ -326,6 +387,94 @@ onUnmounted(() => { window.removeEventListener('keydown', onKey); stopObserving(
 }
 @keyframes ping {
   75%, 100% { transform: scale(1.4); opacity: 0; }
+}
+
+/* ── Chat bubble ─────────────────────────────────────────────────── */
+.tour-bubble {
+  position: absolute;
+  bottom: 64px;
+  right: -4px;
+  width: 210px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px 16px 12px;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(0,0,0,0.06);
+  text-align: left;
+  animation: bubbleBounce 2s ease-in-out infinite;
+  cursor: default;
+  z-index: 9995;
+}
+/* Little tail pointing down-right to the FAB */
+.tour-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  right: 18px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  transform: rotate(45deg);
+  box-shadow: 2px 2px 6px rgba(15, 23, 42, 0.08);
+  z-index: -1;
+}
+
+.tour-bubble p {
+  margin: 0 0 3px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--lj-navy, #1E2B5B);
+  line-height: 1.3;
+}
+
+.tour-bubble-sub {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #6B7280;
+  line-height: 1.4;
+}
+
+.tour-bubble-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.tour-bubble-close:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+/* Bouncing animation */
+@keyframes bubbleBounce {
+  0%, 100% { transform: translateY(0); }
+  15%       { transform: translateY(-10px); }
+  30%       { transform: translateY(0); }
+  45%       { transform: translateY(-6px); }
+  60%       { transform: translateY(0); }
+}
+
+/* Transition for show/hide */
+.bubble-pop-enter-active { animation: bubbleIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.bubble-pop-leave-active { animation: bubbleOut 0.2s ease-in; }
+@keyframes bubbleIn {
+  from { opacity: 0; transform: scale(0.5) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes bubbleOut {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.8); }
 }
 
 /* ── SVG Backdrop ─────────────────────────────────────────────────── */
