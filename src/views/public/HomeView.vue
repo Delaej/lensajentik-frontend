@@ -428,7 +428,7 @@ const fetchStats = async () => {
     </section>
 
     <!-- ─── Cara Kerja ───────────────────────────────────────────────── -->
-    <section class="py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
+    <section id="home-carakerja-section" class="py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
       <div class="text-center mb-12 animate-on-scroll relative z-20">
         <div class="lj-section-label mb-4 mx-auto bg-white" style="width: fit-content;">CARA KERJA</div>
       </div>

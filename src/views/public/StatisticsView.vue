@@ -123,7 +123,7 @@ const goToMap = (kode) => router.push(`/beranda/peta-resiko?kode=${kode}`)
       </div>
 
       <!-- Search bar -->
-      <div class="relative max-w-xl mx-auto w-full">
+      <div id="stats-search-bar" class="relative max-w-xl mx-auto w-full">
         <div class="bg-white rounded-2xl px-4 py-3 flex items-center gap-3 border shadow-sm" style="border-color: var(--lj-border);">
           <Search class="w-5 h-5 shrink-0" style="color: #4E63DA;" />
           <div class="flex-1 flex items-center gap-2 flex-wrap min-w-0">
@@ -224,7 +224,7 @@ const goToMap = (kode) => router.push(`/beranda/peta-resiko?kode=${kode}`)
       </div>
 
       <!-- Nasional summary cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div id="stats-summary-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-2xl p-5 border shadow-sm text-center">
           <div class="text-xs font-bold mb-1" style="color: var(--lj-muted);">Rata-rata Skor Risiko</div>
           <div class="text-3xl font-black" :style="{ color: levelColor(levelNasional) }">{{ skorNasional ?? '—' }}</div>
@@ -252,7 +252,7 @@ const goToMap = (kode) => router.push(`/beranda/peta-resiko?kode=${kode}`)
       </div>
 
       <!-- Rankings -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div id="stats-rankings-section" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Top 10 Hijau -->
         <div class="bg-white rounded-3xl p-6 border shadow-sm">
           <div class="flex items-center gap-2 mb-4">

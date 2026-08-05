@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { HelpCircle, ChevronLeft, ChevronRight, X } from 'lucide-vue-next'
 import { useGuidedTour } from '@/composables/useGuidedTour'
 
@@ -17,30 +17,55 @@ const {
   goTo,
 } = useGuidedTour()
 
-// ── spotlight rectangle (viewport relative) ───────────────────────
+// ── Spotlight rect in screen coordinates ──────────────────────────
 const spotRect = ref({ top: 0, left: 0, width: 0, height: 0, visible: false })
-const tooltipStyle = ref({})
+const tooltipStyle = ref({ left: '50%', top: '50%' })
 const tooltipArrow = ref('bottom')
 const tooltipCardRef = ref(null)
+
+// SVG viewport dimensions
+const svgW = ref(window.innerWidth)
+const svgH = ref(window.innerHeight)
 
 let animFrameId = null
 let resizeObserver = null
 let mutationObserver = null
 
-// ── recalculate target element position ────────────────────────────
+// ── Compute SVG clip path string for the cutout mask ──────────────
+function svgClipPath() {
+  const r = spotRect.value
+  if (!r.visible) return `M0,0 H${svgW.value} V${svgH.value} H0 Z`
+  const rx = 16 // border-radius
+  const { top: t, left: l, width: w, height: h } = r
+  // Outer rect (full screen) + inner rect (cutout) with rounded corners
+  // Uses evenodd fill rule to create a "hole"
+  return [
+    `M0,0 H${svgW.value} V${svgH.value} H0 Z`,
+    `M${l + rx},${t}`,
+    `H${l + w - rx} Q${l + w},${t} ${l + w},${t + rx}`,
+    `V${t + h - rx} Q${l + w},${t + h} ${l + w - rx},${t + h}`,
+    `H${l + rx} Q${l},${t + h} ${l},${t + h - rx}`,
+    `V${t + rx} Q${l},${t} ${l + rx},${t}`,
+    `Z`,
+  ].join(' ')
+}
+
+// ── Recalculate target element rect ───────────────────────────────
 function calculateRect() {
   const step = currentStep.value
+  svgW.value = window.innerWidth
+  svgH.value = window.innerHeight
+
   if (!step) {
     spotRect.value.visible = false
-    return null
+    return
   }
 
   try {
     const el = document.querySelector(step.selector)
     if (!el) {
-      // Fallback: center of screen
-      const w = Math.min(window.innerWidth * 0.85, 480)
-      const h = 200
+      const w = Math.min(window.innerWidth * 0.8, 480)
+      const h = 180
       spotRect.value = {
         top: (window.innerHeight - h) / 2,
         left: (window.innerWidth - w) / 2,
@@ -49,12 +74,11 @@ function calculateRect() {
         visible: true,
       }
       updateTooltipPosition(step.position || 'bottom')
-      return null
+      return
     }
 
     const rect = el.getBoundingClientRect()
     const pad = 8
-
     spotRect.value = {
       top: rect.top - pad,
       left: rect.left - pad,
@@ -62,196 +86,158 @@ function calculateRect() {
       height: rect.height + pad * 2,
       visible: true,
     }
-
     updateTooltipPosition(step.position || 'bottom')
-    return el
-  } catch (err) {
+  } catch {
     spotRect.value.visible = false
-    return null
   }
 }
 
-// ── update spotlight on step change with smooth scroll ─────────────
-async function updateSpotlight(shouldScroll = true) {
+// ── Scroll element into view, then track for 40 frames ────────────
+async function updateSpotlight(scroll = true) {
   const step = currentStep.value
   if (!step) return
-
   await nextTick()
-  const el = document.querySelector(step.selector)
 
-  if (el && shouldScroll) {
-    // Scroll page smoothly to bring element into view
+  const el = document.querySelector(step.selector)
+  if (el && scroll) {
     el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
   }
 
-  // Track element during smooth scroll animation
   let frames = 0
   const track = () => {
     calculateRect()
-    frames++
-    if (frames < 35) {
-      animFrameId = requestAnimationFrame(track)
-    }
+    if (++frames < 40) animFrameId = requestAnimationFrame(track)
   }
   if (animFrameId) cancelAnimationFrame(animFrameId)
   animFrameId = requestAnimationFrame(track)
 }
 
-// ── tooltip positioning math ───────────────────────────────────────
+// ── Tooltip position — always fully inside viewport ───────────────
 function updateTooltipPosition(preferred = 'bottom') {
   const r = spotRect.value
   if (!r.visible) return
 
-  // Measure card if mounted, fallback to 340x200
   const cardEl = tooltipCardRef.value
-  const tooltipW = cardEl ? cardEl.offsetWidth : 340
-  const tooltipH = cardEl ? cardEl.offsetHeight : 200
-  const gap = 16
-  const margin = 20
+  const TW = cardEl ? cardEl.offsetWidth : 350
+  const TH = cardEl ? cardEl.offsetHeight : 210
+  const GAP = 14
+  const M = 16
+  const W = window.innerWidth
+  const H = window.innerHeight
 
-  const winW = window.innerWidth
-  const winH = window.innerHeight
+  // Decide best side
+  let side = preferred
+  if (side === 'bottom' && r.top + r.height + TH + GAP > H - M) side = 'top'
+  if (side === 'top'    && r.top - TH - GAP < M)               side = 'bottom'
+  if (side === 'right'  && r.left + r.width + TW + GAP > W - M) side = 'left'
+  if (side === 'left'   && r.left - TW - GAP < M)               side = 'right'
+  // Ultimate fallback: just stay bottom with clamping
+  tooltipArrow.value = side
 
-  // Determine best position
-  let best = preferred
-  if (preferred === 'bottom' && r.top + r.height + tooltipH + gap > winH - margin) {
-    best = 'top'
-  } else if (preferred === 'top' && r.top - tooltipH - gap < margin) {
-    best = 'bottom'
+  const cx = r.left + r.width / 2
+  const cy = r.top + r.height / 2
+  let tl, tt
+
+  switch (side) {
+    case 'top':    tl = cx - TW / 2; tt = r.top - TH - GAP; break
+    case 'right':  tl = r.left + r.width + GAP; tt = cy - TH / 2; break
+    case 'left':   tl = r.left - TW - GAP; tt = cy - TH / 2; break
+    default:       tl = cx - TW / 2; tt = r.top + r.height + GAP; break
   }
 
-  tooltipArrow.value = best
+  // Hard clamp — card must never go outside viewport
+  tl = Math.max(M, Math.min(W - TW - M, tl))
+  tt = Math.max(M, Math.min(H - TH - M, tt))
 
-  let tLeft, tTop
-  const centerX = r.left + r.width / 2
-  const centerY = r.top + r.height / 2
-
-  switch (best) {
-    case 'bottom':
-      tLeft = centerX - tooltipW / 2
-      tTop = r.top + r.height + gap
-      break
-    case 'top':
-      tLeft = centerX - tooltipW / 2
-      tTop = r.top - tooltipH - gap
-      break
-    case 'right':
-      tLeft = r.left + r.width + gap
-      tTop = centerY - tooltipH / 2
-      break
-    case 'left':
-      tLeft = r.left - tooltipW - gap
-      tTop = centerY - tooltipH / 2
-      break
-    default:
-      tLeft = centerX - tooltipW / 2
-      tTop = r.top + r.height + gap
-  }
-
-  // STRICT VIEWPORT CLAMPING (Never submerges or goes offscreen)
-  const clampedLeft = clamp(tLeft, margin, winW - tooltipW - margin)
-  const clampedTop = clamp(tTop, margin, winH - tooltipH - margin)
-
-  tooltipStyle.value = {
-    left: `${clampedLeft}px`,
-    top: `${clampedTop}px`,
-  }
+  tooltipStyle.value = { left: `${tl}px`, top: `${tt}px` }
 }
 
-function clamp(v, min, max) {
-  if (max < min) return min
-  return Math.max(min, Math.min(max, v))
-}
+// ── Observers ─────────────────────────────────────────────────────
+function onScrollOrResize() { if (isActive.value) calculateRect() }
 
-// ── scroll & resize listeners for real-time tracking ───────────────
-function onWindowScrollOrResize() {
-  if (!isActive.value) return
-  calculateRect()
-}
-
-// ── keyboard shortcuts ─────────────────────────────────────────────
-function onKeydown(e) {
-  if (!isActive.value) return
-  if (e.key === 'Escape') stop()
-  if (e.key === 'ArrowRight') next()
-  if (e.key === 'ArrowLeft') prev()
-}
-
-// ── watch step changes ─────────────────────────────────────────────
-watch([currentStepIdx, isActive], async ([newIdx, active]) => {
-  if (active) {
-    await updateSpotlight(true)
-  }
-})
-
-// ── observe DOM changes ─────────────────────────────────────────────
 function startObserving() {
-  window.addEventListener('scroll', onWindowScrollOrResize, { passive: true })
-  window.addEventListener('resize', onWindowScrollOrResize, { passive: true })
-
-  resizeObserver = new ResizeObserver(() => calculateRect())
+  window.addEventListener('scroll', onScrollOrResize, { passive: true })
+  window.addEventListener('resize', onScrollOrResize, { passive: true })
+  resizeObserver = new ResizeObserver(onScrollOrResize)
   resizeObserver.observe(document.body)
-
-  mutationObserver = new MutationObserver(() => calculateRect())
-  mutationObserver.observe(document.body, { childList: true, subtree: true, attributes: true })
+  mutationObserver = new MutationObserver(onScrollOrResize)
+  mutationObserver.observe(document.body, { childList: true, subtree: true })
 }
 
 function stopObserving() {
-  window.removeEventListener('scroll', onWindowScrollOrResize)
-  window.removeEventListener('resize', onWindowScrollOrResize)
-  if (resizeObserver) { resizeObserver.disconnect(); resizeObserver = null }
-  if (mutationObserver) { mutationObserver.disconnect(); mutationObserver = null }
+  window.removeEventListener('scroll', onScrollOrResize)
+  window.removeEventListener('resize', onScrollOrResize)
+  resizeObserver?.disconnect(); resizeObserver = null
+  mutationObserver?.disconnect(); mutationObserver = null
   if (animFrameId) cancelAnimationFrame(animFrameId)
 }
 
-watch(isActive, (val) => {
-  if (val) {
-    startObserving()
-  } else {
-    stopObserving()
-  }
+// ── Keyboard shortcuts ────────────────────────────────────────────
+function onKey(e) {
+  if (!isActive.value) return
+  if (e.key === 'Escape')      stop()
+  if (e.key === 'ArrowRight')  next()
+  if (e.key === 'ArrowLeft')   prev()
+}
+
+// ── Watchers ──────────────────────────────────────────────────────
+watch([currentStepIdx, isActive], async ([, active]) => {
+  if (active) await updateSpotlight(true)
 })
 
-onMounted(() => {
-  window.addEventListener('keydown', onKeydown)
-})
+watch(isActive, val => val ? startObserving() : stopObserving())
 
-onUnmounted(() => {
-  window.removeEventListener('keydown', onKeydown)
-  stopObserving()
-})
+onMounted(() => window.addEventListener('keydown', onKey))
+onUnmounted(() => { window.removeEventListener('keydown', onKey); stopObserving() })
 </script>
 
 <template>
-  <!-- ── Floating "?" FAB button (fixed bottom right) ─────────────── -->
+  <!-- ── Floating ? FAB (always visible) ──────────────────────────── -->
   <button
     v-if="!isActive"
     class="tour-fab"
     aria-label="Panduan Interaktif Halaman"
-    title="Klik untuk melihat panduan fitur halaman ini"
+    title="Panduan fitur halaman ini"
     @click="start"
   >
     <HelpCircle class="w-6 h-6" />
     <span class="tour-fab-ping" />
   </button>
 
-  <!-- ── Active Tour Overlay ─────────────────────────────────────── -->
+  <!-- ── Active Tour ───────────────────────────────────────────────── -->
   <Teleport to="body">
-    <div v-if="isActive" class="tour-overlay" @click.self="stop">
+    <template v-if="isActive">
 
-      <!-- Spotlight Cutout -->
-      <div
-        v-if="spotRect.visible"
-        class="tour-spotlight"
-        :style="{
-          top: spotRect.top + 'px',
-          left: spotRect.left + 'px',
-          width: spotRect.width + 'px',
-          height: spotRect.height + 'px',
-        }"
-      />
+      <!-- SVG Backdrop with cut-out hole (no box-shadow bleed) -->
+      <svg
+        class="tour-svg-backdrop"
+        :viewBox="`0 0 ${svgW} ${svgH}`"
+        :width="svgW"
+        :height="svgH"
+        @click.self="stop"
+      >
+        <!-- Dark mask with cutout using evenodd fill rule -->
+        <path
+          :d="svgClipPath()"
+          fill="rgba(15,23,42,0.68)"
+          fill-rule="evenodd"
+        />
+        <!-- Glowing border around spotlight -->
+        <rect
+          v-if="spotRect.visible"
+          :x="spotRect.left - 3"
+          :y="spotRect.top - 3"
+          :width="spotRect.width + 6"
+          :height="spotRect.height + 6"
+          rx="19"
+          fill="none"
+          stroke="rgba(255,255,255,0.85)"
+          stroke-width="2.5"
+          style="filter: drop-shadow(0 0 10px rgba(78,99,218,0.6))"
+        />
+      </svg>
 
-      <!-- Tooltip Card -->
+      <!-- Tooltip Card — lives ABOVE svg backdrop -->
       <div
         v-if="currentStep && spotRect.visible"
         ref="tooltipCardRef"
@@ -259,81 +245,53 @@ onUnmounted(() => {
         :class="'arrow-' + tooltipArrow"
         :style="tooltipStyle"
       >
-        <!-- Top right close button -->
-        <button
-          class="tour-close-corner"
-          title="Tutup panduan"
-          @click.stop="stop"
-        >
-          <X class="w-4 h-4" />
+        <!-- Close X -->
+        <button class="tour-close-x" @click.stop="stop" title="Tutup panduan">
+          <X class="w-3.5 h-3.5" />
         </button>
 
-        <!-- Step Indicator & Progress Dots -->
+        <!-- Header -->
         <div class="tour-header">
-          <div class="tour-step-badge">
-            LANGKAH {{ currentStepIdx + 1 }} / {{ totalSteps }}
-          </div>
-
-          <!-- Progress dots -->
+          <span class="tour-badge">LANGKAH {{ currentStepIdx + 1 }} / {{ totalSteps }}</span>
           <div class="tour-dots">
             <button
-              v-for="(_, idx) in totalSteps"
-              :key="idx"
+              v-for="(_, i) in totalSteps"
+              :key="i"
               class="tour-dot"
-              :class="{ active: currentStepIdx === idx }"
-              :title="`Pergi ke langkah ${idx + 1}`"
-              @click="goTo(idx)"
+              :class="{ active: currentStepIdx === i }"
+              @click="goTo(i)"
             />
           </div>
         </div>
 
         <!-- Content -->
-        <h3 class="tour-step-title">{{ currentStep.title }}</h3>
-        <p class="tour-step-desc">{{ currentStep.description }}</p>
+        <h3 class="tour-title">{{ currentStep.title }}</h3>
+        <p class="tour-desc">{{ currentStep.description }}</p>
 
         <!-- Actions -->
         <div class="tour-actions">
-          <button
-            v-if="!isFirstStep"
-            class="tour-btn tour-btn-prev"
-            @click.stop="prev"
-          >
-            <ChevronLeft class="w-3.5 h-3.5" />
-            Sebelumnya
+          <button v-if="!isFirstStep" class="tour-btn tour-prev" @click.stop="prev">
+            <ChevronLeft class="w-3.5 h-3.5" /> Sebelumnya
           </button>
-          
-          <div class="tour-spacer" />
-
-          <button
-            v-if="!isLastStep"
-            class="tour-btn tour-btn-next"
-            @click.stop="next"
-          >
-            Lanjutkan
-            <ChevronRight class="w-3.5 h-3.5" />
+          <div style="flex:1" />
+          <button v-if="!isLastStep" class="tour-btn tour-next" @click.stop="next">
+            Lanjutkan <ChevronRight class="w-3.5 h-3.5" />
           </button>
-
-          <button
-            v-else
-            class="tour-btn tour-btn-done"
-            @click.stop="stop"
-          >
-            Selesai
-            <ChevronRight class="w-3.5 h-3.5" />
+          <button v-else class="tour-btn tour-done" @click.stop="stop">
+            Selesai <ChevronRight class="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      <!-- Skip Tour Button -->
-      <button class="tour-skip-all" @click="stop">
-        Lewati panduan
-      </button>
-    </div>
+      <!-- Skip button -->
+      <button class="tour-skip" @click="stop">Lewati panduan</button>
+
+    </template>
   </Teleport>
 </template>
 
 <style scoped>
-/* ── Floating FAB button ────────────────────────────────────────── */
+/* ── FAB ──────────────────────────────────────────────────────────── */
 .tour-fab {
   position: fixed;
   bottom: 28px;
@@ -342,168 +300,104 @@ onUnmounted(() => {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(255,255,255,0.9);
   background: var(--lj-blue, #4E63DA);
-  color: white;
+  color: #fff;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(78, 99, 218, 0.4);
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
-  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 8px 24px rgba(78,99,218,0.45);
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
+.tour-fab:hover  { transform: scale(1.12); box-shadow: 0 12px 32px rgba(78,99,218,0.55); }
+.tour-fab:active { transform: scale(0.93); }
 
-.tour-fab:hover {
-  transform: scale(1.12);
-  box-shadow: 0 12px 32px rgba(78, 99, 218, 0.55);
-}
-
-.tour-fab:active {
-  transform: scale(0.95);
-}
-
-/* Subtle pulse ring on FAB */
 .tour-fab-ping {
   position: absolute;
   inset: -4px;
   border-radius: 50%;
   border: 2px solid var(--lj-blue, #4E63DA);
   opacity: 0.6;
-  animation: ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  animation: ping 2.5s cubic-bezier(0,0,0.2,1) infinite;
   pointer-events: none;
 }
-
 @keyframes ping {
-  75%, 100% {
-    transform: scale(1.4);
-    opacity: 0;
-  }
+  75%, 100% { transform: scale(1.4); opacity: 0; }
 }
 
-/* ── Overlay ───────────────────────────────────────────────────── */
-.tour-overlay {
+/* ── SVG Backdrop ─────────────────────────────────────────────────── */
+.tour-svg-backdrop {
   position: fixed;
   inset: 0;
   z-index: 10000;
   pointer-events: auto;
+  cursor: default;
 }
 
-/* ── Spotlight Cutout ──────────────────────────────────────────── */
-.tour-spotlight {
-  position: fixed;
-  z-index: 10001;
-  border-radius: 16px;
-  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.65);
-  pointer-events: none;
-  transition: top 0.18s cubic-bezier(0.22, 0.61, 0.36, 1),
-              left 0.18s cubic-bezier(0.22, 0.61, 0.36, 1),
-              width 0.18s cubic-bezier(0.22, 0.61, 0.36, 1),
-              height 0.18s cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
-/* Outer glowing accent ring */
-.tour-spotlight::after {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: 20px;
-  border: 3px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 0 24px rgba(78, 99, 218, 0.45);
-  pointer-events: none;
-}
-
-/* ── Tooltip Card ──────────────────────────────────────────────── */
+/* ── Tooltip Card ─────────────────────────────────────────────────── */
 .tour-tooltip {
   position: fixed;
-  z-index: 10002;
+  z-index: 10002;          /* above SVG */
   width: 350px;
   max-width: calc(100vw - 32px);
-  background: #ffffff;
+  background: #fff;
   border-radius: 20px;
   padding: 20px 22px 18px;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.8);
-  transition: left 0.18s cubic-bezier(0.22, 0.61, 0.36, 1),
-              top 0.18s cubic-bezier(0.22, 0.61, 0.36, 1);
-  font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
-  animation: tooltipFadeIn 0.2s ease-out;
+  box-shadow: 0 20px 50px rgba(15,23,42,0.28), 0 0 0 1px rgba(255,255,255,0.8);
+  font-family: 'Satoshi','Inter',system-ui,sans-serif;
   box-sizing: border-box;
+  transition: left 0.18s cubic-bezier(0.22,0.61,0.36,1),
+              top  0.18s cubic-bezier(0.22,0.61,0.36,1);
+  animation: tfIn 0.2s ease-out;
 }
-
-@keyframes tooltipFadeIn {
+@keyframes tfIn {
   from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
-/* Close corner button */
-.tour-close-corner {
+/* Arrow nub */
+.tour-tooltip::before {
+  content: '';
   position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 26px;
-  height: 26px;
+  width: 14px; height: 14px;
+  background: #fff;
+  transform: rotate(45deg);
+}
+.tour-tooltip.arrow-bottom::before { top: -7px;    left: calc(50% - 7px); box-shadow: -2px -2px 4px rgba(0,0,0,0.06); }
+.tour-tooltip.arrow-top::before    { bottom: -7px; left: calc(50% - 7px); box-shadow:  2px  2px 4px rgba(0,0,0,0.06); }
+.tour-tooltip.arrow-right::before  { left: -7px;   top:  calc(50% - 7px); }
+.tour-tooltip.arrow-left::before   { right: -7px;  top:  calc(50% - 7px); }
+
+/* Close X */
+.tour-close-x {
+  position: absolute;
+  top: 13px; right: 13px;
+  width: 26px; height: 26px;
   border-radius: 50%;
   border: none;
   background: #f1f5f9;
   color: #64748b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.15s;
 }
+.tour-close-x:hover { background: #e2e8f0; color: #0f172a; }
 
-.tour-close-corner:hover {
-  background: #e2e8f0;
-  color: #0f172a;
-}
-
-/* Arrow indicator */
-.tour-tooltip::before {
-  content: '';
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  background: #ffffff;
-  transform: rotate(45deg);
-}
-
-.tour-tooltip.arrow-bottom::before {
-  top: -7px;
-  left: calc(50% - 7px);
-  box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.tour-tooltip.arrow-top::before {
-  bottom: -7px;
-  left: calc(50% - 7px);
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.tour-tooltip.arrow-right::before {
-  left: -7px;
-  top: calc(50% - 7px);
-}
-
-.tour-tooltip.arrow-left::before {
-  right: -7px;
-  top: calc(50% - 7px);
-}
-
-/* ── Header & Dots ─────────────────────────────────────────────── */
+/* Header */
 .tour-header {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
-  padding-right: 28px; /* space for close button */
+  padding-right: 26px;
 }
-
-.tour-step-badge {
+.tour-badge {
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--lj-blue, #4E63DA);
   background: var(--lj-blue-pale, #EEF1FD);
@@ -511,58 +405,42 @@ onUnmounted(() => {
   border-radius: 999px;
   white-space: nowrap;
 }
-
-.tour-dots {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
+.tour-dots { display: flex; align-items: center; gap: 4px; }
 .tour-dot {
-  width: 6px;
-  height: 6px;
+  width: 6px; height: 6px;
   border-radius: 50%;
   background: #cbd5e1;
-  border: none;
-  padding: 0;
+  border: none; padding: 0;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
 }
-
 .tour-dot.active {
   width: 16px;
   border-radius: 999px;
   background: var(--lj-blue, #4E63DA);
 }
 
-/* ── Title & Description ────────────────────────────────────────── */
-.tour-step-title {
+/* Content */
+.tour-title {
   margin: 0 0 6px;
-  font-size: 16px;
+  font-size: 15.5px;
   font-weight: 700;
   color: var(--lj-navy, #1E2B5B);
   line-height: 1.3;
 }
-
-.tour-step-desc {
+.tour-desc {
   margin: 0 0 16px;
   font-size: 12.5px;
-  line-height: 1.6;
+  line-height: 1.65;
   color: #475569;
 }
 
-/* ── Actions ────────────────────────────────────────────────────── */
+/* Actions */
 .tour-actions {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
 }
-
-.tour-spacer {
-  flex: 1;
-}
-
 .tour-btn {
   display: inline-flex;
   align-items: center;
@@ -575,81 +453,39 @@ onUnmounted(() => {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.15s;
   white-space: nowrap;
 }
+.tour-prev { background: #f1f5f9; color: #475569; }
+.tour-prev:hover { background: #e2e8f0; color: #1e293b; }
+.tour-next { background: var(--lj-blue, #4E63DA); color: #fff; }
+.tour-next:hover { background: var(--lj-navy, #1E2B5B); box-shadow: 0 4px 14px rgba(78,99,218,0.35); }
+.tour-done { background: var(--lj-green-dk, #5AF61F); color: var(--lj-navy, #1E2B5B); }
+.tour-done:hover { filter: brightness(1.08); }
 
-.tour-btn-prev {
-  background: #f1f5f9;
-  color: #475569;
-}
-
-.tour-btn-prev:hover {
-  background: #e2e8f0;
-  color: #1e293b;
-}
-
-.tour-btn-next {
-  background: var(--lj-blue, #4E63DA);
-  color: #ffffff;
-}
-
-.tour-btn-next:hover {
-  background: var(--lj-navy, #1E2B5B);
-  box-shadow: 0 4px 16px rgba(78, 99, 218, 0.35);
-}
-
-.tour-btn-done {
-  background: var(--lj-green-dk, #5AF61F);
-  color: var(--lj-navy, #1E2B5B);
-}
-
-.tour-btn-done:hover {
-  filter: brightness(1.08);
-  box-shadow: 0 4px 16px rgba(90, 246, 31, 0.4);
-}
-
-/* ── Skip Button ────────────────────────────────────────────────── */
-.tour-skip-all {
+/* Skip */
+.tour-skip {
   position: fixed;
-  bottom: 28px;
-  right: 28px;
+  bottom: 28px; right: 28px;
   z-index: 10003;
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(15,23,42,0.75);
   backdrop-filter: blur(8px);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 999px;
   padding: 8px 18px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.22);
 }
+.tour-skip:hover { background: rgba(15,23,42,0.92); transform: translateY(-1px); }
 
-.tour-skip-all:hover {
-  background: rgba(15, 23, 42, 0.9);
-  transform: translateY(-1px);
-}
-
-/* ── Responsive ─────────────────────────────────────────────────── */
+/* Mobile */
 @media (max-width: 480px) {
-  .tour-tooltip {
-    width: calc(100vw - 32px);
-    left: 16px !important;
-  }
-
-  .tour-fab {
-    bottom: 20px;
-    right: 20px;
-    width: 46px;
-    height: 46px;
-  }
-
-  .tour-skip-all {
-    bottom: 20px;
-    right: 20px;
-  }
+  .tour-tooltip { width: calc(100vw - 32px); left: 16px !important; }
+  .tour-fab, .tour-skip { bottom: 18px; right: 18px; }
+  .tour-fab { width: 46px; height: 46px; }
 }
 </style>
