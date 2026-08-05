@@ -4,6 +4,7 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { Bell, User, HelpCircle, Menu, X, ChevronDown, Facebook, Twitter, Instagram, Linkedin, Youtube, Clock } from 'lucide-vue-next'
 import { useGamificationStore } from '@/stores/useGamificationStore'
 import MosquitoComponent from '@/components/MosquitoComponent.vue'
+import GuidedTour from '@/components/GuidedTour.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -48,6 +49,8 @@ onMounted(() => {
       })
     }, 100)
   }
+  // Expose agar view yang mengubah konten dinamis bisa re-trigger observer
+  window.__observeScrollElements = observeElements
   router.afterEach(observeElements)
   observeElements()
 })
@@ -193,6 +196,9 @@ const emit = defineEmits(['trigger-onboarding'])
 
     <!-- ─── Easter Egg: Nyamuk Sesekali ────────────────────────────── -->
     <MosquitoComponent />
+
+    <!-- ─── Guided Tour (Tombol "?") ──────────────────────────────── -->
+    <GuidedTour />
   </div>
 </template>
 

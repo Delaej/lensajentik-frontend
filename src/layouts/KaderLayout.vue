@@ -16,6 +16,7 @@ import {
 } from 'lucide-vue-next'
 import { useKaderStore } from '@/stores/useKaderStore'
 import MosquitoComponent from '@/components/MosquitoComponent.vue'
+import GuidedTour from '@/components/GuidedTour.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -169,5 +170,8 @@ const handleLogout = () => {
 
     <!-- ─── Easter Egg: Nyamuk Sesekali ────────────────────────────── -->
     <MosquitoComponent />
+
+    <!-- ─── Guided Tour (Tombol "?") ──────────────────────────────── -->
+    <GuidedTour />
   </div>
 </template>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
   Camera, MapPin, Navigation, Search, CheckCircle2,
@@ -270,8 +270,12 @@ const handleSubmit = async () => {
       gamificationStore.addPoints(result.poin_didapat)
     }
     step.value = 'success'
-    // Scroll ke atas setelah 100ms — trigger animasi
-    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
+    // Tunggu DOM update, lalu scroll ke atas dan re-trigger animate-on-scroll
+    await nextTick()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (typeof window.__observeScrollElements === 'function') {
+      window.__observeScrollElements()
+    }
   } catch (err) {
     alert('Gagal mengirim laporan: ' + (err.response?.data?.message || err.message))
   } finally {
@@ -314,7 +318,7 @@ const resetForm = () => {
       </div>
     </div>
 
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-8" :key="step">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-8">
 
       <!-- ════════════════════════════════════════════════════ -->
       <!-- STEP: FORM                                          -->

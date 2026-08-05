@@ -1,5 +1,6 @@
 <script setup>
 import { RouterView } from 'vue-router'
+import GuidedTour from '@/components/GuidedTour.vue'
 </script>
 
 <template>
@@ -9,5 +10,8 @@ import { RouterView } from 'vue-router'
         <component :is="Component" :key="route.fullPath" />
       </Transition>
     </RouterView>
+
+    <!-- ─── Guided Tour (Tombol "?") ──────────────────────────────── -->
+    <GuidedTour />
   </div>
 </template>
