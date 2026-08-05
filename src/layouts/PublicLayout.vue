@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { Bell, User, HelpCircle, Menu, X, ChevronDown, Facebook, Twitter, Instagram, Linkedin, Youtube, Clock } from 'lucide-vue-next'
 import { useGamificationStore } from '@/stores/useGamificationStore'
+import MosquitoComponent from '@/components/MosquitoComponent.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -189,6 +190,9 @@ const emit = defineEmits(['trigger-onboarding'])
         </div>
       </div>
     </footer>
+
+    <!-- ─── Easter Egg: Nyamuk Sesekali ────────────────────────────── -->
+    <MosquitoComponent />
   </div>
 </template>
 

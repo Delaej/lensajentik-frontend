@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-vue-next'
 import { useKaderStore } from '@/stores/useKaderStore'
+import MosquitoComponent from '@/components/MosquitoComponent.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -166,5 +167,7 @@ const handleLogout = () => {
       </main>
     </div>
 
+    <!-- ─── Easter Egg: Nyamuk Sesekali ────────────────────────────── -->
+    <MosquitoComponent />
   </div>
 </template>
