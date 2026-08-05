@@ -162,8 +162,8 @@ onMounted(() => {
               viewBox="0 0 120 120"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <ellipse cx="46" cy="30" rx="26" ry="14" fill="rgba(79,95,214,.28)" transform="rotate(-24 46 30)"/>
-              <ellipse cx="76" cy="34" rx="26" ry="14" fill="rgba(126,217,87,.28)" transform="rotate(18 76 34)"/>
+              <ellipse cx="46" cy="52" rx="26" ry="14" fill="rgba(79,95,214,.28)" transform="rotate(-24 46 52)"/>
+              <ellipse cx="76" cy="56" rx="26" ry="14" fill="rgba(126,217,87,.28)" transform="rotate(18 76 56)"/>
               <path d="M60 34C64 46 66 60 64 76C63 88 58 96 54 100" stroke="var(--navy)" stroke-width="5" stroke-linecap="round" fill="none"/>
               <path d="M56 96 L44 108 M56 96 L50 112 M64 96 L76 108 M64 96 L70 112 M58 60 L40 58 M62 60 L80 58" stroke="var(--navy)" stroke-width="3.5" stroke-linecap="round"/>
               <path d="M56 34 C44 32 34 30 24 26" stroke="var(--navy)" stroke-width="4" stroke-linecap="round"/>
