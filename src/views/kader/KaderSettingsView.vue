@@ -178,9 +178,16 @@ const localSettings = ref({
 
         <div class="relative">
           <!-- If photo preview exists, show it; otherwise show initials -->
+          <!-- If photo preview exists, show it; otherwise if userProfile.avatar exists, show it; otherwise show initials -->
           <img
             v-if="avatarPreview"
             :src="avatarPreview"
+            alt="Foto Profil"
+            class="w-20 h-20 rounded-3xl object-cover ring-4 ring-blue-500/20"
+          />
+          <img
+            v-else-if="kaderStore.userProfile.avatar"
+            :src="kaderStore.userProfile.avatar"
             alt="Foto Profil"
             class="w-20 h-20 rounded-3xl object-cover ring-4 ring-blue-500/20"
           />
@@ -205,7 +212,7 @@ const localSettings = ref({
           <div class="font-bold text-slate-900 text-base">{{ profileForm.nama || '—' }}</div>
           <div class="text-xs text-slate-500">{{ profileForm.role || 'Kader Kesehatan' }}</div>
           <button @click="handleAvatarChange" class="text-xs text-blue-600 font-bold hover:underline mt-1">
-            {{ avatarPreview ? 'Ganti Foto' : 'Unggah Foto' }}
+            {{ (avatarPreview || kaderStore.userProfile.avatar) ? 'Ganti Foto' : 'Unggah Foto' }}
           </button>
           <p v-if="avatarPreview" class="text-[10px] text-amber-600 mt-0.5">Preview lokal. Simpan profil untuk menggunakan foto ini.</p>
         </div>

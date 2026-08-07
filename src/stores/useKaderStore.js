@@ -122,8 +122,9 @@ export const useKaderStore = defineStore('kader', {
           if (updatedData.current_password !== undefined) formData.append('current_password', updatedData.current_password)
           if (updatedData.password !== undefined) formData.append('password', updatedData.password)
           if (updatedData.password_confirmation !== undefined) formData.append('password_confirmation', updatedData.password_confirmation)
+          formData.append('_method', 'PATCH')
           if (updatedData.avatar !== undefined) formData.append('avatar', updatedData.avatar)
-          response = await apiClient.patch('/auth/update-profile', formData, {
+          response = await apiClient.post('/auth/update-profile', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
           })
         } else {

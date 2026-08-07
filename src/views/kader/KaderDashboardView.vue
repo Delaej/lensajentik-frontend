@@ -66,9 +66,10 @@ const chartBars = computed(() => {
           <Bell class="w-5 h-5 stroke-[2.3] text-slate-900" />
         </RouterLink>
         <RouterLink to="/kader/pengaturan"
-          class="w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-all hover:brightness-105"
-          style="background:#5AF61F;" title="Profil">
-          <User class="w-5 h-5 stroke-[2.3] text-slate-900" />
+          class="w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-all hover:brightness-105 overflow-hidden border border-slate-200"
+          :style="kaderStore.userProfile.avatar ? '' : 'background:#5AF61F;'" title="Profil">
+          <img v-if="kaderStore.userProfile.avatar" :src="kaderStore.userProfile.avatar" alt="Foto Profil" class="w-full h-full object-cover" />
+          <User v-else class="w-5 h-5 stroke-[2.3] text-slate-900" />
         </RouterLink>
       </div>
     </div>
