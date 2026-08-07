@@ -399,7 +399,7 @@ onMounted(() => {
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(126, 217, 87, 0.28) 0%,
+    rgba(255, 255, 255, 0.32) 0%,
     rgba(79, 95, 214, 0.10) 45%,
     transparent 72%
   );

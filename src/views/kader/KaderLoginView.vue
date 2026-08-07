@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Mail, Lock, Eye, EyeOff } from 'lucide-vue-next'
+import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-vue-next'
 import { useKaderStore } from '@/stores/useKaderStore'
 
 const router = useRouter()
@@ -73,6 +73,12 @@ const handleLogin = async () => {
         style="background:#5AF61F;"></div>
       <div class="absolute -bottom-20 -left-20 w-64 h-64 rounded-full blur-[100px] pointer-events-none opacity-40 z-20"
         style="background:#4E63DA;"></div>
+
+      <!-- Back Button -->
+      <router-link to="/" class="absolute top-6 left-6 z-20 flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors">
+        <ArrowLeft class="w-5 h-5 stroke-[2]" />
+        Kembali
+      </router-link>
 
       <div class="w-full max-w-sm z-10 space-y-8">
 
