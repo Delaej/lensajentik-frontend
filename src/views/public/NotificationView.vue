@@ -78,7 +78,7 @@ const formatDate = (d) => {
     <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10 pb-40">
 
       <!-- Header -->
-      <div class="flex items-center justify-between mb-8">
+      <div class="flex flex-wrap items-center justify-between gap-3 sm:gap-0 mb-8">
         <RouterLink to="/beranda" class="w-8 h-8 flex items-center justify-center hover:bg-black/5 rounded-full transition-colors">
           <ArrowLeft class="w-5 h-5" style="color: var(--lj-navy);" />
         </RouterLink>
@@ -97,17 +97,17 @@ const formatDate = (d) => {
       </div>
 
       <!-- Filter tabs -->
-      <div class="inline-flex rounded-full border-[3px] p-1 mb-8" style="border-color: #95FE6D; background: white;">
+      <div class="flex flex-wrap sm:inline-flex rounded-2xl sm:rounded-full border-[3px] p-1 mb-8 gap-1 sm:gap-0" style="border-color: #95FE6D; background: white;">
         <button
           @click="activeFilter = 'semua'"
-          class="px-6 py-1.5 rounded-full text-xs font-bold transition-all"
+          class="flex-1 sm:flex-none px-4 sm:px-6 py-1.5 rounded-xl sm:rounded-full text-xs font-bold transition-all text-center"
           :style="activeFilter === 'semua' ? 'background: #4E63DA; color: white;' : 'background: transparent; color: #4B5563;'"
         >
           Semua ({{ totalCount() }})
         </button>
         <button
           @click="activeFilter = 'unread'"
-          class="px-6 py-1.5 rounded-full text-xs font-bold transition-all"
+          class="flex-1 sm:flex-none px-4 sm:px-6 py-1.5 rounded-xl sm:rounded-full text-xs font-bold transition-all text-center"
           :style="activeFilter === 'unread' ? 'background: #4E63DA; color: white;' : 'background: transparent; color: #4B5563;'"
         >
           Belum dibaca ({{ unreadCount() }})
@@ -122,7 +122,7 @@ const formatDate = (d) => {
         <div
           v-for="notif in filteredNotifications()"
           :key="notif.id"
-          class="bg-white rounded-3xl p-5 flex items-start gap-5 border shadow-sm relative transition-transform"
+          class="bg-white rounded-3xl p-4 sm:p-5 flex flex-wrap sm:flex-nowrap items-start gap-3 sm:gap-5 border shadow-sm relative transition-transform"
           style="border-color: var(--lj-border);"
         >
           <!-- Unread dot -->
@@ -134,7 +134,7 @@ const formatDate = (d) => {
           </div>
 
           <!-- Content -->
-          <div class="flex-1 mt-1">
+          <div class="flex-1 mt-1 min-w-0 w-full sm:w-auto order-1 sm:order-none basis-full sm:basis-auto">
             <p class="text-sm" style="color: #4B5563;">
               <span class="font-bold text-black">{{ notif.judul }}</span> {{ notif.pesan }}
             </p>
@@ -145,7 +145,7 @@ const formatDate = (d) => {
           <button
             v-if="!notif.is_dibaca"
             @click="markAsRead(notif.id)"
-            class="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 hover:bg-gray-100 transition-colors"
+            class="text-[10px] font-bold px-3 py-1.5 sm:px-2.5 sm:py-1 rounded-full shrink-0 hover:bg-gray-100 transition-colors ml-auto sm:ml-0 whitespace-nowrap"
             style="color: #4E63DA; border: 1px solid #4E63DA;"
           >
             Tandai Dibaca

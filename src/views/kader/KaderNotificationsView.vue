@@ -40,7 +40,7 @@ const getIcon = (type) => {
 <template>
   <div class="max-w-4xl mx-auto space-y-6">
     <!-- Header Page -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-xs">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs">
       <div>
         <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
           <Bell class="w-6 h-6 text-blue-600" />
@@ -51,7 +51,7 @@ const getIcon = (type) => {
 
       <button
         @click="kaderStore.markAllNotificationsRead()"
-        class="py-2.5 px-4 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors border border-blue-200"
+        class="w-full sm:w-auto justify-center py-2.5 px-4 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors border border-blue-200"
       >
         <CheckCheck class="w-4 h-4 text-blue-600" />
         <span>Tandai Semua Dibaca</span>
@@ -96,8 +96,8 @@ const getIcon = (type) => {
           !notif.read ? 'border-blue-300 bg-blue-50/20 shadow-xs' : 'border-slate-200 opacity-90'
         ]"
       >
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex items-start gap-3.5">
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div class="flex items-start gap-3.5 flex-1 min-w-0">
             <!-- Icon Avatar -->
             <div
               class="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-xs"
@@ -109,7 +109,7 @@ const getIcon = (type) => {
               <component :is="getIcon(notif.type)" class="w-5 h-5" />
             </div>
 
-            <div class="space-y-1">
+            <div class="space-y-1 min-w-0 flex-1">
               <div class="flex items-center gap-2">
                 <h4 class="font-bold text-sm text-slate-900">{{ notif.title }}</h4>
                 <!-- Unread Indicator Dot -->
@@ -124,7 +124,7 @@ const getIcon = (type) => {
           <button
             v-if="!notif.read"
             @click="kaderStore.markNotificationRead(notif.id)"
-            class="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors shrink-0"
+            class="w-full sm:w-auto text-center text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors shrink-0"
           >
             Tandai Dibaca
           </button>

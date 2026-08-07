@@ -45,7 +45,7 @@ const chartBars = computed(() => {
   <div class="space-y-6 max-w-6xl mx-auto" style="font-family:'Satoshi',sans-serif;">
 
     <!-- ── Top Header ──────────────────────────────────────────────────────── -->
-    <div class="flex items-start justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 sm:gap-0">
       <div>
         <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center flex-wrap gap-2">
           {{ greeting }},
@@ -59,7 +59,7 @@ const chartBars = computed(() => {
       </div>
 
       <!-- Bell + User Avatar icons (lime green circle) -->
-      <div class="flex items-center gap-2.5 shrink-0 ml-4">
+      <div class="flex items-center gap-2.5 shrink-0 ml-0 sm:ml-4 w-full sm:w-auto justify-start sm:justify-end">
         <RouterLink to="/kader/notifikasi"
           class="w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-all hover:brightness-105"
           style="background:#5AF61F;" title="Notifikasi">
@@ -79,13 +79,13 @@ const chartBars = computed(() => {
       <!-- LEFT: Rangkuman Wilayah Binaan (8 cols) -->
       <div class="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-xs flex flex-col justify-between gap-6">
         <!-- Card Header -->
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
           <div class="flex items-center gap-3">
             <BookOpen class="w-6 h-6 stroke-[2.2]" style="color:#4E63DA;" />
             <h2 class="text-base font-black text-slate-900">Rangkuman Wilayah Binaan</h2>
           </div>
           <!-- Status Aman badge -->
-          <div class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-900 shadow-2xs"
+          <div class="flex items-center w-fit gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-900 shadow-2xs"
             :style="{ background: kaderStore.quickMetricsDisplay.status === 'Aman' ? '#5AF61F' : kaderStore.quickMetricsDisplay.status === 'Waspada' ? '#F59E0B' : '#EF4444' }">
             <CheckCircle2 class="w-3.5 h-3.5 stroke-[2.8]" />
             Status {{ kaderStore.quickMetricsDisplay.status }}
@@ -120,7 +120,7 @@ const chartBars = computed(() => {
       <!-- RIGHT: Notifikasi (4 cols) -->
       <div class="lg:col-span-4 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-xs flex flex-col justify-between gap-4">
         <!-- Card Header -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 w-full">
           <Bell class="w-6 h-6 stroke-[2.2]" style="color:#4E63DA;" />
           <h2 class="text-base font-black text-slate-900">Notifikasi</h2>
         </div>
@@ -156,7 +156,7 @@ const chartBars = computed(() => {
 
     <!-- ── Tren ABJ Mingguan Chart Card ──────────────────────────────────── -->
     <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-xs space-y-5">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
         <div class="flex items-center gap-3">
           <TrendingUp class="w-6 h-6 stroke-[2.2]" style="color:#4E63DA;" />
           <h2 class="text-base font-black text-slate-900">Tren ABJ Mingguan</h2>
