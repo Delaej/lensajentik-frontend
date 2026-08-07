@@ -117,11 +117,7 @@ onMounted(() => {
     <!-- ── Stage 1: logo + progress bar ──────────────────── -->
     <div class="loader-stage">
       <div class="mark">
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M50 12C34 20 26 34 30 52C33 65 45 72 50 72C50 50 50 30 50 12Z" fill="var(--green)"/>
-          <circle cx="66" cy="24" r="7" fill="var(--navy)"/>
-          <path d="M62 40C74 46 80 58 74 72C71 79 62 84 58 82C58 68 58 54 62 40Z" fill="var(--indigo)"/>
-        </svg>
+        <img src="/LOGO_LENSAJENTIK.svg" alt="LensaJentik Logo" class="w-full h-full object-contain" />
       </div>
 
       <div class="loader-copy">
