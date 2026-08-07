@@ -304,12 +304,11 @@ const resetForm = () => {
       <!-- Lottie centered, content at designed size — background fills edges -->
       <div class="absolute inset-0 z-0 pointer-events-none flex items-center justify-center">
         <Vue3Lottie
-          animationLink="/illustrasi_laporan.json"
+          animationLink="/illustrasi_laporan_fix.json"
           :loop="true"
           :autoplay="true"
-          class="h-full"
-          style="width: 100%; max-width: 1200px;"
-          :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
+          class="w-full h-full"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
         />
       </div>
       <!-- Sway wave bottom -->

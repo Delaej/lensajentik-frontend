@@ -50,11 +50,11 @@ const handleLogin = async () => {
       <!-- Lottie fills entire left column -->
       <div class="absolute inset-0 z-0">
         <Vue3Lottie
-          animationLink="/illustrasi login.json"
+          animationLink="/illustrasi login_fix.json"
           :loop="true"
           :autoplay="true"
           class="w-full h-full"
-          :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
         />
       </div>
       <!-- Right-facing sway (overlaps the Lottie, pointing left toward the login card) -->

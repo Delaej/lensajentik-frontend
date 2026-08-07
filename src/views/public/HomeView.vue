@@ -241,12 +241,11 @@ const fetchStats = async () => {
       <!-- Lottie centered, content at designed size — background fills edges -->
       <div class="absolute inset-0 z-0 pointer-events-none flex items-center justify-center" style="border-radius: 0;">
         <Vue3Lottie
-          animationLink="/landing_page.json"
+          animationLink="/landing_page_fix.json"
           :loop="true"
           :autoplay="true"
-          class="h-full"
-          style="width: 100%; max-width: 1200px;"
-          :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
+          class="w-full h-full"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
         />
       </div>
 
@@ -254,7 +253,7 @@ const fetchStats = async () => {
       <div class="absolute inset-0 bg-gradient-to-b from-white/70 via-white/30 to-transparent"></div>
 
       <!-- Sway wave bottom -->
-      <div class="absolute bottom-0 left-0 w-full z-10 pointer-events-none" style="transform: translateY(1px);">
+      <div class="absolute left-0 w-full z-10 pointer-events-none" style="bottom: -2px; transform: translateY(2px);">
         <img src="/sway-hadapatas.svg" alt="" aria-hidden="true" class="w-full block h-auto" />
       </div>
 
@@ -324,12 +323,11 @@ const fetchStats = async () => {
       <!-- Background Lottie — centered, content at designed size -->
       <div class="absolute inset-0 z-0 pointer-events-none flex items-center justify-center" style="border-radius: 0;">
         <Vue3Lottie
-          animationLink="/illustrasi_landing_bg_fiturkami.json"
+          animationLink="/illustrasi_landing_bg_fiturkam_fix.json"
           :loop="true"
           :autoplay="true"
-          class="h-full"
-          style="width: 100%; max-width: 1200px;"
-          :rendererSettings="{ preserveAspectRatio: 'xMidYMid meet' }"
+          class="w-full h-full"
+          :rendererSettings="{ preserveAspectRatio: 'xMidYMid slice' }"
         />
       </div>
       
