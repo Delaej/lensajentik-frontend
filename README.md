@@ -170,7 +170,7 @@ VITE_API_BASE_URL=http://localhost:8000/api
 ### Cek halaman kader
 
 1. Buka `/kader/login` — login dengan akun kader demo:
-   - **Email:** `kader.bogor1@lensajentik.id`
+   - **Email:** `farjeng77@gmail.com`
    - **Password:** `password123`
 2. Setelah login, cek dashboard menampilkan data
 3. Coba input ABJ di `/kader/abj`
