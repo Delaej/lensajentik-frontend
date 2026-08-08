@@ -17,6 +17,7 @@
     "axios": "^1.18.1",
     "canvas-confetti": "^1.9.4",
     "chart.js": "^4.5.1",
+    "chartjs-plugin-zoom": "^2.2.0",
     "leaflet": "^1.9.4",
     "lucide-vue-next": "^1.0.0",
     "pinia": "^4.0.2",
